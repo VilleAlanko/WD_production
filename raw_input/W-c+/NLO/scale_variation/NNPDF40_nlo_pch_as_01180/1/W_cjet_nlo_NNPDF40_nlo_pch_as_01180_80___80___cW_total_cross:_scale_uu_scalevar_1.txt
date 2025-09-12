@@ -1,0 +1,6 @@
+# total cross: scale uu
+# underflow	  0.0000000    	  0.0000000    
+# overflow	  0.0000000    	  0.0000000    
+# sum	 -1607.4379    	 0.55005851    
+# xmin	xmax	cross	numerror
+  0.0000000    	  1.0000000    	 -1607.4379    	 0.55005851    
