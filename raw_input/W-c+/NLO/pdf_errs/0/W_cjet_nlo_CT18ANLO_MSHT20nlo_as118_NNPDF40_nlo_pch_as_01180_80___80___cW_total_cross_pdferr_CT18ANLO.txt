@@ -1,6 +1,0 @@
-# total cross
-# underflow	  0.0000000    	  0.0000000    
-# overflow	  0.0000000    	  0.0000000    
-# sum	  151719.40    	  78.886056    
-# xmin	xmax	cross	numerror	pdfsymm	pdfplus	pdfminus
-  0.0000000    	  1.0000000    	  151719.40    	  78.886056    	  10633.705    	  10813.833    	  11317.754    	
