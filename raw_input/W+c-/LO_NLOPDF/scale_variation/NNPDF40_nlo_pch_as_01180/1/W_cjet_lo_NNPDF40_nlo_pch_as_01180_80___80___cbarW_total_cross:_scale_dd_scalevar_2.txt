@@ -1,0 +1,6 @@
+# total cross: scale dd
+# underflow	  0.0000000    	  0.0000000    
+# overflow	  0.0000000    	  0.0000000    
+# sum	  593.15265    	 0.81092414E-02
+# xmin	xmax	cross	numerror
+  0.0000000    	  1.0000000    	  593.15265    	 0.81092414E-02
