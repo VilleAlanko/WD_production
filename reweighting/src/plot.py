@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import CubicSpline
 from scipy.integrate import quad
+from matplotlib.offsetbox import AnchoredOffsetbox, TextArea, VPacker
 
 log10x_min = -5
 
@@ -182,7 +183,7 @@ def absolute():
         plt.close()
 
 
-def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, PDF_set, which_cross_sections_included):
+def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, which_cross_sections_included):
     markers = ['s', 'd', 'v']
     marker_color = 'black'
     theory_labels = ['CT18ANLO', 'MSHT20nlo', 'NNPDF40_nlo_pch']
@@ -197,9 +198,9 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, PDF_set, which_cross_sections_
     #--------------------------------------------------------------------------------------------------------------------------------------#
 
     DATA = np.loadtxt('input/experimental_values/' + kinematic_quantity + '_' + which_cross_sections_included + '.txt')
-    DATA_errors = np.loadtxt('input/exp_errors/' + kinematic_quantity + '.txt')
+    DATA_errors = np.loadtxt('input/exp_errors/' + kinematic_quantity + '_' + which_cross_sections_included + '.txt')
 
-    for PDF_index in range(len(PDF_sets) - 1):
+    for PDF_index in range(len(PDF_sets)):
         PDF_set = PDF_sets[PDF_index]
         if (PDF_set == 'CT18ANLO' or PDF_set == 'MSHT20nlo_as118'):
             OLD = np.loadtxt('input/theory_values/HESSIAN/best/' + kinematic_quantity + '_' + which_cross_sections_included + '_' + PDF_set + '_best.txt')
@@ -214,10 +215,10 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, PDF_set, which_cross_sections_
             OLD_err_minus = np.loadtxt('input/theory_values/MC/errors/' + kinematic_quantity + '_' + \
                             which_cross_sections_included + '_' + PDF_set + '_minus.txt')
 
-        NEW = np.loadtxt('output/new_Rcpm_' + kinematic_quantity + '/' + PDF_set + '/' + which_cross_sections_included + '/best.txt')
-        NEW_err_up = np.loadtxt('output/new_Rcpm_' + kinematic_quantity + '/' + PDF_set + '/' + which_cross_sections_included + '/error_up.txt')
-        NEW_err_down = np.loadtxt('output/new_Rcpm_' + kinematic_quantity + '/' + PDF_set + '/' + which_cross_sections_included + '/error_down.txt')
-        
+        if (PDF_set != 'NNPDF40_nlo_pch_as_01180'):
+            NEW = np.loadtxt('output/new_Rcpm_' + kinematic_quantity + '/' + PDF_set + '/' + which_cross_sections_included + '/best.txt')
+            NEW_err_up = np.loadtxt('output/new_Rcpm_' + kinematic_quantity + '/' + PDF_set + '/' + which_cross_sections_included + '/error_up.txt')
+            NEW_err_down = np.loadtxt('output/new_Rcpm_' + kinematic_quantity + '/' + PDF_set + '/' + which_cross_sections_included + '/error_down.txt')
 
         #--------------------------------------------------------------------------------------------------------------------------------------#
         #                                                           AX1 PLOTTING (THEORY)                                                      #
@@ -230,7 +231,7 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, PDF_set, which_cross_sections_
             xmin = bin_edges[0:-1]
             xmax = bin_edges[1:]
             bin_midpoints = (xmin + xmax) / 2
-            theory_val_places = [bin_midpoints - 1. / 6. * 0.5, bin_midpoints + 1. / 6. * 0.5]
+            theory_val_places = [bin_midpoints - 1. / 4. * 0.5, bin_midpoints, bin_midpoints + 1. / 4. * 0.5]
 
             
         elif (kinematic_quantity == 'pTD'):
@@ -240,47 +241,70 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, PDF_set, which_cross_sections_
             plt.xscale('log', base=10)
 
             bin_widths = np.diff(bin_edges)
-            bar_width_over_bin_width = 1. / 6.
+            bar_width_over_bin_width = 1. / 5.
             bar_width = bar_width_over_bin_width * bin_widths
 
-            theory_val_places = [bin_edges[:-1] * (bin_edges[1:] / bin_edges[:-1])**(1. / 3.), bin_edges[:-1] * (bin_edges[1:] / bin_edges[:-1])**(2. / 3.)]
+            theory_val_places = [bin_edges[:-1] * (bin_edges[1:] / bin_edges[:-1])**(1. / 4.), 
+                                bin_edges[:-1] * (bin_edges[1:] / bin_edges[:-1])**(2. / 4.),
+                                bin_edges[:-1] * (bin_edges[1:] / bin_edges[:-1])**(3. / 4.)]
         
-        
-        
-        
-        
-        ax1.plot(theory_val_places[PDF_index], (NEW + OLD) / 2., marker=markers[PDF_index],
-                                color=marker_color, markersize=5, linestyle='none',
-                                label=theory_labels[PDF_index], zorder=5)
-        
-        before_reweighting = ax1.bar(theory_val_places[PDF_index] - bar_width / 4., OLD_err_minus + OLD_err_plus, width=bar_width / 2.,
-                                bottom=OLD - OLD_err_minus, color=old_color, zorder=3)
-         
-        after_reweighting = ax1.bar(theory_val_places[PDF_index] + bar_width / 4., NEW_err_up + NEW_err_down, width=bar_width / 2.,
-                                bottom=NEW - NEW_err_down, color=new_color, zorder=3)
+        if (PDF_set != 'NNPDF40_nlo_pch_as_01180'):
+            ax1.plot(theory_val_places[PDF_index], (NEW + OLD) / 2., marker=markers[PDF_index],
+                                    color=marker_color, markersize=5, linestyle='none',
+                                    label=theory_labels[PDF_index], zorder=5)
+            
+            before_reweighting = ax1.bar(theory_val_places[PDF_index] - bar_width / 4., OLD_err_minus + OLD_err_plus, width=bar_width / 2.,
+                                    bottom=OLD - OLD_err_minus, color=old_color, zorder=3)
+            
+            after_reweighting = ax1.bar(theory_val_places[PDF_index] + bar_width / 4., NEW_err_up + NEW_err_down, width=bar_width / 2.,
+                                    bottom=NEW - NEW_err_down, color=new_color, zorder=3)
 
-        ax1.hlines(NEW, theory_val_places[PDF_index], theory_val_places[PDF_index] + bar_width / 2., color='darkred', zorder=4)
-        ax1.hlines(OLD, theory_val_places[PDF_index] - bar_width / 2., theory_val_places[PDF_index], color='darkblue', zorder=4)
+            ax1.hlines(NEW, theory_val_places[PDF_index], theory_val_places[PDF_index] + bar_width / 2., color='darkred', zorder=4)
+            ax1.hlines(OLD, theory_val_places[PDF_index] - bar_width / 2., theory_val_places[PDF_index], color='darkblue', zorder=4)
+        else:
+            ax1.plot(theory_val_places[PDF_index], OLD, marker=markers[PDF_index],
+                                    color=marker_color, markersize=5, linestyle='none',
+                                    label=theory_labels[PDF_index], zorder=5)
+            
+            if (kinematic_quantity != 'pTD'):
+                before_reweighting = ax1.bar(theory_val_places[PDF_index], OLD_err_minus + OLD_err_plus, width=bar_width / 2.,
+                                        bottom=OLD - OLD_err_minus, color=old_color, zorder=3)
+            else:
+                before_reweighting = ax1.bar(theory_val_places[PDF_index], OLD_err_minus + OLD_err_plus, width=bar_width / 2. * [1.5, 1.3 ,1., 1., 1.],
+                                        bottom=OLD - OLD_err_minus, color=old_color, zorder=3)
 
         #--------------------------------------------------------------------------------------------------------------------------------------#
         #                                                            AX2 PLOTTING (THEORY)                                                     #
         #--------------------------------------------------------------------------------------------------------------------------------------#
 
-        ax2.plot(theory_val_places[PDF_index], ((NEW + OLD) / 2.) / DATA, marker=markers[PDF_index], color=marker_color,
-                markersize=5, linestyle='none', zorder=5)
-        
-        ax2.hlines(NEW / DATA, theory_val_places[PDF_index], theory_val_places[PDF_index] + bar_width / 2., color='darkred', zorder=4)
-        ax2.hlines(OLD / DATA, theory_val_places[PDF_index], theory_val_places[PDF_index] - bar_width / 2., color='darkblue', zorder=4)
-
         ratio_up_err_OLD = (OLD + OLD_err_plus) / DATA - OLD / DATA
         ratio_down_err_OLD = OLD / DATA - (OLD - OLD_err_minus) / DATA
-        ratio_up_err_NEW = (NEW + NEW_err_up) / DATA - NEW / DATA
-        ratio_down_err_NEW = NEW / DATA - (NEW - NEW_err_down) / DATA
 
-        ax2.bar(theory_val_places[PDF_index] - bar_width / 4., ratio_up_err_OLD + ratio_down_err_OLD, width=bar_width / 2.,
+        if (PDF_set != 'NNPDF40_nlo_pch_as_01180'):
+            ratio_up_err_NEW = (NEW + NEW_err_up) / DATA - NEW / DATA
+            ratio_down_err_NEW = NEW / DATA - (NEW - NEW_err_down) / DATA
+
+            ax2.plot(theory_val_places[PDF_index], ((NEW + OLD) / 2.) / DATA, marker=markers[PDF_index], color=marker_color,
+                        markersize=5, linestyle='none', zorder=5)
+
+            ax2.hlines(NEW / DATA, theory_val_places[PDF_index], theory_val_places[PDF_index] + bar_width / 2., color='darkred', zorder=4)
+            ax2.hlines(OLD / DATA, theory_val_places[PDF_index], theory_val_places[PDF_index] - bar_width / 2., color='darkblue', zorder=4)
+
+            ax2.bar(theory_val_places[PDF_index] - bar_width / 4., ratio_up_err_OLD + ratio_down_err_OLD, width=bar_width / 2.,
                                 bottom=OLD / DATA - ratio_down_err_OLD, color=old_color, zorder=3)
-        ax2.bar(theory_val_places[PDF_index] + bar_width / 4., ratio_up_err_NEW + ratio_down_err_NEW, width=bar_width / 2.,
+            ax2.bar(theory_val_places[PDF_index] + bar_width / 4., ratio_up_err_NEW + ratio_down_err_NEW, width=bar_width / 2.,
                                 bottom=NEW / DATA - ratio_down_err_NEW, color=new_color, zorder=3)
+
+        else:
+            ax2.plot(theory_val_places[PDF_index], OLD / DATA, marker=markers[PDF_index], color=marker_color,
+                        markersize=5, linestyle='none', zorder=5)
+
+            if (kinematic_quantity != 'pTD'):
+                ax2.bar(theory_val_places[PDF_index], ratio_up_err_OLD + ratio_down_err_OLD, width=bar_width / 2.,
+                                    bottom=OLD / DATA - ratio_down_err_OLD, color=old_color, zorder=3)
+            else:
+                ax2.bar(theory_val_places[PDF_index], ratio_up_err_OLD + ratio_down_err_OLD, width=bar_width / 2. * [1.5, 1.3 ,1., 1., 1.],
+                                    bottom=OLD / DATA - ratio_down_err_OLD, color=old_color, zorder=3)
 
     #--------------------------------------------------------------------------------------------------------------------------------------#
     #                                                              AX1 PLOTTING (DATA)                                                     #
@@ -303,25 +327,27 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, PDF_set, which_cross_sections_
     #--------------------------------------------------------------------------------------------------------------------------------------#
 
     plt.xlim(bin_edges[0], bin_edges[-1])
-    ax1.set_ylim(0.825, 1.15)
-    ax2.set_ylim(0.94, 1.06)
-    ax1.set_ylabel(r'$R_c^\pm$', fontsize=axis_label_font_size)
+    ax1.set_ylim(0.755, 1.15)
+    ax2.set_ylim(0.83, 1.09)
+    if (which_cross_sections_included == 'both'):
+        ax1.set_ylabel(r'$R_c^\pm$', fontsize=axis_label_font_size)
+    elif (which_cross_sections_included == 'D'):
+        ax1.set_ylabel(r'$R_c^\pm$ ($D^{*\pm}$ excluded)', fontsize=axis_label_font_size)
+
     ax2.set_ylabel(r'$\frac{\text{Theory}}{\text{ATLAS}}$', fontsize=axis_label_font_size * 1.3)
 
-    ax2.set_yticks([0.95, 1., 1.05])
+    ax2.set_yticks([0.85, 0.9, 0.95, 1., 1.05])
 
     if (kinematic_quantity == 'pTD'):
-        for i in range(1, len(bin_edges) - 2):
+        for i in range(1, len(bin_edges) - 1):
             ax1.axvline(bin_edges[i], linestyle='dashed', color='black', linewidth=0.5, ymax=0.65)
-        for i in range(len(bin_edges) - 2, len(bin_edges) - 1):
-            ax1.axvline(bin_edges[i], linestyle='dashed', color='black', linewidth=0.5, ymax=0.5)
         for i in range(1, len(bin_edges) - 1):
             ax2.axvline(bin_edges[i], linestyle='dashed', color='black', linewidth=0.5)
     elif (kinematic_quantity == 'eta_lept'):
         for i in range(1, len(bin_edges) - 3):
-            ax1.axvline(bin_edges[i], linestyle='dashed', color='black', linewidth=0.5, ymax=0.7)
+            ax1.axvline(bin_edges[i], linestyle='dashed', color='black', linewidth=0.5, ymax=0.75)
         for i in range(len(bin_edges) - 3, len(bin_edges) - 1):
-            ax1.axvline(bin_edges[i], linestyle='dashed', color='black', linewidth=0.5, ymax=0.6)
+            ax1.axvline(bin_edges[i], linestyle='dashed', color='black', linewidth=0.5, ymax=0.62)
         for i in range(1, len(bin_edges) - 1):
             ax2.axvline(bin_edges[i], linestyle='dashed', color='black', linewidth=0.5)
 
@@ -444,6 +470,8 @@ def strangeness_asymmetry(PDF_set, which_cross_sections_included, plot_errors_fl
     text_x = 10**(-5) * 1.8
     text_y1 = 1.6
 
+    if (which_cross_sections_included == 'D'):
+        ax1.text(text_x, 1.9, r'$D^{*\pm}$ excluded in reweighting', color='red', fontsize=font_size)
     ax1.text(text_x, text_y1, r'$\mu_\text{fact} = M_W$', fontsize=font_size)
 
     ax1.text(0.01, 1.01, r'$\times 10^{-2}$',
@@ -498,17 +526,17 @@ def weights(PDF_set, which_cross_sections_included):
 
 
 #PDF_set = 'NNPDF40_nlo_pch_as_01180'
-PDF_set = 'CT18ANLO'
+PDF_set = 'MSHT20nlo_as118'
 #PDF_set = 'CT18ANLO'
 flavors = [1, -1, 3, -3, 21]
-which_cross_sections_included = 'both'
+which_cross_sections_included = 'D'
 
 #ratio(PDF_set, which_cross_sections_included)
 #ratio_to_other_PDF('MSHT20nlo_as118', 'CT18ANLO', flavors, which_cross_sections_included)
 #ratio_of_ratio(1)
 #ratio_of_ratio(3)
 #absolute()
-#Rcpm_OLD_and_NEW_and_DATA('eta_lept', PDF_set, which_cross_sections_included)
-#Rcpm_OLD_and_NEW_and_DATA('pTD', PDF_set, which_cross_sections_included)
+Rcpm_OLD_and_NEW_and_DATA('eta_lept', which_cross_sections_included)
+Rcpm_OLD_and_NEW_and_DATA('pTD', which_cross_sections_included)
 #strangeness_asymmetry(PDF_set, which_cross_sections_included, True, False)
-weights(PDF_set, which_cross_sections_included)
+#weights(PDF_set, which_cross_sections_included)

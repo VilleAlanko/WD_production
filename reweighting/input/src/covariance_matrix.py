@@ -2,17 +2,7 @@ import numpy as np
 from numpy.linalg import inv
 from pprint import pprint
 
-atlas_vals = np.array([[12.27, 11.57, 10.41, 9.09, 6.85],
-                        [11.87, 11.55, 10.09, 8.6, 6.25],
-                        [12.18, 11.77, 10.61, 8.85, 7.22],
-                        [12.52, 12.14, 10.29, 8.38, 6.55]])
-
-A = np.zeros(5)
-B = np.zeros(5)
-
-for eta_lept_index in range(5):
-    A[eta_lept_index] = atlas_vals[1][eta_lept_index] + atlas_vals[3][eta_lept_index]
-    B[eta_lept_index] = atlas_vals[0][eta_lept_index] + atlas_vals[2][eta_lept_index]
+which_cross_sections_included = 'D'
 
 eta_starless = np.array([[0.201, 0.183, 0.184, 0.126, 0.115, 0.193, 0.178, 0.179, 0.121, 0.154],
                         [0.245, 0.229, 0.219, 0.165, 0.129, 0.237, 0.221, 0.212, 0.206, 0.121],
@@ -63,20 +53,40 @@ eta_star = np.flipud(eta_star)
 pT_starless = np.flipud(pT_starless)
 pT_star = np.flipud(pT_star)
 
-Rcpm_derivatives = np.array([[-A[0] / B[0]**2, 0., 0., 0., 0., 1. / B[0], 0., 0., 0., 0., -A[0] / B[0]**2, 0., 0., 0., 0., 1. / B[0], 0., 0., 0., 0.],
+
+def cov_Rcpm(starless, star, kinematic_quantity, which_cross_sections_included):
+    if (kinematic_quantity == 'eta_lept'):
+        atlas_vals = np.array([[12.27, 11.57, 10.41, 9.09, 6.85],
+                                [11.87, 11.55, 10.09, 8.6, 6.25],
+                                [12.18, 11.77, 10.61, 8.85, 7.22],
+                                [12.52, 12.14, 10.29, 8.38, 6.55]])
+    else:
+        atlas_vals = np.array([[15.04, 15.34, 13.78, 5.13, 0.93],
+                                [14.61, 15.12, 13.07, 4.84, 0.82],
+                                [14.50, 15.88, 14.19, 5.42, 1.07],
+                                [14.26, 15.60, 14.08, 5.11, 0.99]])
+
+    A = np.zeros(5)
+    B = np.zeros(5)
+
+    for eta_lept_index in range(5):
+        A[eta_lept_index] = atlas_vals[1][eta_lept_index] + atlas_vals[3][eta_lept_index]
+        B[eta_lept_index] = atlas_vals[0][eta_lept_index] + atlas_vals[2][eta_lept_index]
+
+    Rcpm_derivatives = np.array([[-A[0] / B[0]**2, 0., 0., 0., 0., 1. / B[0], 0., 0., 0., 0., -A[0] / B[0]**2, 0., 0., 0., 0., 1. / B[0], 0., 0., 0., 0.],
                             [0., -A[1] / B[1]**2, 0., 0., 0., 0., 1. / B[1], 0., 0., 0., 0., -A[1] / B[1]**2, 0., 0., 0., 0., 1. / B[1], 0., 0., 0.],
                             [0., 0., -A[2] / B[2]**2, 0., 0., 0., 0., 1. / B[2], 0., 0., 0., 0., -A[2] / B[2]**2, 0., 0., 0., 0., 1. / B[2], 0., 0.],
                             [0., 0., 0., -A[3] / B[3]**2, 0., 0., 0., 0., 1. / B[3], 0., 0., 0., 0., -A[3] / B[3]**2, 0., 0., 0., 0., 1. / B[3], 0.],
                             [0., 0., 0., 0., -A[4] / B[4]**2, 0., 0., 0., 0., 1. / B[4], 0., 0., 0., 0., -A[4] / B[4]**2, 0., 0., 0., 0., 1. / B[4]]])
 
-
-def cov_Rcpm(starless, star, filename):
     cov_exp = np.zeros((20, 20))
 
     for i in range(10):
         for j in range(10):
-            cov_exp[i, j] = starless[i, j]
-            cov_exp[10 + i, 10 + j] = star[i, j]
+            if (which_cross_sections_included == 'both' or which_cross_sections_included == 'D'):
+                cov_exp[i, j] = starless[i, j]
+            if (which_cross_sections_included == 'both' or which_cross_sections_included == 'Dstar'):
+                cov_exp[10 + i, 10 + j] = star[i, j]
 
     cov_Rcpm = Rcpm_derivatives @ cov_exp @ Rcpm_derivatives.T
 
@@ -86,17 +96,15 @@ def cov_Rcpm(starless, star, filename):
 
     for i in range(5):
         Rcpm_errors[i] = np.sqrt(cov_Rcpm[i, i])
+    
+    print(Rcpm_errors)
 
-    np.savetxt('exp_errors/' + filename + '.txt', Rcpm_errors)
-    np.savetxt('covariance_matrix/' + filename + '.txt', cov_Rcpm_inv)
-
-    #for row in cov_Rcpm_inv:
-    #    print(" ".join(f"{val:4}" for val in row))
-    #print()
+    np.savetxt('exp_errors/' + kinematic_quantity + '_' + which_cross_sections_included + '.txt', Rcpm_errors)
+    np.savetxt('covariance_matrix/' + kinematic_quantity + '_' + which_cross_sections_included + '.txt', cov_Rcpm_inv)
 
 
-cov_Rcpm(eta_starless, eta_star, 'eta_lept')
-cov_Rcpm(pT_starless, pT_star, 'pTD')
+cov_Rcpm(eta_starless, eta_star, 'eta_lept', which_cross_sections_included)
+cov_Rcpm(pT_starless, pT_star, 'pTD', which_cross_sections_included)
 
 
 

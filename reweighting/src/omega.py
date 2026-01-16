@@ -1,7 +1,7 @@
 import numpy as np
 
 PDF_set = 'NNPDF40_nlo_pch_as_01180'
-which_cross_sections_included = 'both'
+which_cross_sections_included = 'D'
 
 num_members = 100
 N_data = 10
@@ -9,12 +9,12 @@ N_data = 10
 y_eta_lept = np.loadtxt('input/theory_values/MC/variation/eta_lept_' + which_cross_sections_included + '_' + PDF_set + '_vals.txt', delimiter=',')
 y_best_eta_lept = np.loadtxt('input/theory_values/MC/best/eta_lept_' + which_cross_sections_included + '_' + PDF_set + '_best.txt')
 y_exp_eta_lept = np.loadtxt('input/experimental_values/eta_lept_' + which_cross_sections_included + '.txt')
-C_inverse_eta_lept = np.loadtxt('input/covariance_matrix/eta_lept.txt', delimiter=' ')
+C_inverse_eta_lept = np.loadtxt('input/covariance_matrix/eta_lept_' + which_cross_sections_included + '.txt', delimiter=' ')
 
 y_pTD = np.loadtxt('input/theory_values/MC/variation/pTD_' + which_cross_sections_included + '_' + PDF_set + '_vals.txt', delimiter=',')
 y_best_pTD = np.loadtxt('input/theory_values/MC/best/pTD_' + which_cross_sections_included + '_' + PDF_set + '_best.txt')
 y_exp_pTD = np.loadtxt('input/experimental_values/pTD_' + which_cross_sections_included + '.txt')
-C_inverse_pTD = np.loadtxt('input/covariance_matrix/pTD.txt', delimiter=' ')
+C_inverse_pTD = np.loadtxt('input/covariance_matrix/pTD_' + which_cross_sections_included + '.txt', delimiter=' ')
 
 chi_k_squared = np.zeros(num_members)
 

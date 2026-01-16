@@ -1,0 +1,6 @@
+# total cross
+# underflow	  0.0000000    	  0.0000000    
+# overflow	  0.0000000    	  0.0000000    
+# sum	  6.5691914    	 0.65045996E-01
+# xmin	xmax	cross	numerror
+  0.0000000    	  1.0000000    	  6.5691914    	 0.65045996E-01

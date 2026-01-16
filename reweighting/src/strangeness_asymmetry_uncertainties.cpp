@@ -351,7 +351,7 @@ int main()
     cout << "Enter PDF set: ";
     cin >> PDF_set;
 
-    string which_cross_sections_included = "both";
+    string which_cross_sections_included = "D";
     //cout << "Which cross sections should be included? ";
     //cin >> which_cross_sections_included;
 
