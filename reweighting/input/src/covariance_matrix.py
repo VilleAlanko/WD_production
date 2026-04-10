@@ -2,7 +2,9 @@ import numpy as np
 from numpy.linalg import inv
 from pprint import pprint
 
-which_cross_sections_included = 'D'
+which_cross_sections_included = 'both'
+
+# Experimental covariance matrices
 
 eta_starless = np.array([[0.201, 0.183, 0.184, 0.126, 0.115, 0.193, 0.178, 0.179, 0.121, 0.154],
                         [0.245, 0.229, 0.219, 0.165, 0.129, 0.237, 0.221, 0.212, 0.206, 0.121],
@@ -55,6 +57,7 @@ pT_star = np.flipud(pT_star)
 
 
 def cov_Rcpm(starless, star, kinematic_quantity, which_cross_sections_included):
+    # ATLAS vals, W-D+, W+D-, W-Dstar+, W+Dstar-
     if (kinematic_quantity == 'eta_lept'):
         atlas_vals = np.array([[12.27, 11.57, 10.41, 9.09, 6.85],
                                 [11.87, 11.55, 10.09, 8.6, 6.25],
@@ -69,9 +72,17 @@ def cov_Rcpm(starless, star, kinematic_quantity, which_cross_sections_included):
     A = np.zeros(5)
     B = np.zeros(5)
 
-    for eta_lept_index in range(5):
-        A[eta_lept_index] = atlas_vals[1][eta_lept_index] + atlas_vals[3][eta_lept_index]
-        B[eta_lept_index] = atlas_vals[0][eta_lept_index] + atlas_vals[2][eta_lept_index]
+    if (which_cross_sections_included == 'both'):
+        for eta_lept_index in range(5):
+            A[eta_lept_index] = atlas_vals[1][eta_lept_index] + atlas_vals[3][eta_lept_index]
+            B[eta_lept_index] = atlas_vals[0][eta_lept_index] + atlas_vals[2][eta_lept_index]
+    elif (which_cross_sections_included == 'D'):
+        for eta_lept_index in range(5):
+            A[eta_lept_index] = atlas_vals[1][eta_lept_index]
+            B[eta_lept_index] = atlas_vals[0][eta_lept_index]
+    else:
+        exit(1)
+
 
     Rcpm_derivatives = np.array([[-A[0] / B[0]**2, 0., 0., 0., 0., 1. / B[0], 0., 0., 0., 0., -A[0] / B[0]**2, 0., 0., 0., 0., 1. / B[0], 0., 0., 0., 0.],
                             [0., -A[1] / B[1]**2, 0., 0., 0., 0., 1. / B[1], 0., 0., 0., 0., -A[1] / B[1]**2, 0., 0., 0., 0., 1. / B[1], 0., 0., 0.],
@@ -98,6 +109,7 @@ def cov_Rcpm(starless, star, kinematic_quantity, which_cross_sections_included):
         Rcpm_errors[i] = np.sqrt(cov_Rcpm[i, i])
     
     print(Rcpm_errors)
+    
 
     np.savetxt('exp_errors/' + kinematic_quantity + '_' + which_cross_sections_included + '.txt', Rcpm_errors)
     np.savetxt('covariance_matrix/' + kinematic_quantity + '_' + which_cross_sections_included + '.txt', cov_Rcpm_inv)

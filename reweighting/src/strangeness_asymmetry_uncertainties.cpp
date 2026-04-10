@@ -352,8 +352,8 @@ int main()
     cin >> PDF_set;
 
     string which_cross_sections_included = "D";
-    //cout << "Which cross sections should be included? ";
-    //cin >> which_cross_sections_included;
+    cout << "Which cross sections should be included? ";
+    cin >> which_cross_sections_included;
 
     int num_err_members;
 

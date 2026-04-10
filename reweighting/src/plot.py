@@ -3,15 +3,26 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import CubicSpline
 from scipy.integrate import quad
 from matplotlib.offsetbox import AnchoredOffsetbox, TextArea, VPacker
+import matplotlib as mpl
+
+mpl.rcParams.update({
+    "text.usetex": True,
+    "font.family": "serif",
+    "font.weight": "bold"
+})
+mpl.rcParams['text.latex.preamble'] = r'''
+\usepackage{amsmath}
+\usepackage{xcolor}
+'''
 
 log10x_min = -5
 
-font_size = 16
-axis_label_font_size = 17
-axis_font_size = 13
-legend_fontsize = 13
+font_size = 17
+axis_label_font_size = 18
+axis_font_size = 14
+legend_fontsize = 14
 
-PDF_set_labels = ['CT18ANLO', 'MSHT20nlo', 'NNPDF40_nlo_pch']
+PDF_set_labels = ['CT18ANLO', 'MSHT20NLO', 'NNPDF4.0NLO (pch)']
 
 
 def ratio(PDF_set, which_cross_sections_included):
@@ -186,7 +197,7 @@ def absolute():
 def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, which_cross_sections_included):
     markers = ['s', 'd', 'v']
     marker_color = 'black'
-    theory_labels = ['CT18ANLO', 'MSHT20nlo', 'NNPDF40_nlo_pch']
+    theory_labels = ['CT18ANLO', 'MSHT20NLO', 'NNPDF4.0NLO (pch)']
     PDF_sets = ['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180']
     old_color = 'cornflowerblue'
     new_color = 'salmon'
@@ -236,7 +247,7 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, which_cross_sections_included)
             
         elif (kinematic_quantity == 'pTD'):
             bin_edges = np.array([8., 12., 20., 40., 80., 150.])
-            plt.xlabel(r'$p_{T, D}$', fontsize=axis_label_font_size)
+            plt.xlabel(r'$p_T (D)$ [GeV]', fontsize=axis_label_font_size)
 
             plt.xscale('log', base=10)
 
@@ -328,28 +339,22 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, which_cross_sections_included)
 
     plt.xlim(bin_edges[0], bin_edges[-1])
     ax1.set_ylim(0.755, 1.15)
-    ax2.set_ylim(0.83, 1.09)
+    ax2.set_ylim(0.83, 1.14)
     if (which_cross_sections_included == 'both'):
-        ax1.set_ylabel(r'$R_c^\pm$', fontsize=axis_label_font_size)
+        ax1.set_ylabel(r'$R_c^\pm(D^\pm, D^{*\pm})$', fontsize=axis_label_font_size)
     elif (which_cross_sections_included == 'D'):
-        ax1.set_ylabel(r'$R_c^\pm$ ($D^{*\pm}$ excluded)', fontsize=axis_label_font_size)
+        ax1.set_ylabel(r'$R_c^\pm$($D^\pm)$', fontsize=axis_label_font_size)
 
     ax2.set_ylabel(r'$\frac{\text{Theory}}{\text{ATLAS}}$', fontsize=axis_label_font_size * 1.3)
 
-    ax2.set_yticks([0.85, 0.9, 0.95, 1., 1.05])
+    ax2.set_yticks([0.85, 0.9, 0.95, 1., 1.05, 1.1])
 
-    if (kinematic_quantity == 'pTD'):
-        for i in range(1, len(bin_edges) - 1):
-            ax1.axvline(bin_edges[i], linestyle='dashed', color='black', linewidth=0.5, ymax=0.65)
-        for i in range(1, len(bin_edges) - 1):
-            ax2.axvline(bin_edges[i], linestyle='dashed', color='black', linewidth=0.5)
-    elif (kinematic_quantity == 'eta_lept'):
-        for i in range(1, len(bin_edges) - 3):
-            ax1.axvline(bin_edges[i], linestyle='dashed', color='black', linewidth=0.5, ymax=0.75)
-        for i in range(len(bin_edges) - 3, len(bin_edges) - 1):
-            ax1.axvline(bin_edges[i], linestyle='dashed', color='black', linewidth=0.5, ymax=0.62)
-        for i in range(1, len(bin_edges) - 1):
-            ax2.axvline(bin_edges[i], linestyle='dashed', color='black', linewidth=0.5)
+    for i in range(1, len(bin_edges) - 3):
+        ax1.axvline(bin_edges[i], color='gray', linewidth=0.5, ymax=0.75, zorder=0)
+    for i in range(len(bin_edges) - 3, len(bin_edges) - 1):
+        ax1.axvline(bin_edges[i], color='gray', linewidth=0.5, ymax=0.62, zorder=0)
+    for i in range(1, len(bin_edges) - 1):
+        ax2.axvline(bin_edges[i], color='gray', linewidth=0.5, zorder=0)
 
     text_y1 = 1.11
     text_y2 = 1.075
@@ -426,17 +431,25 @@ def strangeness_asymmetry(PDF_set, which_cross_sections_included, plot_errors_fl
 
     if (plot_errors_flag):
         PDF_uncertainty = ax1.fill_between(x, (asymmetry_OLD - OLD_asymmetry_error_minus) * 10**2, (asymmetry_OLD + OLD_asymmetry_error_plus) * 10**2,
-                        color='lightgray', zorder=0)
+                        color='lightgray', zorder=0, rasterized=True)
         reweighted_PDF_uncertainty = ax1.fill_between(x, (asymmetry_NEW - NEW_asymmetry_error_minus) * 10**2, (asymmetry_NEW + NEW_asymmetry_error_plus) * 10**2,
-                        color='salmon', zorder=1, alpha=0.6)
+                        color='salmon', zorder=1, alpha=0.6, rasterized=True)
 
+    # ax2.plot(x, (asymmetry_NEW - asymmetry_OLD) * 10**2, color='red', zorder=2)
     ax2.plot(x, asymmetry_NEW / asymmetry_OLD, color='red', zorder=2)
 
+    #if (plot_errors_flag):
+    #    ax2.fill_between(x, OLD_asymmetry_error_plus * 10**2,
+    #                    -OLD_asymmetry_error_minus * 10**2, color='lightgray', zorder=0)
+    #    ax2.fill_between(x, (asymmetry_NEW + NEW_asymmetry_error_plus - asymmetry_OLD) * 10**2,
+    #                    (asymmetry_NEW - NEW_asymmetry_error_minus - asymmetry_OLD) * 10**2, color='salmon', zorder=1, alpha=0.6)
+
+    print(1. / (asymmetry_OLD + OLD_asymmetry_error_plus))
     if (plot_errors_flag):
-        ax2.fill_between(x, (asymmetry_OLD + OLD_asymmetry_error_plus) / asymmetry_OLD,
-                        (asymmetry_OLD - OLD_asymmetry_error_minus) / asymmetry_OLD, color='lightgray', zorder=0)
+        ax2.fill_between(x, (asymmetry_OLD - OLD_asymmetry_error_minus) / asymmetry_OLD,
+                        (asymmetry_OLD + OLD_asymmetry_error_plus) / asymmetry_OLD, color='lightgray', zorder=0, rasterized=True)
         ax2.fill_between(x, (asymmetry_NEW + NEW_asymmetry_error_plus) / asymmetry_OLD,
-                        (asymmetry_NEW - NEW_asymmetry_error_minus) / asymmetry_OLD, color='salmon', zorder=1, alpha=0.6)
+                        (asymmetry_NEW - NEW_asymmetry_error_minus) / asymmetry_OLD, color='salmon', zorder=1, alpha=0.6, rasterized=True)
 
     if (plot_mem_vals):
         mem_vals = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_OLD_mem_vals.txt', delimiter=',')
@@ -451,6 +464,7 @@ def strangeness_asymmetry(PDF_set, which_cross_sections_included, plot_errors_fl
     plt.xlim(10**(-5), 1)
     if (PDF_set == 'MSHT20nlo_as118'):
         ax1.set_ylim(-0.7, 2.3)
+        #ax2.set_ylim(-1e-1 * 6., 1e-0 * 0.9)
         ax2.set_ylim(-0.5, 3.5)
     elif (PDF_set == 'NNPDF40_nlo_pch_as_01180'):
         ax1.set_ylim(-6, 15)
@@ -462,7 +476,8 @@ def strangeness_asymmetry(PDF_set, which_cross_sections_included, plot_errors_fl
 
     plt.xlabel(r'$x$', fontsize=axis_label_font_size)
     ax1.set_ylabel(r'$x(s - \overline{s})$', fontsize=axis_label_font_size)
-    ax2.set_ylabel(r'$\frac{\text{Original}}{\text{Reweighted}}$', fontsize=axis_label_font_size * 1.3)
+    #ax2.set_ylabel('Reweighted\n - Original', fontsize=axis_label_font_size)
+    ax2.set_ylabel(r'$\frac{\text{Reweighted}}{\text{Original}}$', fontsize=axis_label_font_size * 1.3)
 
     ax1.tick_params(axis='both', which='major', labelsize=axis_font_size)
     ax2.tick_params(axis='both', which='major', labelsize=axis_font_size)
@@ -470,9 +485,12 @@ def strangeness_asymmetry(PDF_set, which_cross_sections_included, plot_errors_fl
     text_x = 10**(-5) * 1.8
     text_y1 = 1.6
 
-    if (which_cross_sections_included == 'D'):
-        ax1.text(text_x, 1.9, r'$D^{*\pm}$ excluded in reweighting', color='red', fontsize=font_size)
     ax1.text(text_x, text_y1, r'$\mu_\text{fact} = M_W$', fontsize=font_size)
+
+    if (which_cross_sections_included == 'D'):
+        ax1.text(text_x, 1.9, r'$R_c^\pm (D^\pm)$', fontsize=font_size)
+    else:
+        ax1.text(text_x, 1.9, r'$R_c^\pm (D^\pm, D^{*\pm})$', fontsize=font_size)
 
     ax1.text(0.01, 1.01, r'$\times 10^{-2}$',
         transform=ax1.transAxes,
@@ -480,7 +498,7 @@ def strangeness_asymmetry(PDF_set, which_cross_sections_included, plot_errors_fl
 
     legend1 = ax1.legend(loc='lower left', fontsize=legend_fontsize, framealpha=1, bbox_to_anchor=(0., 0.5))
     legend2 = ax1.legend([PDF_uncertainty, reweighted_PDF_uncertainty],
-                        ['PDF uncertainty', 'Reweighted'],
+                        ['PDF error (90% C.L.)', 'Reweighted'],
                         loc='lower left', fontsize=legend_fontsize, framealpha=1, bbox_to_anchor=(0., 0.3))
     ax1.add_artist(legend1)
 
@@ -498,7 +516,116 @@ def strangeness_asymmetry(PDF_set, which_cross_sections_included, plot_errors_fl
 
     plt.tight_layout()
 
-    plt.savefig('plots/strange_asymmetry/' + PDF_set + '_' + which_cross_sections_included + '.pdf')
+    plt.savefig('plots/strange_asymmetry/strangeness_asymmetry_' + PDF_set + '_' + which_cross_sections_included + '.pdf', dpi=300)
+    plt.show()
+
+
+def strangeness_asymmetry_v2(PDF_set, which_cross_sections_included, plot_errors_flag, plot_mem_vals):
+    if (PDF_set == 'NNPDF40_nlo_pch_as_01180'):
+        PDF_index = 2
+        num_members = 100
+    if (PDF_set == 'MSHT20nlo_as118'):
+        PDF_index = 1
+    
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [3, 1], 'hspace': 0}, figsize=(6, 6))
+
+    x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_3_best.txt', delimiter=',', max_rows=1)
+    NEW_s = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_3_best.txt', delimiter=',', skiprows=1, max_rows=1)
+    NEW_sbar = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_-3_best.txt', delimiter=',', skiprows=1, max_rows=1)
+    OLD_s = np.loadtxt('output/old_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_3.txt', delimiter=',', skiprows=1, max_rows=1)
+    OLD_sbar = np.loadtxt('output/old_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_-3.txt', delimiter=',', skiprows=1, max_rows=1)
+    if (plot_errors_flag):
+        OLD_asymmetry_error_plus = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_OLD_plus.txt', delimiter=',')
+        OLD_asymmetry_error_minus = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_OLD_minus.txt', delimiter=',')
+        NEW_asymmetry_error_plus = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_' + \
+                                                which_cross_sections_included + '_NEW_plus.txt', delimiter=',')
+        NEW_asymmetry_error_minus = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_' + \
+                                                which_cross_sections_included + '_NEW_minus.txt', delimiter=',')
+
+    asymmetry_OLD = OLD_s - OLD_sbar
+    asymmetry_NEW = NEW_s - NEW_sbar
+
+    for x_index in range(len(asymmetry_OLD)):
+        if (asymmetry_NEW[x_index] != asymmetry_NEW[x_index]):
+            asymmetry_NEW[x_index] = 0.
+        if (asymmetry_OLD[x_index] != asymmetry_OLD[x_index]):
+            asymmetry_OLD[x_index] = 0.
+
+    ax1.plot(x, asymmetry_OLD * 10**2, color='black', zorder=2, label=PDF_set_labels[PDF_index])
+    ax1.plot(x, asymmetry_NEW * 10**2, color='red', zorder=2, label='reweighted')
+
+    if (plot_errors_flag):
+        PDF_uncertainty = ax1.fill_between(x, (asymmetry_OLD - OLD_asymmetry_error_minus) * 10**2, (asymmetry_OLD + OLD_asymmetry_error_plus) * 10**2,
+                        color='lightgray', zorder=0, rasterized=True)
+        reweighted_PDF_uncertainty = ax1.fill_between(x, (asymmetry_NEW - NEW_asymmetry_error_minus) * 10**2, (asymmetry_NEW + NEW_asymmetry_error_plus) * 10**2,
+                        color='salmon', zorder=1, alpha=0.6, rasterized=True)
+
+    # ax2.plot(x, (asymmetry_NEW - asymmetry_OLD) * 10**2, color='red', zorder=2)
+    ax2.plot(x, (asymmetry_NEW - asymmetry_OLD) * 10**2, color='red', zorder=2)
+
+    if (plot_errors_flag):
+        ax2.fill_between(x, OLD_asymmetry_error_plus * 10**2,
+                        -OLD_asymmetry_error_minus * 10**2, color='lightgray', zorder=0)
+        ax2.fill_between(x, (asymmetry_NEW + NEW_asymmetry_error_plus - asymmetry_OLD) * 10**2,
+                        (asymmetry_NEW - NEW_asymmetry_error_minus - asymmetry_OLD) * 10**2, color='salmon', zorder=1, alpha=0.6)
+
+    plt.xscale('log')
+
+    plt.xlim(10**(-5), 1)
+    if (PDF_set == 'MSHT20nlo_as118'):
+        ax1.set_ylim(-0.7, 2.3)
+        ax2.set_ylim(-0.7, 0.9)
+        #ax2.set_ylim(-0.5, 3.5)
+    elif (PDF_set == 'NNPDF40_nlo_pch_as_01180'):
+        ax1.set_ylim(-6, 15)
+        ax2.set_ylim(-3, 7)
+
+    ax1.plot([10**(-6), 2], [0, 0], color='black', zorder=1)
+    ax2.plot([10**(-6), 2], [0, 0], color='black', zorder=1)
+
+    plt.xlabel(r'$x$', fontsize=axis_label_font_size)
+    ax1.set_ylabel(r'$x(s - \overline{s})$', fontsize=axis_label_font_size)
+    ax2.set_ylabel('Reweighted\n - Original', fontsize=axis_label_font_size)
+    #ax2.set_ylabel(r'$\frac{\text{Reweighted}}{\text{Original}}$', fontsize=axis_label_font_size * 1.3)
+
+    ax1.tick_params(axis='both', which='major', labelsize=axis_font_size)
+    ax2.tick_params(axis='both', which='major', labelsize=axis_font_size)
+
+    text_x = 10**(-5) * 1.8
+    text_y1 = 1.6
+
+    ax1.text(text_x, text_y1, r'$\mu_\text{fact} = M_W$', fontsize=font_size)
+
+    if (which_cross_sections_included == 'D'):
+        ax1.text(text_x, 1.9, r'$R_c^\pm (D^\pm)$', fontsize=font_size)
+    else:
+        ax1.text(text_x, 1.9, r'$R_c^\pm (D^\pm, D^{*\pm})$', fontsize=font_size)
+
+    ax1.text(0.01, 1.01, r'$\times 10^{-2}$',
+        transform=ax1.transAxes,
+        fontsize=13, va='bottom', ha='left')
+
+    legend1 = ax1.legend(loc='lower left', fontsize=legend_fontsize, framealpha=1, bbox_to_anchor=(0., 0.5))
+    legend2 = ax1.legend([PDF_uncertainty, reweighted_PDF_uncertainty],
+                        ['PDF error (90% C.L.)', 'Reweighted'],
+                        loc='lower left', fontsize=legend_fontsize, framealpha=1, bbox_to_anchor=(0., 0.3))
+    ax1.add_artist(legend1)
+
+    #ax2.set_yticks([0, 1, 2, 3])
+
+    # Configure ticks to appear on all sides
+    ax1.tick_params(direction='in', top=True, right=True)
+    ax2.tick_params(direction='in', top=True, right=True)
+
+    # Add minor ticks
+    ax1.minorticks_on()
+    ax1.tick_params(which='both', direction='in', top=True, right=True)
+    ax2.minorticks_on()
+    ax2.tick_params(which='both', direction='in', top=True, right=True)
+
+    plt.tight_layout()
+
+    plt.savefig('plots/strange_asymmetry/strangeness_asymmetry_' + PDF_set + '_' + which_cross_sections_included + '_v2.pdf', dpi=300)
     plt.show()
 
 
@@ -529,14 +656,14 @@ def weights(PDF_set, which_cross_sections_included):
 PDF_set = 'MSHT20nlo_as118'
 #PDF_set = 'CT18ANLO'
 flavors = [1, -1, 3, -3, 21]
-which_cross_sections_included = 'D'
+which_cross_sections_included = 'both'
 
 #ratio(PDF_set, which_cross_sections_included)
 #ratio_to_other_PDF('MSHT20nlo_as118', 'CT18ANLO', flavors, which_cross_sections_included)
 #ratio_of_ratio(1)
 #ratio_of_ratio(3)
 #absolute()
-Rcpm_OLD_and_NEW_and_DATA('eta_lept', which_cross_sections_included)
+#Rcpm_OLD_and_NEW_and_DATA('eta_lept', which_cross_sections_included)
 Rcpm_OLD_and_NEW_and_DATA('pTD', which_cross_sections_included)
-#strangeness_asymmetry(PDF_set, which_cross_sections_included, True, False)
+#strangeness_asymmetry_v2(PDF_set, which_cross_sections_included, True, False)
 #weights(PDF_set, which_cross_sections_included)

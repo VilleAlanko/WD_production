@@ -29,12 +29,13 @@ for PDF_set in PDF_sets:
     chi_squared = 0.
 
     for i in range(N):
+        #print(y_exp_eta_lept[i] - y_best_eta_lept[i])
         for j in range(N):
             chi_squared += (y_exp_eta_lept[i] - y_best_eta_lept[i]) * C_inverse_eta_lept[i, j] * (y_exp_eta_lept[j] - y_best_eta_lept[j])
             chi_squared += (y_exp_pTD[i] - y_best_pTD[i]) * C_inverse_pTD[i, j] * (y_exp_pTD[j] - y_best_pTD[j])
 
     print(PDF_set)
-    print('Chi squared:', chi_squared)
+    print('Chi squared / # d.o.f.:', chi_squared / (dof * 1.))
 
     p_val = chi2.sf(chi_squared, dof)
 
