@@ -32,6 +32,7 @@ pdf_centrals = [[[np.zeros((284, num_etac_bins)) for _ in range(5)] for _ in ran
 
 scale_var_color = 'cornflowerblue'
 pdf_err_color = 'salmon'
+atlas_err_color = 'lightgray'
 
 if (fragmentation_set == 'KKKS08_opal'):
     frag_set_text = 'KKKS08 OPAL'
@@ -523,15 +524,6 @@ def compute_Rcpm_pdf_err_pTD_HESSIAN(PDF_index, Rcpm_central, which_cross_sectio
     pTD_bin_width = 0.5
     pTD_bins = [8., 12., 20., 40., 80., 150.]
 
-    WpDm_pdf_plus = 0.
-    WpDm_pdf_minus = 0.
-    WpDstarm_pdf_plus = 0.
-    WpDstarm_pdf_minus = 0.
-    WmDp_pdf_plus = 0.
-    WmDp_pdf_minus = 0.
-    WmDstarp_pdf_plus = 0.
-    WmDstarp_pdf_minus = 0.
-
     for member_index in range(1, int(num_err_members_in_sets[PDF_index] / 2) + 1):
         member_vals_normalized = compute_normalized_3D_values_for_a_pdf_member('W+D-', PDF_index, 2 * (member_index - 1) + 1)
         WpDm_3D_vals_plus = np.array(member_vals_normalized)
@@ -632,8 +624,6 @@ def compute_Rcpm_pdf_err_pTD_HESSIAN(PDF_index, Rcpm_central, which_cross_sectio
 def compute_Rcpm_pdf_err_pTD_MC(PDF_index, Rcpm_central, which_cross_sections_included):
     Rcpm_vals = np.zeros((num_err_members_in_sets[PDF_index], 5))
     Rcpm_best = np.zeros(5)
-
-    PDF_set = PDF_sets[PDF_index]
 
     sum_in_error_formula = np.zeros(5)
 
@@ -744,31 +734,24 @@ def pTD_plot(PDF_sets, plot_errors_flag, theory_labels):
     for i in range(len(pTD_bins) - 1):
         bin_midpoints[i] = np.sqrt(pTD_bins[i] * pTD_bins[i + 1])
         bin_midpoints_linear_scale[i] = (pTD_bins[i + 1] + pTD_bins[i]) / 2
-    
-    xmin = np.sqrt(pTD_bins[0:-1] * bin_midpoints)
-    xmax = np.sqrt(pTD_bins[1:] * bin_midpoints)
 
-    places_inside_bins = np.zeros((len(PDF_sets), 5))
-    places_inside_bins_right = np.zeros((len(PDF_sets), 5))
-    places_inside_bins_left = np.zeros((len(PDF_sets), 5))
+    places_inside_bins_log_scale = np.zeros((len(PDF_sets), 5))
+    places_inside_bins_right_log_scale = np.zeros((len(PDF_sets), 5))
+    places_inside_bins_left_log_scale = np.zeros((len(PDF_sets), 5))
     places_inside_bins_linear_scale = np.zeros((len(PDF_sets), 5))
 
     for i in range(len(PDF_sets)):
-        places_inside_bins[i, :] = pTD_bins[:-1] * (pTD_bins[1:] / pTD_bins[:-1])**((i * 1. + 1) / (len(PDF_sets) * 1. + 1.))
+        places_inside_bins_log_scale[i, :] = pTD_bins[:-1] * (pTD_bins[1:] / pTD_bins[:-1])**((i * 1. + 1) / (len(PDF_sets) * 1. + 1.))
         places_inside_bins_linear_scale[i, :] = pTD_bins[:-1] + (i * 1. + 1.) / (len(PDF_sets) * 1. + 1.) * (pTD_bins[1:] - pTD_bins[:-1])
 
-    bar_width_over_bin_width = 1. / 9.
-    bar_width = bar_width_over_bin_width * bin_widths
-    shifts = np.zeros(5)
+    bar_widths = np.zeros((3, 5))
 
-    for i in range(5):
-        shifts[i] = ((pTD_bins[i + 1] * 1.) / (pTD_bins[i] * 1.))**(bar_width_over_bin_width / 2.)
+    width_parameter = 1.02
+    bar_widths = places_inside_bins_log_scale * width_parameter - places_inside_bins_log_scale / width_parameter
 
     for i in range(len(PDF_sets)):
-        places_inside_bins_left[i, :] = places_inside_bins[i, :] / shifts
-        places_inside_bins_right[i, :] = places_inside_bins[i, :] * shifts
-
-    scalings = [0.9, 1., 1.18]
+        places_inside_bins_left_log_scale[i, :] = places_inside_bins_log_scale[i, :] / width_parameter
+        places_inside_bins_right_log_scale[i, :] = places_inside_bins_log_scale[i, :] * width_parameter
 
     for PDF_index in range(len(PDF_sets)):
         for QCD_order_index in range(1, 2):
@@ -818,16 +801,17 @@ def pTD_plot(PDF_sets, plot_errors_flag, theory_labels):
 
             if (variation_flag):
                 if (QCD_order == "NLO"):
-                    ax1.plot(places_inside_bins[PDF_index, :], HISTO_central_sigma_vals, marker=markers[PDF_index],
+                    print(PDF_set, HISTO_central_sigma_vals)
+                    ax1.plot(places_inside_bins_log_scale[PDF_index, :], HISTO_central_sigma_vals, marker=markers[PDF_index],
                                 color=marker_color, markersize=5, linestyle='none',
                                 label=theory_labels[PDF_index], zorder=4)
 
                     if (plot_errors_flag):
-                        ax1.bar(places_inside_bins_left[PDF_index, :], HISTO_pdf_err_plus + HISTO_pdf_err_minus, width=bar_width * scalings[PDF_index],
+                        ax1.bar(places_inside_bins_left_log_scale[PDF_index, :], HISTO_pdf_err_plus + HISTO_pdf_err_minus, width=bar_widths[PDF_index],
                                     bottom=HISTO_central_sigma_vals - HISTO_pdf_err_minus, color=pdf_err_color,
                                     zorder=3)
 
-                        ax1.bar(places_inside_bins_right[PDF_index, :], HISTO_scales_uu_sigma_vals - HISTO_scales_dd_sigma_vals, width=bar_width * scalings[PDF_index],
+                        ax1.bar(places_inside_bins_right_log_scale[PDF_index, :], HISTO_scales_uu_sigma_vals - HISTO_scales_dd_sigma_vals, width=bar_widths[PDF_index],
                                     bottom=HISTO_central_sigma_vals + HISTO_scales_dd_sigma_vals, color=scale_var_color,
                                     zorder=2)
 
@@ -869,25 +853,25 @@ def pTD_plot(PDF_sets, plot_errors_flag, theory_labels):
                     ratios_theory_pdf_err_var_up[eta_lept_index] = (HISTO_central_sigma_vals[eta_lept_index] + HISTO_pdf_err_plus[eta_lept_index]) / \
                                                                         HISTO_central_sigma_vals[eta_lept_index]
                                                         
-            ax2.plot(places_inside_bins[PDF_index, :], ratios, zorder=4, marker=markers[PDF_index],
+            ax2.plot(places_inside_bins_log_scale[PDF_index, :], ratios, zorder=4, marker=markers[PDF_index],
                         color=marker_color, markersize=5, linestyle='none')
 
             if (plot_errors_flag):
-                scale_var_bar_plot = ax2.bar(places_inside_bins_right[PDF_index, :], ratios_theory_scale_var_var_up - ratios_theory_scale_var_var_down,
-                        bottom=ratios - 1. + ratios_theory_scale_var_var_down, width=bar_width * scalings[PDF_index], color=scale_var_color,
+                scale_var_bar_plot = ax2.bar(places_inside_bins_right_log_scale[PDF_index, :], ratios_theory_scale_var_var_up - ratios_theory_scale_var_var_down,
+                        bottom=ratios - 1. + ratios_theory_scale_var_var_down, width=bar_widths[PDF_index], color=scale_var_color,
                         linewidth=1, zorder=3)
                 
-                pdf_err_bar_plot = ax2.bar(places_inside_bins_left[PDF_index, :], ratios_theory_pdf_err_var_up - ratios_theory_pdf_err_var_down,
-                        bottom=ratios - 1. + ratios_theory_pdf_err_var_down, width=bar_width * scalings[PDF_index], color=pdf_err_color,
+                pdf_err_bar_plot = ax2.bar(places_inside_bins_left_log_scale[PDF_index, :], ratios_theory_pdf_err_var_up - ratios_theory_pdf_err_var_down,
+                        bottom=ratios - 1. + ratios_theory_pdf_err_var_down, width=bar_widths[PDF_index], color=pdf_err_color,
                         linewidth=1, zorder=3)
     
     ax1.hlines(atlas_vals[atlas_index], pTD_bins[:-1], pTD_bins[1:], color='black', label='ATLAS', zorder=1)
     # Plot error bars for the Atlas values.
     ATLAS_uncertainty = ax1.bar(bin_midpoints_linear_scale, atlas_vals_down_err[atlas_index] + atlas_vals_up_err[atlas_index],
-            bottom=atlas_vals[atlas_index] - atlas_vals_down_err[atlas_index], color='lightgray',
+            bottom=atlas_vals[atlas_index] - atlas_vals_down_err[atlas_index], color=atlas_err_color,
             width=bin_widths, zorder=0, linewidth=1.5)
     ax2.bar(bin_midpoints_linear_scale, ratios_ATLAS_var_up - ratios_ATLAS_var_down,
-                    bottom=1. - ratios + ratios_ATLAS_var_down, color='lightgray',
+                    bottom=1. - ratios + ratios_ATLAS_var_down, color=atlas_err_color,
                     width=bin_widths, zorder=0, linewidth=1.5)
 
     plt.xscale('log', base=10)
@@ -896,7 +880,7 @@ def pTD_plot(PDF_sets, plot_errors_flag, theory_labels):
     ax2.set_ylim(0.65, 1.15)
 
     ax2.set_xlabel(r'$p_T (D)$ [GeV]', fontsize=axis_label_font_size - 2)
-    ax1.set_ylabel(r'$\mathrm{Cross}\ \mathrm{section}\ \mathrm{[pb]}$', fontsize=axis_label_font_size)
+    ax1.set_ylabel(r'Cross section [pb]', fontsize=axis_label_font_size)
     ax2.set_ylabel(r'$\frac{\mathrm{Theory}}{\mathrm{ATLAS}}$', 
                fontsize=axis_label_font_size * 1.3)
 
@@ -1076,13 +1060,13 @@ def pTD_effect_of_subtraction_plot():
         #            np.sqrt(bin_midpoints * (bin_midpoints + bin_widths / 15.)), zorder=3, color='black')
 
         #ax1.bar(bin_midpoints, atlas_vals_down_err[atlas_index] + atlas_vals_up_err[atlas_index],
-        #        bottom=atlas_vals[atlas_index] - atlas_vals_down_err[atlas_index], width=bar_width, zorder=2, color='lightgray', edgecolor='black',
+        #        bottom=atlas_vals[atlas_index] - atlas_vals_down_err[atlas_index], width=bar_width, zorder=2, color=atlas_err_color, edgecolor='black',
         #        linewidth=1)
 
         #ax1.hlines(atlas_vals[atlas_index], pTD_bins[:-1], pTD_bins[1:], color='black', label='ATLAS', zorder=1)
         # Plot error bars for the Atlas values.
         #ax1.bar(bin_midpoints_linear_scale, atlas_vals_down_err[atlas_index] + atlas_vals_up_err[atlas_index],
-        #        bottom=atlas_vals[atlas_index] - atlas_vals_down_err[atlas_index], color='lightgray',
+        #        bottom=atlas_vals[atlas_index] - atlas_vals_down_err[atlas_index], color=atlas_err_color,
         #        width=bin_widths, zorder=0, linewidth=1.5)
 
         plt.xscale('log', base=10)
@@ -1323,10 +1307,10 @@ def pTD_varying_FF_fit(PDF_set, num_err_members, process, plot_errors_flag, FF_f
     ax1.hlines(atlas_vals[atlas_index], pTD_bins[:-1], pTD_bins[1:], color='black', label='ATLAS', zorder=1)
     # Plot error bars for the Atlas values.
     ATLAS_uncertainty = ax1.bar(bin_midpoints_linear_scale, atlas_vals_down_err[atlas_index] + atlas_vals_up_err[atlas_index],
-            bottom=atlas_vals[atlas_index] - atlas_vals_down_err[atlas_index], color='lightgray',
+            bottom=atlas_vals[atlas_index] - atlas_vals_down_err[atlas_index], color=atlas_err_color,
             width=bin_widths, zorder=0, linewidth=1.5)
     ax2.bar(bin_midpoints_linear_scale, ratios_ATLAS_var_up - ratios_ATLAS_var_down,
-                    bottom=1. - ratios + ratios_ATLAS_var_down, color='lightgray',
+                    bottom=1. - ratios + ratios_ATLAS_var_down, color=atlas_err_color,
                     width=bin_widths, zorder=0, linewidth=1.5)
 
     plt.xscale('log', base=10)
@@ -1335,7 +1319,7 @@ def pTD_varying_FF_fit(PDF_set, num_err_members, process, plot_errors_flag, FF_f
     ax2.set_ylim(0.75, 2.05)
 
     ax2.set_xlabel(r'$P_T(D)$ [GeV]', fontsize=axis_label_font_size)
-    ax1.set_ylabel(r'$\mathrm{Cross}\ \mathrm{section}\ \mathrm{[pb]}$', fontsize=axis_label_font_size)
+    ax1.set_ylabel(r'Cross section [pb]', fontsize=axis_label_font_size)
     ax2.set_ylabel(r'$\frac{\mathrm{Theory}}{\mathrm{ATLAS}}$', 
                fontsize=axis_label_font_size * 1.3)
 
@@ -1442,9 +1426,6 @@ def eta_lept_plot():
             HISTO_pdf_err_plus = np.zeros(5)
             HISTO_pdf_err_minus = np.zeros(5)
 
-            HISTO_total_variation_dd = np.zeros(5)
-            HISTO_total_variation_uu = np.zeros(5)
-
             for eta_lept_index in range(5):
                 HISTO_central_sigma_vals[eta_lept_index] = sum(sum(scales_vals[0][eta_lept_index]))
                 HISTO_scales_dd_sigma_vals[eta_lept_index] = sum(sum(scales_vals[1][eta_lept_index]))
@@ -1518,11 +1499,11 @@ def eta_lept_plot():
 
     ax1.hlines(atlas_vals[atlas_index], eta_lept_bins[:-1], eta_lept_bins[1:], color='black', label='ATLAS', zorder=1)
     ax2.bar(bin_midpoints, ratios_ATLAS_var_up - ratios_ATLAS_var_down,
-                    bottom=1. - ratios + ratios_ATLAS_var_down, width=0.5, zorder=0, color='lightgray')
+                    bottom=1. - ratios + ratios_ATLAS_var_down, width=0.5, zorder=0, color=atlas_err_color)
 
     # Plot error bars for the Atlas values.
     ATLAS_uncertainty = ax1.bar(bin_midpoints, atlas_vals_down_err[atlas_index] + atlas_vals_up_err[0],
-            bottom=atlas_vals[atlas_index] - atlas_vals_down_err[atlas_index], color='lightgray', width=0.5, zorder=0)
+            bottom=atlas_vals[atlas_index] - atlas_vals_down_err[atlas_index], color=atlas_err_color, width=0.5, zorder=0)
 
     for i in range(1, len(eta_lept_bins) - 1):
         ax1.axvline(eta_lept_bins[i], color='gray', linewidth=0.5, ymax=0.5, zorder=0)
@@ -1532,22 +1513,21 @@ def eta_lept_plot():
 
     ax1.set_xscale('linear')
     ax1.set_ylim(2, 28)
-    ax2.set_ylim(0.75, 1.45)
+    ax2.set_ylim(0.6, 1.1)
     plt.xlim(0, 2.5)
 
     ax2.set_xlabel(r'$|\eta(\mathrm{lepton})|$', fontsize=axis_label_font_size)
-    ax1.set_ylabel(r'$\mathrm{Cross}\ \mathrm{section}\ \mathrm{[pb]}$', fontsize=axis_label_font_size)
+    ax1.set_ylabel(r'Cross section [pb]', fontsize=axis_label_font_size)
     ax2.set_ylabel(r'$\frac{\mathrm{Theory}}{\mathrm{ATLAS}}$', 
             fontsize=axis_label_font_size * 1.3)
 
     ax1.tick_params(axis='both', which='major', labelsize=axis_font_size)
     ax2.tick_params(axis='both', which='major', labelsize=axis_font_size)
 
-    ax2.set_yticks([0.8, 1., 1.2, 1.4])
+    #ax2.set_yticks([0.8, 1.])
     ax1.set_yticks([5, 10, 15, 20, 25])
 
     info_xval_1 = 0.1
-    info_xval_2 = 1.
     info_yval_1 = 25
     info_yval_2 = 22.5
     info_yval_3 = 20
@@ -2243,7 +2223,7 @@ def total_cross_section():
     ax.text(info_xval_1, info_yval_3, frag_set_text, fontsize=font_size)
 
     legend1 = ax.legend(fontsize=legend_fontsize, bbox_to_anchor=(1, 0.696), loc='center right')
-    legend2 = ax.legend([pdf_err, scale_var], ["PDF error (68% C.L.)", "Scale variation"], framealpha=1, fontsize=legend_fontsize, loc='upper right')
+    legend2 = ax.legend([pdf_err, scale_var], ["PDF error (68\% C.L.)", "Scale variation"], framealpha=1, fontsize=legend_fontsize, loc='upper right')
     legend3 = ax.legend([atlas_stat_err, atlas_tot_err], ["ATLAS stat. error", "ATLAS tot. error"], bbox_to_anchor=(0., 0.665), framealpha=1, fontsize=legend_fontsize, loc='center left')
 
     ax.add_artist(legend1)
@@ -2262,7 +2242,7 @@ def total_cross_section():
     plt.show()
 
 
-def Rcpm_eta_lept(which_cross_sections_included, plot_errors_flag, PDF_sets, theory_labels):
+def Rcpm_bin_integrated(kinematic_variable, which_cross_sections_included, plot_errors_flag, PDF_sets):
     font_size = 16
     axis_label_font_size = 17
     axis_font_size = 13
@@ -2270,459 +2250,105 @@ def Rcpm_eta_lept(which_cross_sections_included, plot_errors_flag, PDF_sets, the
     
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [3, 1], 'hspace': 0}, figsize=(6, 6))
 
-    eta_lept_bins = np.array([0., 0.5, 1.0, 1.5, 2.0, 2.5])
-
-    xmin = eta_lept_bins[0:-1]
-    xmax = eta_lept_bins[1:]
-    bin_midpoints = (xmin + xmax) / 2
-
-    theory_val_places = np.zeros((len(PDF_sets), 5))
-
-    for i in range(len(PDF_sets)):
-        theory_val_places[i, :] = eta_lept_bins[:-1] + (i * 1. + 1.) / (len(PDF_sets) * 1. + 1.) * (eta_lept_bins[1:] - eta_lept_bins[:-1])
-
-    #--------------------------------------------------------------------------------------------------------------------------------------#
-    #                                                   ATLAS VALUES AND COVARIANCE MATRICES                                               #
-    #--------------------------------------------------------------------------------------------------------------------------------------#
-    # The rows from top to bottom are D+W-, D-W+, D*+W-, D*-W+.
-    atlas_vals = np.array([[12.27, 11.57, 10.41, 9.09, 6.85],
-                            [11.87, 11.55, 10.09, 8.6, 6.25],
-                            [12.18, 11.77, 10.61, 8.85, 7.22],
-                            [12.52, 12.14, 10.29, 8.38, 6.55]])
-    
-    atlas_vals_up_err = np.array([[0.13+0.67, 0.12+0.63, 0.12+0.64, 0.11+0.45, 0.11+0.39],
-                                    [0.13+0.65, 0.12+0.61, 0.12+0.61, 0.12+0.43, 0.11+0.37],
-                                    [0.18+0.48, 0.17+0.53, 0.17+0.67, 0.16+0.42, 0.16+0.38],
-                                    [0.18+0.50, 0.18+0.55, 0.18+0.64, 0.16+0.39, 0.16+0.37]])
-
-    atlas_vals_down_err = np.array([[0.13+0.64, 0.12+0.61, 0.12+0.59, 0.11+0.43, 0.11+0.37],
-                                    [0.13+0.62, 0.12+0.60, 0.12+0.57, 0.12+0.41, 0.11+0.35],
-                                    [0.18+0.46, 0.17+0.50, 0.17+0.61, 0.16+0.40, 0.16+0.36],
-                                    [0.18+0.48, 0.18+0.52, 0.18+0.58, 0.16+0.37, 0.16+0.34]])
-    
-    atlas_covariance_starless = np.array([[0.201, 0.183, 0.184, 0.126, 0.115, 0.193, 0.178, 0.179, 0.121, 0.154],
-                                          [0.245, 0.229, 0.219, 0.165, 0.129, 0.237, 0.221, 0.212, 0.206, 0.121],
-                                          [0.390, 0.349, 0.367, 0.223, 0.194, 0.376, 0.340, 0.402, 0.212, 0.179],
-                                          [0.385, 0.396, 0.352, 0.236, 0.208, 0.375, 0.431, 0.340, 0.221, 0.178],
-                                          [0.425, 0.392, 0.388, 0.249, 0.216, 0.463, 0.375, 0.376, 0.237, 0.193],
-                                          [0.222, 0.215, 0.206, 0.142, 0.180, 0.216, 0.208, 0.194, 0.129, 0.115],
-                                          [0.259, 0.243, 0.233, 0.221, 0.142, 0.249, 0.236, 0.223, 0.165, 0.126],
-                                          [0.401, 0.363, 0.435, 0.233, 0.206, 0.388, 0.352, 0.367, 0.219, 0.184],
-                                          [0.398, 0.457, 0.363, 0.243, 0.215, 0.392, 0.396, 0.349, 0.229, 0.183],
-                                          [0.490, 0.398, 0.401, 0.259, 0.222, 0.425, 0.385, 0.390, 0.245, 0.201]])
-
-    atlas_covariance_star = np.array([[0.0733, 0.129, 0.166, 0.0941, 0.0854, 0.0782, 0.138, 0.156, 0.0875, 0.168],
-                                      [0.109, 0.156, 0.174, 0.129, 0.0951, 0.118, 0.164, 0.167, 0.192, 0.0875],
-                                      [0.0898, 0.255, 0.359, 0.180, 0.169, 0.105, 0.267, 0.423, 0.167, 0.156],
-                                      [0.154, 0.261, 0.281, 0.176, 0.146, 0.170, 0.352, 0.267, 0.164, 0.138],
-                                      [0.197, 0.161, 0.107, 0.131, 0.0805, 0.296, 0.170, 0.105, 0.118, 0.0782],
-                                      [0.0778, 0.139, 0.179, 0.100, 0.177, 0.0805, 0.146, 0.169, 0.0951, 0.0854],
-                                      [0.116, 0.172, 0.187, 0.212, 0.100, 0.131, 0.176, 0.180, 0.129, 0.0941],
-                                      [0.0992, 0.268, 0.458, 0.187, 0.179, 0.107, 0.281, 0.359, 0.174, 0.166],
-                                      [0.145, 0.323, 0.268, 0.172, 0.139, 0.161, 0.261, 0.255, 0.156, 0.129],
-                                      [0.273, 0.145, 0.0992, 0.116, 0.0778, 0.197, 0.154, 0.0898, 0.109, 0.0733]])
-    
-    #--------------------------------------------------------------------------------------------------------------------------------------#
-    #                                                             FILLING HISTOGRAMS                                                       #
-    #--------------------------------------------------------------------------------------------------------------------------------------#
-    Rcpm_atlas = np.zeros(5)
-    Rcpm_atlas_error = np.zeros(5)
-
-    HISTO_Rcpm_central = [np.zeros(5) for _ in range(len(PDF_sets))]
-    HISTO_Rcpm_scale_var_up = [np.zeros(5) for _ in range(len(PDF_sets))]
-    HISTO_Rcpm_scale_var_down = [np.zeros(5) for _ in range(len(PDF_sets))]
-    HISTO_Rcpm_MCerr_up = [np.zeros(5) for _ in range(len(PDF_sets))]
-    HISTO_Rcpm_MCerr_down = [np.zeros(5) for _ in range(len(PDF_sets))]
-    HISTO_Rcpm_pdf_err_up = [np.zeros(5) for _ in range(len(PDF_sets))]
-    HISTO_Rcpm_pdf_err_down = [np.zeros(5) for _ in range(len(PDF_sets))]
-    HISTO_Rcpm_error_up = [np.zeros(5) for _ in range(len(PDF_sets))]
-    HISTO_Rcpm_error_down = [np.zeros(5) for _ in range(len(PDF_sets))]
-
-    HISTO_ratios_central = [np.zeros(5) for _ in range(len(PDF_sets))]
-    HISTO_ratios_error_up = [np.zeros(5) for _ in range(len(PDF_sets))]
-    HISTO_ratios_error_down = [np.zeros(5) for _ in range(len(PDF_sets))]
-
-    for eta_lept_index in range(5):
-        A = atlas_vals[1][eta_lept_index] + atlas_vals[3][eta_lept_index]
-        B = atlas_vals[0][eta_lept_index] + atlas_vals[2][eta_lept_index]
-
-        var_sigma_p = atlas_covariance_starless[4 - eta_lept_index, 5 + eta_lept_index]
-        var_sigma_m = atlas_covariance_starless[9 - eta_lept_index, eta_lept_index]
-        var_sigma_sp = atlas_covariance_star[4 - eta_lept_index, 5 + eta_lept_index]
-        var_sigma_sm = atlas_covariance_star[9 - eta_lept_index, eta_lept_index]
-
-        corr_p_m = atlas_covariance_starless[4 - eta_lept_index, eta_lept_index]
-        corr_sp_sm = atlas_covariance_star[4 - eta_lept_index, eta_lept_index]
-
-        if (which_cross_sections_included == 'both'):
-            Rcpm_atlas[eta_lept_index] = (atlas_vals[1][eta_lept_index] + atlas_vals[3][eta_lept_index]) / \
-                                        (atlas_vals[0][eta_lept_index] + atlas_vals[2][eta_lept_index])
-
-            Rcpm_atlas_error[eta_lept_index] = np.sqrt(1. / B**2 * (var_sigma_p + var_sigma_sp) + \
-                                                         A**2 / B**4 * (var_sigma_m + var_sigma_sm) - \
-                                                         2. * A / B**3 * (corr_p_m + corr_sp_sm))
-        elif (which_cross_sections_included == 'D'):
-            Rcpm_atlas[eta_lept_index] = atlas_vals[1][eta_lept_index] / atlas_vals[0][eta_lept_index]
-
-            Rcpm_atlas_error[eta_lept_index] = np.sqrt(1. / B**2 * (var_sigma_p) + \
-                                                         A**2 / B**4 * (var_sigma_m) - \
-                                                         2. * A / B**3 * (corr_p_m))
-        elif (which_cross_sections_included == 'Dstar'):
-            Rcpm_atlas[eta_lept_index] = atlas_vals[3][eta_lept_index] / atlas_vals[2][eta_lept_index]
-
-            Rcpm_atlas_error[eta_lept_index] = np.sqrt(1. / B**2 * (var_sigma_sp) + \
-                                                         A**2 / B**4 * (var_sigma_sm) - \
-                                                         2. * A / B**3 * (corr_sp_sm))
-        else:
-            print('ERROR: INVALID VALUE FOR "which_cross_sections_included".')
-            exit(1)
-        
-    print(Rcpm_atlas_error)
-    
-    np.savetxt(reweighting_input_directory + 'experimental_values/eta_lept_' + which_cross_sections_included + '.txt', Rcpm_atlas, delimiter=',')
-    
-    for PDF_index in range(len(PDF_sets)):
-        PDF_set = PDF_sets[PDF_index]
-        num_err_members_in_set = num_err_members_in_sets[PDF_index]
-
-        processes_here = np.array(['W+D-', 'W+Dstar-', 'W-D+', 'W-Dstar+'])
-
-        HISTO_central_sigma_vals = [np.zeros(5) for _ in range(len(processes_here))]
-        HISTO_central_sigma_MCerrs = [np.zeros(5) for _ in range(len(processes_here))]
-
-        HISTO_scales_dd_sigma_vals = [np.zeros(5) for _ in range(len(processes_here))]
-        HISTO_scales_uu_sigma_vals = [np.zeros(5) for _ in range(len(processes_here))]
-
-        for process_index in range(len(processes_here)):
-            if (plot_errors_flag):
-                scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                            processes_here[process_index], True, True, True, 'frag_main_scale', z_def, fragmentation_set)
-            else:
-                scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                            processes_here[process_index], False, False, True, 'frag_main_scale', z_def, fragmentation_set)
-
-            for eta_lept_index in range(5):
-                HISTO_central_sigma_vals[process_index][eta_lept_index] = sum(sum(scales_vals[0][eta_lept_index]))
-                HISTO_scales_dd_sigma_vals[process_index][eta_lept_index] = sum(sum(scales_vals[1][eta_lept_index]))
-                HISTO_scales_uu_sigma_vals[process_index][eta_lept_index] = sum(sum(scales_vals[2][eta_lept_index]))
-
-                HISTO_central_sigma_MCerrs[process_index][eta_lept_index] = sum(sum(scales_MCerrs[0][eta_lept_index]))
-
-        # ax1
-        if (which_cross_sections_included == 'both'):
-            for eta_lept_index in range(5):
-                HISTO_Rcpm_central[PDF_index][eta_lept_index] = (HISTO_central_sigma_vals[0][eta_lept_index] + \
-                                                        HISTO_central_sigma_vals[1][eta_lept_index]) / \
-                                                        (HISTO_central_sigma_vals[2][eta_lept_index] + \
-                                                        HISTO_central_sigma_vals[3][eta_lept_index])
-
-                Rcpm_scales_dd = (HISTO_central_sigma_vals[0][eta_lept_index] + HISTO_scales_dd_sigma_vals[0][eta_lept_index] + \
-                                            HISTO_central_sigma_vals[1][eta_lept_index] + HISTO_scales_dd_sigma_vals[1][eta_lept_index]) / \
-                                            (HISTO_central_sigma_vals[2][eta_lept_index] + HISTO_scales_dd_sigma_vals[2][eta_lept_index] + \
-                                            HISTO_central_sigma_vals[3][eta_lept_index] + HISTO_scales_dd_sigma_vals[3][eta_lept_index])
-
-                Rcpm_scales_uu = (HISTO_central_sigma_vals[0][eta_lept_index] + HISTO_scales_uu_sigma_vals[0][eta_lept_index] + \
-                                            HISTO_central_sigma_vals[1][eta_lept_index] + HISTO_scales_uu_sigma_vals[1][eta_lept_index]) / \
-                                            (HISTO_central_sigma_vals[2][eta_lept_index] + HISTO_scales_uu_sigma_vals[2][eta_lept_index] + \
-                                            HISTO_central_sigma_vals[3][eta_lept_index] + HISTO_scales_uu_sigma_vals[3][eta_lept_index])
-                
-                HISTO_Rcpm_scale_var_down[PDF_index][eta_lept_index] = HISTO_Rcpm_central[PDF_index][eta_lept_index] - \
-                                                                min(Rcpm_scales_dd, Rcpm_scales_uu)
-            
-                HISTO_Rcpm_scale_var_up[PDF_index][eta_lept_index] = max(Rcpm_scales_dd, Rcpm_scales_uu) - \
-                                                                HISTO_Rcpm_central[PDF_index][eta_lept_index]
-
-                HISTO_Rcpm_MCerr_up[PDF_index][eta_lept_index] = (HISTO_central_sigma_vals[0][eta_lept_index] + \
-                                                                    HISTO_central_sigma_MCerrs[0][eta_lept_index] + \
-                                    HISTO_central_sigma_vals[1][eta_lept_index] + HISTO_central_sigma_MCerrs[1][eta_lept_index]) / \
-                                    (HISTO_central_sigma_vals[2][eta_lept_index] - HISTO_central_sigma_MCerrs[2][eta_lept_index] + \
-                                    HISTO_central_sigma_vals[3][eta_lept_index] - HISTO_central_sigma_MCerrs[3][eta_lept_index]) - \
-                                    HISTO_Rcpm_central[PDF_index][eta_lept_index]
-                
-                HISTO_Rcpm_MCerr_down[PDF_index][eta_lept_index] = HISTO_Rcpm_central[PDF_index][eta_lept_index] - \
-                                                                    (HISTO_central_sigma_vals[0][eta_lept_index] - \
-                                                                    HISTO_central_sigma_MCerrs[0][eta_lept_index] + \
-                                    HISTO_central_sigma_vals[1][eta_lept_index] - HISTO_central_sigma_MCerrs[1][eta_lept_index]) / \
-                                    (HISTO_central_sigma_vals[2][eta_lept_index] + HISTO_central_sigma_MCerrs[2][eta_lept_index] + \
-                                    HISTO_central_sigma_vals[3][eta_lept_index] + HISTO_central_sigma_MCerrs[3][eta_lept_index])
-            
-            if (plot_errors_flag):
-                if (PDF_set == 'CT18NLO' or PDF_set == 'CT18ANLO' or PDF_set == 'MSHT20nlo_as118'):
-                    HISTO_Rcpm_pdf_err_up[PDF_index], HISTO_Rcpm_pdf_err_down[PDF_index] = compute_Rcpm_pdf_err_eta_lept_HESSIAN(PDF_index,
-                                                                                            HISTO_Rcpm_central[PDF_index], 'both')
-                else:
-                    HISTO_Rcpm_central[PDF_index], HISTO_Rcpm_pdf_err_up[PDF_index], HISTO_Rcpm_pdf_err_down[PDF_index] = \
-                            compute_Rcpm_pdf_err_eta_lept_MC(PDF_index, HISTO_Rcpm_central[PDF_index], 'both')
-
-        elif (which_cross_sections_included == 'D'):
-            for eta_lept_index in range(5):
-                HISTO_Rcpm_central[PDF_index][eta_lept_index] = HISTO_central_sigma_vals[0][eta_lept_index] / \
-                                                        HISTO_central_sigma_vals[2][eta_lept_index]
-
-                Rcpm_scales_dd = (HISTO_central_sigma_vals[0][eta_lept_index] + HISTO_scales_dd_sigma_vals[0][eta_lept_index]) / \
-                                            (HISTO_central_sigma_vals[2][eta_lept_index] + HISTO_scales_dd_sigma_vals[2][eta_lept_index])
-
-                Rcpm_scales_uu = (HISTO_central_sigma_vals[0][eta_lept_index] + HISTO_scales_uu_sigma_vals[0][eta_lept_index]) / \
-                                            (HISTO_central_sigma_vals[2][eta_lept_index] + HISTO_scales_uu_sigma_vals[2][eta_lept_index])
-                
-                HISTO_Rcpm_scale_var_down[PDF_index][eta_lept_index] = HISTO_Rcpm_central[PDF_index][eta_lept_index] - \
-                                                                min(Rcpm_scales_dd, Rcpm_scales_uu)
-            
-                HISTO_Rcpm_scale_var_up[PDF_index][eta_lept_index] = max(Rcpm_scales_dd, Rcpm_scales_uu) - \
-                                                                HISTO_Rcpm_central[PDF_index][eta_lept_index]
-                
-                HISTO_Rcpm_MCerr_up[PDF_index][eta_lept_index] = (HISTO_central_sigma_vals[0][eta_lept_index] + \
-                                                                    HISTO_central_sigma_MCerrs[0][eta_lept_index]) / \
-                                    (HISTO_central_sigma_vals[2][eta_lept_index] - HISTO_central_sigma_MCerrs[2][eta_lept_index]) - \
-                                    HISTO_Rcpm_central[PDF_index][eta_lept_index]
-                
-                HISTO_Rcpm_MCerr_down[PDF_index][eta_lept_index] = HISTO_Rcpm_central[PDF_index][eta_lept_index] - \
-                                                                    (HISTO_central_sigma_vals[0][eta_lept_index] - \
-                                                                    HISTO_central_sigma_MCerrs[0][eta_lept_index]) / \
-                                    (HISTO_central_sigma_vals[2][eta_lept_index] + HISTO_central_sigma_MCerrs[2][eta_lept_index])
-
-            if (plot_errors_flag):
-                if (PDF_set == 'CT18NLO' or PDF_set == 'CT18ANLO' or PDF_set == 'MSHT20nlo_as118'):
-                    HISTO_Rcpm_pdf_err_up[PDF_index], HISTO_Rcpm_pdf_err_down[PDF_index] = compute_Rcpm_pdf_err_eta_lept_HESSIAN(PDF_index,
-                                                                                            HISTO_Rcpm_central[PDF_index], 'D')
-                else:
-                    HISTO_Rcpm_central[PDF_index], HISTO_Rcpm_pdf_err_up[PDF_index], HISTO_Rcpm_pdf_err_down[PDF_index] = \
-                            compute_Rcpm_pdf_err_eta_lept_MC(PDF_index, HISTO_Rcpm_central[PDF_index], 'D')
-
-        else:
-            for eta_lept_index in range(5):
-                HISTO_Rcpm_central[PDF_index][eta_lept_index] = HISTO_central_sigma_vals[1][eta_lept_index] / \
-                                                        HISTO_central_sigma_vals[3][eta_lept_index]
-
-                Rcpm_scales_dd = (HISTO_central_sigma_vals[1][eta_lept_index] + HISTO_scales_dd_sigma_vals[1][eta_lept_index]) / \
-                                    (HISTO_central_sigma_vals[3][eta_lept_index] + HISTO_scales_dd_sigma_vals[3][eta_lept_index])
-                Rcpm_scales_uu = (HISTO_central_sigma_vals[1][eta_lept_index] + HISTO_scales_uu_sigma_vals[1][eta_lept_index]) / \
-                                    (HISTO_central_sigma_vals[3][eta_lept_index] + HISTO_scales_uu_sigma_vals[3][eta_lept_index])
-
-                HISTO_Rcpm_scale_var_down[PDF_index][eta_lept_index] = HISTO_Rcpm_central[PDF_index][eta_lept_index] - \
-                                                                min(Rcpm_scales_dd, Rcpm_scales_uu)
-            
-                HISTO_Rcpm_scale_var_up[PDF_index][eta_lept_index] = max(Rcpm_scales_dd, Rcpm_scales_uu) - \
-                                                                HISTO_Rcpm_central[PDF_index][eta_lept_index]
-                
-                HISTO_Rcpm_MCerr_up[PDF_index][eta_lept_index] = (HISTO_central_sigma_vals[1][eta_lept_index] + \
-                                                                    HISTO_central_sigma_MCerrs[1][eta_lept_index]) / \
-                                    (HISTO_central_sigma_vals[3][eta_lept_index] - HISTO_central_sigma_MCerrs[3][eta_lept_index]) - \
-                                    HISTO_Rcpm_central[PDF_index][eta_lept_index]
-                
-                HISTO_Rcpm_MCerr_down[PDF_index][eta_lept_index] = HISTO_Rcpm_central[PDF_index][eta_lept_index] - \
-                                                                    (HISTO_central_sigma_vals[1][eta_lept_index] - \
-                                                                    HISTO_central_sigma_MCerrs[1][eta_lept_index]) / \
-                                    (HISTO_central_sigma_vals[3][eta_lept_index] + HISTO_central_sigma_MCerrs[3][eta_lept_index])
-
-            if (plot_errors_flag):
-                if (PDF_set == 'CT18NLO' or PDF_set == 'CT18ANLO' or PDF_set == 'MSHT20nlo_as118'):
-                    HISTO_Rcpm_pdf_err_up[PDF_index], HISTO_Rcpm_pdf_err_down[PDF_index] = compute_Rcpm_pdf_err_eta_lept_HESSIAN(PDF_index,
-                                                                                            HISTO_Rcpm_central[PDF_index], 'Dstar')
-                else:
-                    HISTO_Rcpm_central[PDF_index], HISTO_Rcpm_pdf_err_up[PDF_index], HISTO_Rcpm_pdf_err_down[PDF_index] = \
-                            compute_Rcpm_pdf_err_eta_lept_MC(PDF_index, HISTO_Rcpm_central[PDF_index], 'Dstar')
-
-        for eta_lept_index in range(5):
-            if (plot_errors_flag):
-                HISTO_Rcpm_error_up[PDF_index][eta_lept_index] = np.sqrt(HISTO_Rcpm_scale_var_up[PDF_index][eta_lept_index]**2 + \
-                                                                            HISTO_Rcpm_MCerr_up[PDF_index][eta_lept_index]**2 + \
-                                                                            HISTO_Rcpm_pdf_err_up[PDF_index][eta_lept_index]**2)
-                HISTO_Rcpm_error_down[PDF_index][eta_lept_index] = np.sqrt(HISTO_Rcpm_scale_var_down[PDF_index][eta_lept_index]**2 + \
-                                                                            HISTO_Rcpm_MCerr_down[PDF_index][eta_lept_index]**2 + \
-                                                                            HISTO_Rcpm_pdf_err_down[PDF_index][eta_lept_index]**2)
-
-            # ax2
-            HISTO_ratios_central[PDF_index][eta_lept_index] = HISTO_Rcpm_central[PDF_index][eta_lept_index] / \
-                                                                Rcpm_atlas[eta_lept_index]
-
-            if (plot_errors_flag):
-                HISTO_ratios_error_up[PDF_index][eta_lept_index] = (HISTO_Rcpm_central[PDF_index][eta_lept_index] + \
-                                                                    HISTO_Rcpm_error_up[PDF_index][eta_lept_index]) / \
-                                                                    Rcpm_atlas[eta_lept_index] - \
-                                                                    HISTO_ratios_central[PDF_index][eta_lept_index]
-
-                HISTO_ratios_error_down[PDF_index][eta_lept_index] = HISTO_ratios_central[PDF_index][eta_lept_index] - \
-                                                                        (HISTO_Rcpm_central[PDF_index][eta_lept_index] - \
-                                                                        HISTO_Rcpm_error_down[PDF_index][eta_lept_index]) / \
-                                                                        Rcpm_atlas[eta_lept_index]
-
-        #--------------------------------------------------------------------------------------------------------------------------------------#
-        #                                                    SAVING THE BEST VALUES FOR REWEIGHTING                                            #
-        #--------------------------------------------------------------------------------------------------------------------------------------#
-        if (PDF_set == 'CT18NLO' or PDF_set == 'CT18ANLO' or PDF_set == 'MSHT20nlo_as118'):
-            np.savetxt(reweighting_input_directory + 'theory_values/HESSIAN/best/eta_lept_' + which_cross_sections_included + '_' + \
-                   PDF_sets[PDF_index] + '_best.txt', HISTO_Rcpm_central[PDF_index], delimiter=',')
-        else:
-            np.savetxt(reweighting_input_directory + 'theory_values/MC/best/eta_lept_' + which_cross_sections_included + '_' + \
-                   PDF_sets[PDF_index] + '_best.txt', HISTO_Rcpm_central[PDF_index], delimiter=',')
-    #--------------------------------------------------------------------------------------------------------------------------------------#
-    #                                                                   PLOTTING                                                           #
-    #--------------------------------------------------------------------------------------------------------------------------------------#
-
-    # ATLAS
-    ax1.hlines(Rcpm_atlas, xmin, xmax, color='black', zorder=1, label='ATLAS')
-    ax1.bar(bin_midpoints, 2. * Rcpm_atlas_error, bottom=Rcpm_atlas - Rcpm_atlas_error,
-            width=0.5, color='lightgray', zorder=0)
-
-    # THEORY
-    for PDF_index in range(len(PDF_sets)):
-        ax1.plot(theory_val_places[PDF_index], HISTO_Rcpm_central[PDF_index], marker=markers[PDF_index],
-                    color=marker_color, markersize=5, linestyle='none',
-                    label=theory_labels[PDF_index], zorder=4)
-
-        ax1.bar(theory_val_places[PDF_index], HISTO_Rcpm_error_up[PDF_index] + HISTO_Rcpm_error_down[PDF_index],
-                bottom=HISTO_Rcpm_central[PDF_index] - HISTO_Rcpm_error_down[PDF_index], width=0.1, color=scale_var_color, zorder=2)
-
-    # THEORY / ATLAS
-    for PDF_index in range(len(PDF_sets)):
-        ax2.plot(theory_val_places[PDF_index], HISTO_ratios_central[PDF_index], marker=markers[PDF_index],
-                    color=marker_color, markersize=5, linestyle='none',
-                    label=theory_labels[PDF_index], zorder=4)
-
-        if (plot_errors_flag):
-            ax2.bar(theory_val_places[PDF_index], HISTO_ratios_error_up[PDF_index] + HISTO_ratios_error_down[PDF_index],
-                    bottom=HISTO_ratios_central[PDF_index] - HISTO_ratios_error_down[PDF_index], width=0.1, color=scale_var_color, zorder=2)
-
-    if (plot_errors_flag): 
-        ax2.bar(bin_midpoints, 2. * Rcpm_atlas_error / Rcpm_atlas, bottom=1. - Rcpm_atlas_error / Rcpm_atlas,
-           width=0.5, color='lightgray', zorder=0)
-
-    ax2.plot([-1, 3], [1, 1], color='black', zorder=0)
-
-    # DECORATIONS
-    for i in range(1, 5):
-        ax1.axvline(eta_lept_bins[i], linestyle='dashed', color='black', linewidth=0.5, ymax=0.65)
-        ax2.axvline(eta_lept_bins[i], linestyle='dashed', color='black', linewidth=0.5)
-
-    #--------------------------------------------------------------------------------------------------------------------------------------#
-    #                                                        MAKING THE PLOT LOOK PRETTY :)                                                #
-    #--------------------------------------------------------------------------------------------------------------------------------------#
-    #ax1.set_yticks([0.9, 0.95, 1., 1.05, 1.1])
-    ax2.set_yticks([0.95, 1., 1.05])
-
-    ax1.set_xlim(0, 2.5)
-    ax1.set_ylim(0.7, 1.2)
-    ax2.set_ylim(0.8, 1.1)
-
-    plt.xlabel(r'|$\eta$ (lepton)|', fontsize=axis_label_font_size)
-    ax1.set_ylabel(r'$R_c^\pm$', fontsize=axis_label_font_size)
-    ax2.set_ylabel(r'$\frac{\mathrm{Theory}}{\mathrm{ATLAS}}$', fontsize=axis_label_font_size + 6)
-
-    if (which_cross_sections_included == 'both'):
-        ax1.text(0.1, 1.15, r'$D$, $D^*$', fontsize=font_size)
-    elif (which_cross_sections_included == 'D'):
-        ax1.text(0.1, 1.15, r'$D$', fontsize=font_size)
+    if (kinematic_variable == 'pTD'):
+        plt.xscale('log')
+        bin_edges = np.array([8., 12., 20., 40., 80., 150.])
     else:
-        ax1.text(0.1, 1.15, r'$D^*$', fontsize=font_size)
+        bin_edges = np.array([0., 0.5, 1.0, 1.5, 2.0, 2.5])
 
-    legend1 = ax1.legend(loc='center right', framealpha=1, fontsize=legend_fontsize, bbox_to_anchor=(0.99, 0.85))
+    pTD_raw_bin_width = 0.5
 
-    #if (plot_errors_flag):
-    #    legend2 = ax1.legend([pdf_err_bar_plot, scale_var_bar_plot], ["PDF uncertainty", "Scale variation"],
-    #                            loc='lower left', framealpha=1, fontsize=legend_fontsize)
-    #
-    #    ax1.add_artist(legend1)
+    bin_widths = np.diff(bin_edges)
 
-    plt.tight_layout()
+    bin_midpoints_log_scale = np.zeros(len(bin_edges) - 1)
+    bin_midpoints_linear_scale = np.zeros(len(bin_edges) - 1)
 
-    plt.savefig(plots_directory + 'Rcpm/Rcpm_eta_lept_' + which_cross_sections_included + '.pdf')
-    
-    plt.show()
+    for i in range(len(bin_edges) - 1):
+        bin_midpoints_log_scale[i] = np.sqrt(bin_edges[i] * bin_edges[i + 1])
+        bin_midpoints_linear_scale[i] = (bin_edges[i + 1] + bin_edges[i]) / 2
 
+    places_inside_bins_log_scale = np.zeros((3, 5))
 
-def Rcpm_pTD(which_cross_sections_included, plot_errors_flag, PDF_sets):
-    font_size = 16
-    axis_label_font_size = 17
-    axis_font_size = 13
-    legend_fontsize = 14
+    places_inside_bins_log_scale[0, :] = np.sqrt(bin_edges[:-1] * bin_midpoints_log_scale)
+    places_inside_bins_log_scale[1, :] = bin_midpoints_log_scale
+    places_inside_bins_log_scale[2, :] = np.sqrt(bin_edges[1:] * bin_midpoints_log_scale)
 
-    scalings = [0.9, 1., 1.18]
-    
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [3, 1], 'hspace': 0}, figsize=(6, 6))
+    bar_widths = np.zeros((3, 5))
 
-    pTD_bins = np.array([8, 12, 20, 40, 80, 150])
-
-    pTD_data_min = 8.
-    pTD_data_bin_width = 0.5
-
-    bin_widths = np.diff(pTD_bins)
-
-    bin_midpoints = np.zeros(len(pTD_bins) - 1)
-    bin_midpoints_linear_scale = np.zeros(len(pTD_bins) - 1)
-
-    for i in range(len(pTD_bins) - 1):
-        bin_midpoints[i] = np.sqrt(pTD_bins[i] * pTD_bins[i + 1])
-        bin_midpoints_linear_scale[i] = (pTD_bins[i + 1] + pTD_bins[i]) / 2
-    
-    xmin = np.sqrt(pTD_bins[0:-1] * bin_midpoints)
-    xmax = np.sqrt(pTD_bins[1:] * bin_midpoints)
-
-    places_inside_bins = np.zeros((3, 5))
-    places_inside_bins_right = np.zeros((3, 5))
-    places_inside_bins_left = np.zeros((3, 5))
-
-    places_inside_bins[0, :] = np.sqrt(pTD_bins[:-1] * bin_midpoints)
-    places_inside_bins[1, :] = bin_midpoints
-    places_inside_bins[2, :] = np.sqrt(pTD_bins[1:] * bin_midpoints)
-
-    bar_width_over_bin_width = 1. / 9.
-    bar_width = bar_width_over_bin_width * bin_widths
-    shifts = np.zeros(5)
-
-    for i in range(5):
-        shifts[i] = ((pTD_bins[i + 1] * 1.) / (pTD_bins[i] * 1.))**(bar_width_over_bin_width / 2.)
-
-    for i in range(3):
-        places_inside_bins_left[i, :] = places_inside_bins[i, :] / shifts
-        places_inside_bins_right[i, :] = places_inside_bins[i, :] * shifts
+    if (kinematic_variable == 'pTD'):
+        width_parameter = 1.03
+        bar_widths = places_inside_bins_log_scale * width_parameter - places_inside_bins_log_scale / width_parameter
+    else:
+        for i in range(3):
+            for j in range(5):
+                bar_widths[i, j] = 0.05
 
     places_inside_bins_linear_scale = np.zeros((3, 5))
 
-    places_inside_bins_linear_scale[0, :] = (bin_midpoints_linear_scale + pTD_bins[:-1]) / 2.
+    places_inside_bins_linear_scale[0, :] = (bin_midpoints_linear_scale + bin_edges[:-1]) / 2.
     places_inside_bins_linear_scale[1, :] = bin_midpoints_linear_scale
-    places_inside_bins_linear_scale[2, :] = (bin_midpoints_linear_scale + pTD_bins[1:]) / 2.
+    places_inside_bins_linear_scale[2, :] = (bin_midpoints_linear_scale + bin_edges[1:]) / 2.
 
     #--------------------------------------------------------------------------------------------------------------------------------------#
     #                                                   ATLAS VALUES AND COVARIANCE MATRICES                                               #
     #--------------------------------------------------------------------------------------------------------------------------------------#
     #The rows from top to bottom are D+W-, D-W+, D*+W-, D*-W+.
-    atlas_vals = np.array([[15.04, 15.34, 13.78, 5.13, 0.93],
-                        [14.61, 15.12, 13.07, 4.84, 0.82],
-                        [14.50, 15.88, 14.19, 5.42, 1.07],
-                        [14.26, 15.60, 14.08, 5.11, 0.99]])
 
-    atlas_vals_up_err = np.array([[0.19+0.76, 0.14+0.78, 0.12+0.92, 0.07+0.34, 0.04+0.09],
-                                    [0.19+0.73, 0.15+0.75, 0.12+0.89, 0.07+0.31, 0.04+0.08],
-                                    [0.26+0.85, 0.19+0.73, 0.16+0.68, 0.10+0.31, 0.05+0.10],
-                                    [0.27+0.82, 0.20+0.74, 0.17+0.68, 0.10+0.30, 0.06+0.09]])
+    if (kinematic_variable == 'pTD'):
+        atlas_vals = np.array([[15.04, 15.34, 13.78, 5.13, 0.93],
+                            [14.61, 15.12, 13.07, 4.84, 0.82],
+                            [14.50, 15.88, 14.19, 5.42, 1.07],
+                            [14.26, 15.60, 14.08, 5.11, 0.99]])
 
-    atlas_vals_down_err = np.array([[0.19+0.72, 0.14+0.75, 0.12+0.85, 0.07+0.31, 0.04+0.08],
-                                    [0.19+0.69, 0.15+0.72, 0.12+0.82, 0.07+0.29, 0.04+0.07],
-                                    [0.26+0.79, 0.19+0.69, 0.16+0.64, 0.10+0.29, 0.05+0.09],
-                                    [0.27+0.76, 0.20+0.70, 0.17+0.64, 0.10+0.28, 0.06+0.08]])
+        atlas_covariance_starless = np.array([[0.0169, 0.0360, 0.0476, 0.0203, 0.00417, 0.0196, 0.0335, 0.0466, 0.0180, 0.00782],
+                                            [0.0889, 0.171, 0.215, 0.0951, 0.0190, 0.0916, 0.160, 0.210, 0.0989, 0.0180],
+                                            [0.197, 0.597, 0.783, 0.232, 0.0486, 0.196, 0.566, 0.804, 0.210, 0.0466],
+                                            [0.305, 0.565, 0.593, 0.181, 0.0341, 0.279, 0.619, 0.566, 0.160, 0.0335],
+                                            [0.495, 0.298, 0.201, 0.110, 0.0164, 0.615, 0.279, 0.196, 0.0916, 0.0196],
+                                            [0.0142, 0.0370, 0.0493, 0.0207, 0.00853, 0.0164, 0.0341, 0.0486, 0.0190, 0.00417],
+                                            [0.105, 0.190, 0.236, 0.119, 0.0207, 0.110, 0.181, 0.232, 0.0951, 0.0203],
+                                            [0.203, 0.622, 0.864, 0.236, 0.0493, 0.201, 0.593, 0.783, 0.215, 0.0476],
+                                            [0.313, 0.664, 0.622, 0.190, 0.0370, 0.298, 0.565, 0.597, 0.171, 0.0360],
+                                            [0.645, 0.313, 0.203, 0.105, 0.0142, 0.495, 0.305, 0.197, 0.0889, 0.0169]])
 
-    atlas_covariance_starless = np.array([[0.0169, 0.0360, 0.0476, 0.0203, 0.00417, 0.0196, 0.0335, 0.0466, 0.0180, 0.00782],
-                                          [0.0889, 0.171, 0.215, 0.0951, 0.0190, 0.0916, 0.160, 0.210, 0.0989, 0.0180],
-                                          [0.197, 0.597, 0.783, 0.232, 0.0486, 0.196, 0.566, 0.804, 0.210, 0.0466],
-                                          [0.305, 0.565, 0.593, 0.181, 0.0341, 0.279, 0.619, 0.566, 0.160, 0.0335],
-                                          [0.495, 0.298, 0.201, 0.110, 0.0164, 0.615, 0.279, 0.196, 0.0916, 0.0196],
-                                          [0.0142, 0.0370, 0.0493, 0.0207, 0.00853, 0.0164, 0.0341, 0.0486, 0.0190, 0.00417],
-                                          [0.105, 0.190, 0.236, 0.119, 0.0207, 0.110, 0.181, 0.232, 0.0951, 0.0203],
-                                          [0.203, 0.622, 0.864, 0.236, 0.0493, 0.201, 0.593, 0.783, 0.215, 0.0476],
-                                          [0.313, 0.664, 0.622, 0.190, 0.0370, 0.298, 0.565, 0.597, 0.171, 0.0360],
-                                          [0.645, 0.313, 0.203, 0.105, 0.0142, 0.495, 0.305, 0.197, 0.0889, 0.0169]])
+        atlas_covariance_star = np.array([[0.0262, 0.0289, 0.0265, 0.0126, 0.00452, 0.0262, 0.0302, 0.0253, 0.0112, 0.0115],
+                                        [0.00164, 0.0229, 0.167, 0.0765, 0.0148, 0.000730, 0.0301, 0.158, 0.0999, 0.0112],
+                                        [0.0606, 0.0991, 0.414, 0.172, 0.0277, 0.0486, 0.115, 0.495, 0.158, 0.0253],
+                                        [0.507, 0.483, 0.108, 0.0346, 0.0357, 0.485, 0.612, 0.115, 0.0301, 0.0302],
+                                        [0.561, 0.490, 0.0464, 0.00176, 0.0295, 0.727, 0.485, 0.0486, 0.000730, 0.0262],
+                                        [0.0297, 0.0339, 0.0315, 0.0149, 0.0144, 0.0295, 0.0357, 0.0277, 0.0148, 0.00452],
+                                        [0.00149, 0.0261, 0.177, 0.106, 0.0149, 0.00176, 0.0346, 0.172, 0.0765, 0.0126],
+                                        [0.0470, 0.0975, 0.492, 0.177, 0.0315, 0.0464, 0.108, 0.414, 0.167, 0.0265],
+                                        [0.508, 0.584, 0.0975, 0.0261, 0.0339, 0.490, 0.483, 0.0991, 0.0229, 0.0289],
+                                        [0.818, 0.508, 0.0470, 0.00149, 0.0297, 0.561, 0.507, 0.0606, 0.00164, 0.0262]])
+    
+    else:
+        atlas_vals = np.array([[12.27, 11.57, 10.41, 9.09, 6.85],
+                                [11.87, 11.55, 10.09, 8.6, 6.25],
+                                [12.18, 11.77, 10.61, 8.85, 7.22],
+                                [12.52, 12.14, 10.29, 8.38, 6.55]])
+        
+        atlas_covariance_starless = np.array([[0.201, 0.183, 0.184, 0.126, 0.115, 0.193, 0.178, 0.179, 0.121, 0.154],
+                                            [0.245, 0.229, 0.219, 0.165, 0.129, 0.237, 0.221, 0.212, 0.206, 0.121],
+                                            [0.390, 0.349, 0.367, 0.223, 0.194, 0.376, 0.340, 0.402, 0.212, 0.179],
+                                            [0.385, 0.396, 0.352, 0.236, 0.208, 0.375, 0.431, 0.340, 0.221, 0.178],
+                                            [0.425, 0.392, 0.388, 0.249, 0.216, 0.463, 0.375, 0.376, 0.237, 0.193],
+                                            [0.222, 0.215, 0.206, 0.142, 0.180, 0.216, 0.208, 0.194, 0.129, 0.115],
+                                            [0.259, 0.243, 0.233, 0.221, 0.142, 0.249, 0.236, 0.223, 0.165, 0.126],
+                                            [0.401, 0.363, 0.435, 0.233, 0.206, 0.388, 0.352, 0.367, 0.219, 0.184],
+                                            [0.398, 0.457, 0.363, 0.243, 0.215, 0.392, 0.396, 0.349, 0.229, 0.183],
+                                            [0.490, 0.398, 0.401, 0.259, 0.222, 0.425, 0.385, 0.390, 0.245, 0.201]])
 
-    atlas_covariance_star = np.array([[0.0262, 0.0289, 0.0265, 0.0126, 0.00452, 0.0262, 0.0302, 0.0253, 0.0112, 0.0115],
-                                      [0.00164, 0.0229, 0.167, 0.0765, 0.0148, 0.000730, 0.0301, 0.158, 0.0999, 0.0112],
-                                      [0.0606, 0.0991, 0.414, 0.172, 0.0277, 0.0486, 0.115, 0.495, 0.158, 0.0253],
-                                      [0.507, 0.483, 0.108, 0.0346, 0.0357, 0.485, 0.612, 0.115, 0.0301, 0.0302],
-                                      [0.561, 0.490, 0.0464, 0.00176, 0.0295, 0.727, 0.485, 0.0486, 0.000730, 0.0262],
-                                      [0.0297, 0.0339, 0.0315, 0.0149, 0.0144, 0.0295, 0.0357, 0.0277, 0.0148, 0.00452],
-                                      [0.00149, 0.0261, 0.177, 0.106, 0.0149, 0.00176, 0.0346, 0.172, 0.0765, 0.0126],
-                                      [0.0470, 0.0975, 0.492, 0.177, 0.0315, 0.0464, 0.108, 0.414, 0.167, 0.0265],
-                                      [0.508, 0.584, 0.0975, 0.0261, 0.0339, 0.490, 0.483, 0.0991, 0.0229, 0.0289],
-                                      [0.818, 0.508, 0.0470, 0.00149, 0.0297, 0.561, 0.507, 0.0606, 0.00164, 0.0262]])
+        atlas_covariance_star = np.array([[0.0733, 0.129, 0.166, 0.0941, 0.0854, 0.0782, 0.138, 0.156, 0.0875, 0.168],
+                                        [0.109, 0.156, 0.174, 0.129, 0.0951, 0.118, 0.164, 0.167, 0.192, 0.0875],
+                                        [0.0898, 0.255, 0.359, 0.180, 0.169, 0.105, 0.267, 0.423, 0.167, 0.156],
+                                        [0.154, 0.261, 0.281, 0.176, 0.146, 0.170, 0.352, 0.267, 0.164, 0.138],
+                                        [0.197, 0.161, 0.107, 0.131, 0.0805, 0.296, 0.170, 0.105, 0.118, 0.0782],
+                                        [0.0778, 0.139, 0.179, 0.100, 0.177, 0.0805, 0.146, 0.169, 0.0951, 0.0854],
+                                        [0.116, 0.172, 0.187, 0.212, 0.100, 0.131, 0.176, 0.180, 0.129, 0.0941],
+                                        [0.0992, 0.268, 0.458, 0.187, 0.179, 0.107, 0.281, 0.359, 0.174, 0.166],
+                                        [0.145, 0.323, 0.268, 0.172, 0.139, 0.161, 0.261, 0.255, 0.156, 0.129],
+                                        [0.273, 0.145, 0.0992, 0.116, 0.0778, 0.197, 0.154, 0.0898, 0.109, 0.0733]])
     
     #--------------------------------------------------------------------------------------------------------------------------------------#
     #                                                             FILLING HISTOGRAMS                                                       #
@@ -2743,6 +2369,8 @@ def Rcpm_pTD(which_cross_sections_included, plot_errors_flag, PDF_sets):
     HISTO_ratios_central = [np.zeros(5) for _ in range(len(PDF_sets))]
     HISTO_ratios_error_up = [np.zeros(5) for _ in range(len(PDF_sets))]
     HISTO_ratios_error_down = [np.zeros(5) for _ in range(len(PDF_sets))]
+    HISTO_ratios_pdf_error_up = [np.zeros(5) for _ in range(len(PDF_sets))]
+    HISTO_ratios_pdf_error_down = [np.zeros(5) for _ in range(len(PDF_sets))]
 
     for pTD_index in range(5):
         Rcpm_atlas[pTD_index] = (atlas_vals[1][pTD_index] + atlas_vals[3][pTD_index]) / \
@@ -2781,10 +2409,8 @@ def Rcpm_pTD(which_cross_sections_included, plot_errors_flag, PDF_sets):
         else:
             print('ERROR: INVALID VALUE FOR "which_cross_sections_included".')
             exit(1)
-    
-    print(Rcpm_atlas_error)
 
-    np.savetxt(reweighting_input_directory + 'experimental_values/pTD_' + which_cross_sections_included + '.txt', Rcpm_atlas, delimiter=',')
+    np.savetxt(reweighting_input_directory + 'experimental_values/' + kinematic_variable + '_' + which_cross_sections_included + '.txt', Rcpm_atlas, delimiter=',')
     
     for PDF_index in range(len(PDF_sets)):
         PDF_set = PDF_sets[PDF_index]
@@ -2797,32 +2423,32 @@ def Rcpm_pTD(which_cross_sections_included, plot_errors_flag, PDF_sets):
         HISTO_scales_uu_sigma_vals = [np.zeros(5) for _ in range(len(processes_here))]
 
         HISTO_central_sigma_MCerrs = [np.zeros(5) for _ in range(len(processes_here))]
-        HISTO_scales_dd_sigma_MCerrs = [np.zeros(5) for _ in range(len(processes_here))]
-        HISTO_scales_uu_sigma_MCerrs = [np.zeros(5) for _ in range(len(processes_here))]
-
-        HISTO_pdf_err_plus_sigma_vals = [np.zeros(5) for _ in range(len(processes_here))]
-        HISTO_pdf_err_minus_sigma_vals = [np.zeros(5) for _ in range(len(processes_here))]
 
         for process_index in range(len(processes_here)):
             scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(
                 PDF_set, num_err_members_in_set, processes_here[process_index], True, False, True, 'frag_main_scale', z_def, fragmentation_set)
 
-            for eta_lept_index in range(5):
-                bin_index = 0
-                for pTD_index in range(284):
-                    if (pTD_data_min + (pTD_index + 1 / 2) * pTD_data_bin_width > pTD_bins[bin_index + 1]):
-                        if (bin_index == 5):
-                            break
-                        else:
-                            bin_index += 1
-                    HISTO_central_sigma_vals[process_index][bin_index] += sum(scales_vals[0][eta_lept_index][pTD_index, :])
-                    HISTO_scales_dd_sigma_vals[process_index][bin_index] += sum(scales_vals[1][eta_lept_index][pTD_index, :])
-                    HISTO_scales_uu_sigma_vals[process_index][bin_index] += sum(scales_vals[2][eta_lept_index][pTD_index, :])
-
-                    HISTO_central_sigma_MCerrs[process_index][bin_index] += sum(scales_MCerrs[0][eta_lept_index][pTD_index, :])
-                    HISTO_scales_dd_sigma_MCerrs[process_index][bin_index] += sum(scales_MCerrs[1][eta_lept_index][pTD_index, :])
-                    HISTO_scales_uu_sigma_MCerrs[process_index][bin_index] += sum(scales_MCerrs[2][eta_lept_index][pTD_index, :])
-        
+            
+            if (kinematic_variable == 'pTD'):
+                for eta_lept_index in range(5):
+                    bin_index = 0
+                    for pTD_index in range(284):
+                        if (bin_edges[0] + (pTD_index + 1 / 2) * pTD_raw_bin_width > bin_edges[bin_index + 1]):
+                            if (bin_index == 5):
+                                break
+                            else:
+                                bin_index += 1
+                        HISTO_central_sigma_vals[process_index][bin_index] += sum(scales_vals[0][eta_lept_index][pTD_index, :])
+                        HISTO_scales_dd_sigma_vals[process_index][bin_index] += sum(scales_vals[1][eta_lept_index][pTD_index, :])
+                        HISTO_scales_uu_sigma_vals[process_index][bin_index] += sum(scales_vals[2][eta_lept_index][pTD_index, :])
+                        HISTO_central_sigma_MCerrs[process_index][bin_index] += sum(scales_MCerrs[0][eta_lept_index][pTD_index, :])
+            else:
+                print("!")
+                for eta_lept_index in range(5):
+                    HISTO_central_sigma_vals[process_index][eta_lept_index] = sum(sum(scales_vals[0][eta_lept_index]))
+                    HISTO_scales_dd_sigma_vals[process_index][eta_lept_index] = sum(sum(scales_vals[1][eta_lept_index]))
+                    HISTO_scales_uu_sigma_vals[process_index][eta_lept_index] = sum(sum(scales_vals[2][eta_lept_index]))
+                    HISTO_central_sigma_MCerrs[process_index][eta_lept_index] = sum(sum(scales_MCerrs[0][eta_lept_index]))
         
         # ax1
         if (which_cross_sections_included == 'both'):
@@ -2862,12 +2488,20 @@ def Rcpm_pTD(which_cross_sections_included, plot_errors_flag, PDF_sets):
                                     HISTO_central_sigma_vals[3][pTD_index] + HISTO_central_sigma_MCerrs[3][pTD_index])
 
             if (plot_errors_flag):
-                if (PDF_set == 'CT18NLO' or PDF_set == 'CT18ANLO' or PDF_set == 'MSHT20nlo_as118'):    
-                    HISTO_Rcpm_pdf_err_up[PDF_index], HISTO_Rcpm_pdf_err_down[PDF_index] = compute_Rcpm_pdf_err_pTD_HESSIAN(PDF_index,
-                                                                            HISTO_Rcpm_central[PDF_index], 'both')
+                if (PDF_set == 'CT18NLO' or PDF_set == 'CT18ANLO' or PDF_set == 'MSHT20nlo_as118'):
+                    if (kinematic_variable == 'pTD'):
+                        HISTO_Rcpm_pdf_err_up[PDF_index], HISTO_Rcpm_pdf_err_down[PDF_index] = compute_Rcpm_pdf_err_pTD_HESSIAN(PDF_index,
+                                                                                HISTO_Rcpm_central[PDF_index], 'both')
+                    else:
+                        HISTO_Rcpm_pdf_err_up[PDF_index], HISTO_Rcpm_pdf_err_down[PDF_index] = compute_Rcpm_pdf_err_eta_lept_HESSIAN(PDF_index,
+                                                                                HISTO_Rcpm_central[PDF_index], 'both')
                 else:
-                    HISTO_Rcpm_central[PDF_index], HISTO_Rcpm_pdf_err_up[PDF_index], HISTO_Rcpm_pdf_err_down[PDF_index] = compute_Rcpm_pdf_err_pTD_MC(PDF_index,
-                                                                            HISTO_Rcpm_central[PDF_index], 'both')
+                    if (kinematic_variable == 'pTD'):
+                        HISTO_Rcpm_central[PDF_index], HISTO_Rcpm_pdf_err_up[PDF_index], HISTO_Rcpm_pdf_err_down[PDF_index] = compute_Rcpm_pdf_err_pTD_MC(PDF_index,
+                                                                                HISTO_Rcpm_central[PDF_index], 'both')
+                    else:
+                        HISTO_Rcpm_central[PDF_index], HISTO_Rcpm_pdf_err_up[PDF_index], HISTO_Rcpm_pdf_err_down[PDF_index] = compute_Rcpm_pdf_err_eta_lept_MC(PDF_index,
+                                                                                HISTO_Rcpm_central[PDF_index], 'both')
 
         elif (which_cross_sections_included == 'D'):
             for pTD_index in range(5):
@@ -2936,7 +2570,9 @@ def Rcpm_pTD(which_cross_sections_included, plot_errors_flag, PDF_sets):
                 else:
                     HISTO_Rcpm_central[PDF_index], HISTO_Rcpm_pdf_err_up[PDF_index], HISTO_Rcpm_pdf_err_down[PDF_index] = compute_Rcpm_pdf_err_pTD_MC(PDF_index,
                                                                             HISTO_Rcpm_central[PDF_index], 'Dstar')
-
+        
+        for i in range(1):
+            print(HISTO_Rcpm_central[i])
         if (plot_errors_flag):
             for pTD_index in range(5):
                 HISTO_Rcpm_error_up[PDF_index][pTD_index] = np.sqrt(HISTO_Rcpm_scale_var_up[PDF_index][pTD_index]**2 + \
@@ -2961,6 +2597,16 @@ def Rcpm_pTD(which_cross_sections_included, plot_errors_flag, PDF_sets):
                                                                     HISTO_Rcpm_error_down[PDF_index][pTD_index]) / \
                                                                     Rcpm_atlas[pTD_index]
 
+            HISTO_ratios_pdf_error_up[PDF_index][pTD_index] = (HISTO_Rcpm_central[PDF_index][pTD_index] + \
+                                                                HISTO_Rcpm_pdf_err_up[PDF_index][pTD_index]) / \
+                                                                Rcpm_atlas[pTD_index] - \
+                                                                HISTO_ratios_central[PDF_index][pTD_index]
+
+            HISTO_ratios_pdf_error_down[PDF_index][pTD_index] = HISTO_ratios_central[PDF_index][pTD_index] - \
+                                                                    (HISTO_Rcpm_central[PDF_index][pTD_index] - \
+                                                                    HISTO_Rcpm_pdf_err_down[PDF_index][pTD_index]) / \
+                                                                    Rcpm_atlas[pTD_index]
+
         #--------------------------------------------------------------------------------------------------------------------------------------#
         #                                                    SAVING THE BEST VALUES FOR REWEIGHTING                                            #
         #--------------------------------------------------------------------------------------------------------------------------------------#
@@ -2974,78 +2620,110 @@ def Rcpm_pTD(which_cross_sections_included, plot_errors_flag, PDF_sets):
     #                                                                   PLOTTING                                                           #
     #--------------------------------------------------------------------------------------------------------------------------------------#
 
+    places_inside_bins_here = np.zeros((3, 5))
+    if (kinematic_variable == 'pTD'):
+        places_inside_bins_here = places_inside_bins_log_scale
+    else:
+        places_inside_bins_here = places_inside_bins_linear_scale
+    
     # ATLAS
-    ax1.hlines(Rcpm_atlas, pTD_bins[:-1], pTD_bins[1:], color='black', zorder=1, label='ATLAS')
-    ax1.bar(bin_midpoints_linear_scale, 2 * Rcpm_atlas_error, bottom=Rcpm_atlas - Rcpm_atlas_error,
-            width=bin_widths, color='lightgray', zorder=0)
+    ax1.hlines(Rcpm_atlas, bin_edges[:-1], bin_edges[1:], color='black', zorder=1, label='ATLAS')
+    ATLAS_uncertainty = ax1.bar(bin_midpoints_linear_scale, 2 * Rcpm_atlas_error, bottom=Rcpm_atlas - Rcpm_atlas_error,
+            width=bin_widths, color=atlas_err_color, zorder=0)
 
     # THEORY
     for PDF_index in range(len(PDF_sets)):
-        #scale_var_bar_plot = ax1.bar(places_inside_bins[PDF_index, :] + bar_width / 4., HISTO_scales_uu_sigma_vals - HISTO_scales_dd_sigma_vals,
-        #                                width=bar_width / 2., bottom=HISTO_central_sigma_vals + HISTO_scales_dd_sigma_vals,
-        #                                color=scale_var_color, zorder=2)
-
-        ax1.plot(places_inside_bins[PDF_index, :], HISTO_Rcpm_central[PDF_index], marker=markers[PDF_index],
+        ax1.plot(places_inside_bins_here[PDF_index, :], HISTO_Rcpm_central[PDF_index], marker=markers[PDF_index],
                     color=marker_color, markersize=5, linestyle='none',
                     label=theory_labels[PDF_index], zorder=4)
 
         if (plot_errors_flag):
-            ax1.bar(places_inside_bins[PDF_index, :], HISTO_Rcpm_error_up[PDF_index] + HISTO_Rcpm_error_down[PDF_index],
+            PDF_uncertainty = ax1.bar(places_inside_bins_here[PDF_index, :], HISTO_Rcpm_pdf_err_down[PDF_index] + HISTO_Rcpm_pdf_err_up[PDF_index],
+                                        width=bar_widths[PDF_index], bottom=HISTO_Rcpm_central[PDF_index] - HISTO_Rcpm_pdf_err_down[PDF_index],
+                                        color=pdf_err_color, zorder=3)
+
+            theory_uncertainty = ax1.bar(places_inside_bins_here[PDF_index, :], HISTO_Rcpm_error_up[PDF_index] + HISTO_Rcpm_error_down[PDF_index],
                     bottom=HISTO_Rcpm_central[PDF_index] - HISTO_Rcpm_error_down[PDF_index],
-                    width=1.5 * bar_width * scalings[PDF_index], color=scale_var_color, zorder=2)
+                    width=bar_widths[PDF_index], color=scale_var_color, zorder=2)
 
     # THEORY / ATLAS
     for PDF_index in range(len(PDF_sets)):
-        ax2.plot(places_inside_bins[PDF_index, :], HISTO_ratios_central[PDF_index], marker=markers[PDF_index],
+        ax2.plot(places_inside_bins_here[PDF_index, :], HISTO_ratios_central[PDF_index], marker=markers[PDF_index],
                     color=marker_color, markersize=5, linestyle='none',
                     label=theory_labels[PDF_index], zorder=4)
 
         if (plot_errors_flag):
-            ax2.bar(places_inside_bins[PDF_index, :], HISTO_ratios_error_up[PDF_index] + HISTO_ratios_error_down[PDF_index],
+            ax2.bar(places_inside_bins_here[PDF_index, :], HISTO_ratios_error_up[PDF_index] + HISTO_ratios_error_down[PDF_index],
                     bottom=HISTO_ratios_central[PDF_index] - HISTO_ratios_error_down[PDF_index],
-                    width=1.5 * bar_width * scalings[PDF_index], color=scale_var_color, zorder=2)
-        
+                    width=bar_widths[PDF_index], color=scale_var_color, zorder=2)
+            
+            ax2.bar(places_inside_bins_here[PDF_index, :], HISTO_ratios_pdf_error_up[PDF_index] + HISTO_ratios_pdf_error_down[PDF_index],
+                    bottom=HISTO_ratios_central[PDF_index] - HISTO_ratios_pdf_error_down[PDF_index],
+                    width=bar_widths[PDF_index], color=pdf_err_color, zorder=3)
+
     ax2.bar(bin_midpoints_linear_scale, 2 * Rcpm_atlas_error / Rcpm_atlas, bottom=1. - Rcpm_atlas_error / Rcpm_atlas,
-        width=bin_widths, color='lightgray', zorder=0)
-        
-    ax2.plot([7, 151], [1, 1], color='black', zorder=0)
+        width=bin_widths, color=atlas_err_color, zorder=0)
 
     # DECORATIONS
-    for i in range(1, 5):
-        ax1.axvline(pTD_bins[i], linestyle='dashed', color='black', linewidth=0.5, ymax=0.65)
-        ax2.axvline(pTD_bins[i], linestyle='dashed', color='black', linewidth=0.5)
+    for i in range(1, len(bin_edges) - 1):
+        ax1.axvline(bin_edges[i], color='gray', linewidth=0.5, ymax=0.75, zorder=0)
+    for i in range(len(bin_edges) - 3, len(bin_edges) - 1):
+        ax1.axvline(bin_edges[i], color='gray', linewidth=0.5, ymax=0.62, zorder=0)
+    for i in range(1, len(bin_edges) - 1):
+        ax2.axvline(bin_edges[i], color='gray', linewidth=0.5, zorder=0)
+
+    ax2.plot([-1, 151], [1, 1], color='black', zorder=1)
 
     #--------------------------------------------------------------------------------------------------------------------------------------#
     #                                                        MAKING THE PLOT LOOK PRETTY :)                                                #
     #--------------------------------------------------------------------------------------------------------------------------------------#
-    ax1.set_yticks([0.9, 0.95, 1., 1.05, 1.1])
-    ax2.set_yticks([0.9, 0.95, 1., 1.05, 1.1])
+    ax2.set_yticks([0.85, 0.9, 0.95, 1., 1.05, 1.1])
 
-    ax1.set_xlim(8, 150)
-    ax1.set_ylim(0.8, 1.2)
-    ax2.set_ylim(0.85, 1.15)
+    plt.xlim(bin_edges[0], bin_edges[-1])
+    ax1.set_ylim(0.755, 1.15)
+    ax2.set_ylim(0.83, 1.14)
 
-    if (which_cross_sections_included == 'both'):
-        ax1.text(9, 1.15, r'$D$, $D^*$', fontsize=font_size)
-    elif (which_cross_sections_included == 'D'):
-        ax1.text(9, 1.15, r'$D$', fontsize=font_size)
+    ax1.tick_params(axis='both', which='major', labelsize=axis_font_size)
+    ax2.tick_params(axis='both', which='major', labelsize=axis_font_size)
+
+    text_x = 0
+    if (kinematic_variable == 'pTD'):
+        plt.xlabel(r'$p_T (D)$', fontsize=axis_label_font_size)
+        text_x = 9
+        plt.xticks(bin_edges, [f'{tick:.0f}' for tick in bin_edges])
     else:
-        ax1.text(9, 1.15, r'$D^*$', fontsize=font_size)
+        plt.xlabel(r'$\eta_\text{lepton}$', fontsize=axis_label_font_size)
+        text_x = 0.1
+        plt.xticks(bin_edges, [f'{tick:.1f}' for tick in bin_edges])
 
-    plt.xscale('log')
-
-    plt.xlabel(r'$p_T (D)$', fontsize=axis_label_font_size)
     ax1.set_ylabel(r'$R_c^\pm$', fontsize=axis_label_font_size)
     ax2.set_ylabel(r'$\frac{\mathrm{Theory}}{\mathrm{ATLAS}}$', fontsize=axis_label_font_size + 6)
 
-    legend1 = ax1.legend(loc='center right', framealpha=1, fontsize=legend_fontsize, bbox_to_anchor=(0.99, 0.85))
-    #legend2 = ax1.legend([pdf_err_bar_plot, scale_var_bar_plot], ["PDF uncertainty", "Scale variation"],
-    #                        loc='lower left', framealpha=1, fontsize=legend_fontsize)
+    legend1 = ax1.legend(loc='upper right', fontsize=legend_fontsize, framealpha=1)
+    ax1.legend([ATLAS_uncertainty, PDF_uncertainty, theory_uncertainty],
+                        ['ATLAS error', 'PDF error (68\% C.L.)', 'Total theory error'],
+                        loc='lower left', fontsize=legend_fontsize - 0.4, framealpha=1)
+    
     ax1.add_artist(legend1)
+
+    text_y1 = 1.11
+    text_y2 = 1.075
+
+    ax1.text(text_x, text_y1, r'$\sqrt{s} = 13$ TeV', fontsize=font_size)
+    ax1.text(text_x, text_y2, 'KKKS08 OPAL', fontsize=font_size)
+    
+    ax1.tick_params(axis='both', which='major', labelsize=axis_font_size)
+    ax2.tick_params(axis='both', which='major', labelsize=axis_font_size)
+    ax1.tick_params(direction='in', top=True, right=True)
+    ax1.minorticks_on()
+    ax1.tick_params(which='both', direction='in', top=True, right=True)
+    ax2.minorticks_on()
+    ax2.tick_params(which='both', direction='in', top=True, right=True)
+    ax2.tick_params(direction='in', top=True, right=True)
 
     plt.tight_layout()
 
-    plt.savefig(plots_directory + 'Rcpm/Rcpm_pTD_' + which_cross_sections_included + '.pdf')
+    plt.savefig(plots_directory + 'Rcpm/Rcpm_' + kinematic_variable + '_' + which_cross_sections_included + '.pdf')
     plt.show()
 
 
@@ -3107,8 +2785,7 @@ def Rcpm_pTD_varying_FF_fit(PDF_set, which_cross_sections_included):
                 HISTO_Rcpm_central[FF_index][pTD_index] = HISTO_central_sigma_vals[1][pTD_index] / \
                                                         HISTO_central_sigma_vals[3][pTD_index]
 
-    #print(HISTO_Rcpm_central[0])
-    #print(HISTO_Rcpm_central[1])
+
     varying_FF_fit_ratio = np.zeros(5)
 
     print(HISTO_Rcpm_central[0])
@@ -3172,11 +2849,11 @@ def Rcpm_pTD_varying_FF_fit(PDF_set, which_cross_sections_included):
     plt.show()
 
 
-pTD_plot(['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180'], True, theory_labels)
+#pTD_plot(['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180'], True, theory_labels)
 #pTD_plot(['CT18ANLO', 'CT18ANNLO'], False, ['CT18ANLO', 'CT18ANNLO'])
 #pTD_effect_of_subtraction_plot()
 #pTD_varying_FF_fit('CT18ANLO', 58, process, True, ['KKKS08_opal', 'KKKS08_global', 'SMSKA19'], ['KKKS08 OPAL', 'KKKS08 GLOBAL', 'SMSKA19'])
-#eta_lept_plot()
+eta_lept_plot()
 #etaD_plot()
 #z_variation("NLO", 'CT18ANLO')
 #z_def_difference(process, 'CT18ANLO', 58, False)
@@ -3185,8 +2862,5 @@ pTD_plot(['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180'], True, theo
 #Rcpm('Dstar')
 #Rcpm_pp_pPb()
 #total_cross_section()
-#Rcpm_eta_lept('both', True, ['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180'], ['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo'])
-#Rcpm_eta_lept('both', False, ['CT18ANLO', 'CT18ANNLO'], ['CT18ANLO', 'CT18ANNLO'])
-#Rcpm_pTD('both', True, ['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180'])
-#Rcpm_pTD('both', True, ['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180'])
+#Rcpm_bin_integrated('pTD', 'both', True, ['NNPDF40_nlo_pch_as_01180'])
 #Rcpm_pTD_varying_FF_fit('CT18ANLO', 'both')

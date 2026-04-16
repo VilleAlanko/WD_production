@@ -382,7 +382,7 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, which_cross_sections_included)
     ax2.tick_params(direction='in', top=True, right=True)
 
     legend1 = ax1.legend(loc='upper right', fontsize=legend_fontsize, framealpha=1)
-    legend2 = ax1.legend([ATLAS_uncertainty, before_reweighting, after_reweighting],
+    ax1.legend([ATLAS_uncertainty, before_reweighting, after_reweighting],
                         ['ATLAS uncertainty', 'Before reweighting', 'After reweighting'],
                         loc='lower left', fontsize=legend_fontsize, framealpha=1)
     ax1.add_artist(legend1)
