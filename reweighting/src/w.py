@@ -21,7 +21,7 @@ D_pTD = (y_plus_pTD - y_minus_pTD) / 2.
 C_inverse_eta_lept = np.loadtxt('input/covariance_matrix/eta_lept_' + which_cross_sections_included + '.txt', delimiter=' ')
 C_inverse_pTD = np.loadtxt('input/covariance_matrix/pTD_' + which_cross_sections_included + '.txt', delimiter=' ')
 
-t = 0.1
+t = 0.3
 
 if (t == np.sqrt(10)):
     num_decimals = 2

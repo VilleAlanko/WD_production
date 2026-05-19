@@ -60,12 +60,6 @@ def ratio_HESSIAN(PDF_set, which_cross_sections_included, flavor_and_valence_lis
             print(sum(NEW_PDF))
             print(sum(OLD_PDF))
 
-            #print(flavor_and_valence_list[i])
-            #print(sum(NEW_PDF / OLD_PDF) / len(NEW_PDF))
-            log10x_max = 0.
-            log10x_step = 0.001
-            N = int((log10x_max - log10x_min) / log10x_step) + 1
-
             plt.plot(x, NEW_PDF / OLD_PDF, zorder=5, color=colors[tolerance_index], label=labels[tolerance_index])
 
         plt.fill_between(x, (OLD_PDF + OLD_ERR_PLUS) / OLD_PDF, (OLD_PDF - OLD_ERR_MINUS) / OLD_PDF, zorder=3, color='lightgray', alpha=0.5)
@@ -232,13 +226,18 @@ def ratio_of_ratio(flavor):
     plt.close()
 
 
-def absolute():
-    for flavor in flavors:
+def absolute(tolerance, which_cross_sections_included, flavors, valences):
+    for i in range(len(flavors)):
+        flavor = flavors[i]
+        valence = valences[i]
         plt.figure(figsize=(6, 4))
 
-        x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/flavor_' + str(flavor) + '.txt', delimiter=',', max_rows=1)
-        NEW_PDF = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/flavor_' + str(flavor) + '.txt', delimiter=',', skiprows=1, max_rows=1)
-        OLD_PDF = np.loadtxt('output/old_PDF_vals/' + PDF_set + '/flavor_' + str(flavor) + '.txt', delimiter=',', skiprows=1, max_rows=1)
+        x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_' + str(flavor) + '_t_' + tolerance + '_best.txt', delimiter=',', max_rows=1)
+        NEW_PDF = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_' + str(flavor) + '_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+        OLD_PDF = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_' + str(flavor) + '/best_vals_valence_' + str(valence) + '.txt', delimiter=',')
+
+        if (valence == 1):
+            NEW_PDF -= np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_' + str(-flavor) + '_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
 
         log10x_min = -4
         log10x_max = 0
@@ -250,8 +249,7 @@ def absolute():
 
         plt.plot([0, 2], [0, 0], color='black', zorder=0)
 
-        plt.xlim([10**(-9), 1])
-        plt.ylim([0, 100])
+        plt.xlim([10**(-3), 10**(-1)])
         plt.xscale('log')
 
         plt.ylabel(r'$x\cdot $ PDF', fontsize=axis_label_font_size)
@@ -261,7 +259,7 @@ def absolute():
 
         plt.tight_layout()
 
-        plt.savefig('plots/absolute/' + PDF_set + '_' + str(flavor) + '.pdf')
+        plt.savefig('plots/absolute/' + PDF_set + '_flavor_' + str(flavor) + '_valence_' + str(valence) + '.pdf')
 
         plt.close()
 
@@ -714,7 +712,6 @@ def Rcpm_approximation(PDF_set, which_cross_sections_included, tolerances, color
     fig, ax = plt.subplots(figsize=(6, 6))
     
     s_old = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_3/best_vals_valence_0.txt', delimiter=',')
-    d_old = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_1/best_vals_valence_0.txt', delimiter=',')
     sv_old = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_3/best_vals_valence_1.txt', delimiter=',')
     dv_old = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_1/best_vals_valence_1.txt', delimiter=',')
     
@@ -740,6 +737,17 @@ def Rcpm_approximation(PDF_set, which_cross_sections_included, tolerances, color
 
             plt.plot(x, 1. - (epsilon * (d_new - dbar_new) + (s_new - sbar_new)) / s_new, zorder=2,
                     label=labels[tolerance_index], color=colors[tolerance_index])
+            
+            print(tolerance)
+            print(sum(s_new))
+            print(sum(s_new - sbar_new))
+            print(sum(d_new - dbar_new))
+            print()
+            print(sum(s_old))
+            print(sum(sv_old))
+            print(sum(dv_old))
+            print()
+            print()
     
     else:
         x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
@@ -795,29 +803,126 @@ def Rcpm_approximation(PDF_set, which_cross_sections_included, tolerances, color
     plt.show()
 
 
+def Rcpm_approximation_v2(PDF_set, which_cross_sections_included, tolerances, colors, labels):
+    fig, ax = plt.subplots(figsize=(6, 6))
+    
+    s_old = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_3/best_vals_valence_0.txt', delimiter=',')
+    d_old = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_1/best_vals_valence_0.txt', delimiter=',')
+    sv_old = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_3/best_vals_valence_1.txt', delimiter=',')
+    dv_old = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_1/best_vals_valence_1.txt', delimiter=',')
+
+    epsilon = 0.222**2 / 0.975**2
+
+    if (PDF_set != 'NNPDF40_nlo_pch_as_01180'):
+        for tolerance_index in range(len(tolerances)):
+            tolerance = tolerances[tolerance_index]
+
+            x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                '/flavor_3_t_' + tolerances[0] + '_best.txt', delimiter=',', max_rows=1)
+            s_new = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                            '/flavor_3_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+            d_new = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                                '/flavor_1_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+            sbar_new = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                                '/flavor_-3_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+            dbar_new = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                                '/flavor_-1_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+
+            plt.plot(x, (epsilon * dbar_new + sbar_new) / (epsilon * d_new + s_new), zorder=2,
+                    label=labels[tolerance_index], color=colors[tolerance_index])
+            
+            print(tolerance)
+            print(sum(s_new))
+            print(sum(s_new - sbar_new))
+            print(sum(d_new - dbar_new))
+            print()
+            print(sum(s_old))
+            print(sum(sv_old))
+            print(sum(dv_old))
+            print()
+            print()
+    
+    else:
+        x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                '/flavor_3_best.txt', delimiter=',', max_rows=1)
+        s_new = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                        '/flavor_3_best.txt', delimiter=',', skiprows=1, max_rows=1)
+        d_new = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                            '/flavor_1_best.txt', delimiter=',', skiprows=1, max_rows=1)
+        sbar_new = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                            '/flavor_-3_best.txt', delimiter=',', skiprows=1, max_rows=1)
+        dbar_new = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                            '/flavor_-1_best.txt', delimiter=',', skiprows=1, max_rows=1)
+        
+        print(sum(s_new))
+        print(sum(s_new - sbar_new))
+        print(sum(d_new - dbar_new))
+        print()
+        print(sum(s_old))
+        print(sum(sv_old))
+        print(sum(dv_old))
+
+        #plt.plot(x, , zorder=2,
+        #        label='Reweighted', color='red')
+
+    plt.plot(x, (epsilon * (d_old - dv_old) + (s_old - sv_old)) / (epsilon * d_old + s_old), color='black', label='original', zorder=1)
+
+    #plt.fill_between(x, 1. - (epsilon * dv_old + sv_old) / s_old + error_plus,
+    #                    1. - (epsilon * dv_old + sv_old) / s_old - error_minus,
+    #                    color='lightgray', alpha=0.5, zorder=0)
+    
+    ax.xaxis.set_major_locator(ticker.FixedLocator([1e-2, 1e-1]))
+    ax.set_xticklabels([r'$10^{-2}$', r'$10^{-1}$'])
+    ax.xaxis.set_minor_locator(ticker.LogLocator(base=10.0, subs=np.arange(2, 10)*0.1))
+    ax.xaxis.set_minor_formatter(ticker.NullFormatter())
+
+    ax.set_xlim(1e-2, 1e-1)
+    ax.set_xscale('log')
+    ax.xaxis.set_major_locator(ticker.FixedLocator([1e-2, 1e-1]))
+    ax.xaxis.set_minor_locator(ticker.LogLocator(base=10.0, subs=np.arange(2, 10)*0.1))
+    ax.xaxis.set_minor_formatter(ticker.NullFormatter())
+
+    ax.minorticks_on()
+    ax.tick_params(which='both', direction='in', top=True, right=True, zorder=100, labelsize=16)
+
+    plt.ylim([0.45, 1.1])
+
+    plt.xlabel(r'$x$', fontsize=axis_label_font_size)
+    plt.ylabel(r'$R_c^\pm$', fontsize=axis_label_font_size)
+    
+    plt.legend(loc='lower left', fontsize=15)
+    plt.tight_layout()
+    plt.savefig('plots/Rcpm_approximation/' + PDF_set + '_' + which_cross_sections_included + '.pdf')
+    plt.show()
+
+
 
 PDF_set = 'MSHT20nlo_as118'
 #PDF_set = 'NNPDF40_nlo_pch_as_01180'
 #PDF_set = 'CT18ANLO'
-flavors = [1, -1, 3, -3, 21]
+flavors = [1, 3, 21]
 which_cross_sections_included = 'both'
 
-#ratio_HESSIAN(PDF_set, which_cross_sections_included, [[1, 1], [3, 0], [21, 0], [1, 0]], [r'$d_\text{valence}$', r'$s$', r'$g$', r'$d$'], ['3.16', '1', '0.5'],
-#                   [r'$t = \sqrt{10}$', r'$t = 1$', r'$t = 0.5$', r'$t = 0.01$'], ['red', 'green', 'blue', 'purple'],
-#                   [0.9, 0.6, 0.9, 0.9], [1.1, 1.15, 1.05, 1.1])
-#ratio_HESSIAN(PDF_set, which_cross_sections_included, [[1, 1], [3, 0], [3, 1], [21, 0], [1, 0]], [r'$d_\text{valence}$', r'$s$', r'$s_\text{valence}$', r'$g$', r'$d$'],
-#                ['3.16', '1', '0.5', '0.1'], [r'$t = \sqrt{10}$', r'$t = 1$', r'$t = 0.5$', r'$t = 0.1$'], ['red', 'green', 'blue', 'purple', 'orange'],
-#                [0.9, 0.9, -1, 0.94, 0.9], [1.1, 1.1, 3, 1.03, 1.1])
+#ratio_HESSIAN(PDF_set, which_cross_sections_included, [[1, 1], [3, 0], [21, 0], [1, 0]],
+#              [r'$d_\text{valence}$', r'$s$', r'$g$', r'$d$'], ['3.16', '1', '0.1', '0.01', '0.001'],
+#              [r'$t = \sqrt{10}$', r'$t = 1$', r'$t = 0.1$', r'$t = 0.01$', r'$0.001$'], ['red', 'green', 'blue', 'purple', 'orange'],
+#              [0.9, 0.6, 0.9, 0.9], [1.1, 1.15, 1.05, 1.1])
+#ratio_HESSIAN(PDF_set, which_cross_sections_included, [[1, 1], [3, 0], [3, 1], [21, 0], [1, 0]],
+#              [r'$d_\text{valence}$', r'$s$', r'$s_\text{valence}$', r'$g$', r'$d$'], ['3.16', '1', '0.1', '0.01'],
+#              [r'$t = \sqrt{10}$', r'$t = 1$', r'$t = 0.1$', r'$t = 0.01$'], ['red', 'green', 'blue', 'purple', 'orange'],
+#              [0.9, 0.9, -1, 0.94, 0.9], [1.1, 1.1, 3, 1.03, 1.1])
 #ratio_MC(PDF_set, which_cross_sections_included, [[1, 1], [3, 1], [3, 0], [21, 0]], [r'$d_\text{valence}$', r'$s_\text{valence}$', r'$s$', r'$g$'],
 #                   [0.4, -3, 0.6, 0.94], [1.2, 7, 1.25, 1.03])
 #ratio_to_other_PDF('MSHT20nlo_as118', 'CT18ANLO', flavors, which_cross_sections_included)
 #ratio_of_ratio(1)
 #ratio_of_ratio(3)
-#absolute()
-Rcpm_approximation(PDF_set, which_cross_sections_included, ['3.16', '1', '0.5', '0.01', '0.001'], ['red', 'green', 'blue', 'orange', 'purple', 'pink'],
-                   [r'$t = \sqrt{10}$', r'$t = 1$', r'$t = 0.5$', r'$t = 0.01$', r'$t = 0.001$', r'$t = 0.0001$'])
+#absolute('0.01', 'both', [1, 1, 3, 3, 21], [1, 0, 1, 0, 0])
+Rcpm_approximation(PDF_set, which_cross_sections_included, ['3.16', '1', '0.3', '0.01'], ['red', 'green', 'blue', 'orange', 'purple', 'pink'],
+                   [r'$t = \sqrt{10}$', r'$t = 1$', r'$t = 0.3$', r'$t = 0.01$', r'$t = 0.001$', r'$t = 0.0001$'])
+#Rcpm_approximation_v2(PDF_set, which_cross_sections_included, ['3.16', '1', '0.3'], ['red', 'green', 'blue', 'orange', 'purple', 'pink'],
+#                   [r'$t = \sqrt{10}$', r'$t = 1$', r'$t = 0.3$', r'$t = 0.01$', r'$t = 0.001$', r'$t = 0.0001$'])
 #Rcpm_OLD_and_NEW_and_DATA('eta_lept', which_cross_sections_included, '0.01')
-#Rcpm_OLD_and_NEW_and_DATA('pTD', which_cross_sections_included, '0.001')
+#Rcpm_OLD_and_NEW_and_DATA('pTD', which_cross_sections_included, '0.1')
 #strangeness_asymmetry_v2(PDF_set, which_cross_sections_included, True, False)
 #weights(PDF_set, which_cross_sections_included, '1')
 

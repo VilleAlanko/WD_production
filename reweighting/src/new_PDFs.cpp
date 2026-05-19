@@ -7,7 +7,7 @@
 using namespace LHAPDF;
 using namespace std;
 
-const double Q = 80.385;
+const double Q2 = pow(80.385, 2);
 
 const double log10x_min = -4;
 const double log10x_max = 0;
@@ -131,18 +131,20 @@ void HESSIAN(int num_err_members, vector <int> flavors, vector <string> toleranc
                         x_vals.push_back(x);
                     }
 
-                    double xPDF_val = pdf->xfxQ(flavor, x, Q);
-                    
+                    double xPDF_val = pdf->xfxQ2(flavor, x, Q2);
+
                     if (member_id == 0)
                     {
                         PDF_best_OLD[x_index] = xPDF_val;
                     }
                     else if (member_id % 2 == 0)
                     {
+                        // members 2, 4, 6,...
                         PDF_minus_members_OLD[int(member_id / 2) - 1][x_index] = xPDF_val;
                     }
                     else
                     {
+                        // members 1, 3, 5,...
                         PDF_plus_members_OLD[int((member_id - 1) / 2)][x_index] = xPDF_val;
                     }
                 }
@@ -394,16 +396,16 @@ void MC(int num_err_members, vector <int> flavors, string PDF_set, string which_
             {
                 double x = pow(10, log10x_min + log10x_step * x_index);
 
-                double PDF_val = pdf->xfxQ(flavor, x, Q);
+                double xPDF_val = pdf->xfxQ2(flavor, x, Q2);
                 
                 if (member_id == 0)
                 {
-                    PDF_best_OLD[x_index] = PDF_val;
+                    PDF_best_OLD[x_index] = xPDF_val;
                 }
                 else
                 {
-                    best_member_NEW[x_index] += omega[member_id - 1] * PDF_val;
-                    err_members_NEW[member_id - 1][x_index] = omega[member_id - 1] * PDF_val;
+                    best_member_NEW[x_index] += omega[member_id - 1] * xPDF_val;
+                    err_members_NEW[member_id - 1][x_index] = omega[member_id - 1] * xPDF_val;
                 }
             }
         }

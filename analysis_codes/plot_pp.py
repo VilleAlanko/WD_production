@@ -570,7 +570,6 @@ def compute_Rcpm_pdf_err_pTD_HESSIAN(PDF_index, Rcpm_central, which_cross_sectio
                 Rcpm_vals_plus_member[member_index - 1, bin_index] = Rcpm_plus
                 Rcpm_vals_minus_member[member_index - 1, bin_index] = Rcpm_minus
 
-
                 Rcpm_err_plus[bin_index] += max(Rcpm_plus - Rcpm_central[bin_index],
                                     Rcpm_central[bin_index] - Rcpm_minus,
                                     0)**2
@@ -3125,7 +3124,7 @@ def Rcpm_LO_bin_integrated(kinematic_quantity, which_cross_sections_included, PD
 #Rcpm('Dstar')
 #Rcpm_pp_pPb()
 #total_cross_section()
-Rcpm_bin_integrated('eta_lept', 'both', True, ['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180'])
+Rcpm_bin_integrated('pTD', 'both', True, ['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180'])
 #Rcpm_pTD_varying_FF_fit('CT18ANLO', 'both')
 #Rcpm_LO('D', 'MSHT20nlo_as118', 'minus', 'KKKS08_opal')
 #Rcpm_LO_bin_integrated('pTD', 'both', 'MSHT20nlo_as118')

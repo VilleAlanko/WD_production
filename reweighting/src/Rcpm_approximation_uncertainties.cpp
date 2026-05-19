@@ -95,10 +95,10 @@ int OLD(string PDF_set, int num_err_members)
         {
             double x = pow(10, log10x_min + log10x_step * x_index);
 
-            double s = pdf->xfxQ2(3, x, mu_fact2) / x;
-            double sbar = pdf->xfxQ2(-3, x, mu_fact2) / x;
-            double d = pdf->xfxQ2(1, x, mu_fact2) / x;
-            double dbar = pdf->xfxQ2(-1, x, mu_fact2) / x;
+            double s = pdf->xfxQ2(3, x, mu_fact2);
+            double sbar = pdf->xfxQ2(-3, x, mu_fact2);
+            double d = pdf->xfxQ2(1, x, mu_fact2);
+            double dbar = pdf->xfxQ2(-1, x, mu_fact2);
 
             if (member_id != 0)
             {
@@ -137,9 +137,14 @@ int OLD(string PDF_set, int num_err_members)
                 sum_minus_sq += minus * minus;
             }
 
-            err_plus_vals[x_index]  = sqrt(sum_plus_sq) / 1.645;
+            err_plus_vals[x_index]  = sqrt(sum_plus_sq);
+            err_minus_vals[x_index] = sqrt(sum_minus_sq);
 
-            err_minus_vals[x_index] = sqrt(sum_minus_sq) / 1.645;
+            if (PDF_set == "CT18ANLO")
+            {
+                err_plus_vals[x_index] /= 1.645;
+                err_minus_vals[x_index] /= 1.645;
+            }
         }
     }
     else
