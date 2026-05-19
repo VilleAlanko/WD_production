@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.linalg import inv
 
-PDF_set = 'CT18ANLO'
+PDF_set = 'MSHT20nlo_as118'
 which_cross_sections_included = 'both'
 
 y_plus_eta_lept = np.loadtxt('input/theory_values/HESSIAN/variation/eta_lept_' + which_cross_sections_included + '_' + PDF_set + '_plus.txt', delimiter=',')
@@ -21,7 +21,12 @@ D_pTD = (y_plus_pTD - y_minus_pTD) / 2.
 C_inverse_eta_lept = np.loadtxt('input/covariance_matrix/eta_lept_' + which_cross_sections_included + '.txt', delimiter=' ')
 C_inverse_pTD = np.loadtxt('input/covariance_matrix/pTD_' + which_cross_sections_included + '.txt', delimiter=' ')
 
-t = np.sqrt(10.)
+t = 0.1
+
+if (t == np.sqrt(10)):
+    num_decimals = 2
+else:
+    num_decimals = 4
 
 # Number of members
 N = len(D_eta_lept[0, :])
@@ -33,12 +38,14 @@ B = np.zeros((N, N))
 
 for k in range(N):
     for n in range(N):
-        if (k == n):
-            B[k, n] += t**2
         for i in range(M):
             for j in range(M):
-                B[k, n] += D_eta_lept[i, k] * C_inverse_eta_lept[i, j] * D_eta_lept[j, n]
-                B[k, n] += D_pTD[i, k] * C_inverse_pTD[i, j] * D_pTD[j, n]
+                B[k,n] += (D_eta_lept[i,k] * C_inverse_eta_lept[i,j] * D_eta_lept[j,n] +
+                    D_pTD[i,k] * C_inverse_pTD[i,j] * D_pTD[j,n])
+
+B += (t**2) * np.eye(N)
+
+B = 0.5 * (B + B.T)
 
 a = np.zeros(N)
 
@@ -53,13 +60,9 @@ wmin = -1. * inv(B) @ a
 P = sum(wmin**2)
 print('P / delta chi^2 =', P)
 
-np.savetxt('output/wmin_' + PDF_set + '_' + which_cross_sections_included + '.txt', wmin)
+np.savetxt('output/wmin_' + PDF_set + '_' + which_cross_sections_included + '_t_' + str(round(t, num_decimals)) + '.txt', wmin)
 
-eps, v = np.linalg.eig(B)
-
-eps = np.real(eps)
-
-print(eps)
+eps, v = np.linalg.eigh(B)
 
 dw = np.zeros((N, N))
 
@@ -67,16 +70,4 @@ for i in range(N):
     for k in range(N):
         dw[i, k] = v[k][i] * np.sqrt(1. / eps[k]) * t
 
-np.savetxt('output/dw_' + PDF_set + '_' + which_cross_sections_included + '.txt', dw)
-
-delta_y = np.zeros(2 * M)
-
-for i in range(M):
-    delta_y[i] = y_best_eta_lept[i] - y_exp_eta_lept[i]
-    delta_y[M + i] = y_best_pTD[i] - y_exp_pTD[i]
-
-
-
-
-
-
+np.savetxt('output/dw_' + PDF_set + '_' + which_cross_sections_included + '_t_' + str(round(t, num_decimals)) + '.txt', dw)

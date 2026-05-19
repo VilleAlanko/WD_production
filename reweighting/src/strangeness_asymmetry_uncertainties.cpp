@@ -158,7 +158,7 @@ int OLD(string PDF_set, int num_err_members)
 
             if (PDF_set == "NNPDF40_nlo_pch_as_01180")
             {
-                err_plus_vals[x_index] = err_plus_vals[x_index] * 1.645;
+                err_plus_vals[x_index] = err_plus_vals[x_index];
             }
 
             err_minus_vals[x_index] = err_plus_vals[x_index];
@@ -306,7 +306,7 @@ int NEW(string PDF_set, int num_err_members, string which_cross_sections_include
 
             if (PDF_set == "NNPDF40_nlo_pch_as_01180")
             {
-                err_plus_vals[x_index] = err_plus_vals[x_index] * 1.645;
+                err_plus_vals[x_index] = err_plus_vals[x_index];
             }
 
             err_minus_vals[x_index] = err_plus_vals[x_index];

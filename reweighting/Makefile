@@ -12,24 +12,30 @@ SRCS_C   := $(INIH_DIR)/ini.c
 # Source files for executables
 SRC1 = src/new_PDFs.cpp
 SRC2 = src/strangeness_asymmetry_uncertainties.cpp
+SRC3 = src/Rcpm_approximation_uncertainties.cpp
 
 # Targets
 TARGET1 = new_PDFs
 TARGET2 = strangeness_asymmetry_uncertainties
+TARGET3 = Rcpm_approximation_uncertainties
 
 # Object files
 OBJS_COMMON = $(SRCS_CPP:.cpp=.o) $(SRCS_C:.c=.o)
 OBJS1 = $(SRC1:.cpp=.o) $(OBJS_COMMON)
 OBJS2 = $(SRC2:.cpp=.o) $(OBJS_COMMON)
+OBJS3 = $(SRC3:.cpp=.o) $(OBJS_COMMON)
 
 # Default target
-all: $(TARGET1) $(TARGET2)
+all: $(TARGET1) $(TARGET2) $(TARGET3)
 
 # Build rules
 $(TARGET1): $(OBJS1)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(TARGET2): $(OBJS2)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+$(TARGET3): $(OBJS3)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Compilation rules
@@ -41,5 +47,5 @@ $(TARGET2): $(OBJS2)
 
 # Clean rule
 clean:
-	rm -f $(TARGET1) $(TARGET2) $(OBJS_COMMON) $(SRC1:.cpp=.o) $(SRC2:.cpp=.o)
+	rm -f $(TARGET1) $(TARGET2) $(TARGET3) $(OBJS_COMMON) $(SRC1:.cpp=.o) $(SRC2:.cpp=.o) $(SRC3:.cpp=.o)
 

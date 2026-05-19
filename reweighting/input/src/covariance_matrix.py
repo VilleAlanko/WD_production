@@ -101,14 +101,14 @@ def cov_Rcpm(starless, star, kinematic_quantity, which_cross_sections_included):
 
     cov_Rcpm = Rcpm_derivatives @ cov_exp @ Rcpm_derivatives.T
 
+    print(cov_Rcpm)
+
     cov_Rcpm_inv = inv(cov_Rcpm)
 
     Rcpm_errors = np.zeros(5)
 
     for i in range(5):
         Rcpm_errors[i] = np.sqrt(cov_Rcpm[i, i])
-    
-    print(Rcpm_errors)
     
 
     np.savetxt('exp_errors/' + kinematic_quantity + '_' + which_cross_sections_included + '.txt', Rcpm_errors)

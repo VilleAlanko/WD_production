@@ -2,9 +2,9 @@ import numpy as np
 from scipy.stats import chi2
 
 PDF_sets = ['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180']
-which_cross_sections_included = 'D'
+which_cross_sections_included = 'both'
 
-dof = 10
+dof = 5
 
 print()
 print('Which cross sections included:', which_cross_sections_included)
@@ -31,7 +31,7 @@ for PDF_set in PDF_sets:
     for i in range(N):
         #print(y_exp_eta_lept[i] - y_best_eta_lept[i])
         for j in range(N):
-            chi_squared += (y_exp_eta_lept[i] - y_best_eta_lept[i]) * C_inverse_eta_lept[i, j] * (y_exp_eta_lept[j] - y_best_eta_lept[j])
+            #chi_squared += (y_exp_eta_lept[i] - y_best_eta_lept[i]) * C_inverse_eta_lept[i, j] * (y_exp_eta_lept[j] - y_best_eta_lept[j])
             chi_squared += (y_exp_pTD[i] - y_best_pTD[i]) * C_inverse_pTD[i, j] * (y_exp_pTD[j] - y_best_pTD[j])
 
     print(PDF_set)
