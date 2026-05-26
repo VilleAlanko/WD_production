@@ -21,7 +21,7 @@ fragmentation_set = 'KKKS08_opal'
 # minus or plus
 z_def = 'minus'
 
-process = "W-D+"
+process = "W+Dstar-"
 
 PDF_sets = ['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180']
 #PDF_sets = ['CT18ANLO', 'NNPDF40_nlo_pch_as_01180', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180']
@@ -103,14 +103,13 @@ def compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
                         str(eta_lept_index) + '_vals.txt', delimiter=',')
                 except FileNotFoundError:
                     stop = True
-                    print("!")
                     break
                 
                 scales_MCerrs[scale_index][eta_lept_index] = np.loadtxt(
                     main_vals_directory + process + '/NLO/' + z_def + '/' + \
                     fragmentation_set + '/' + FF_scale_choice + '/scale_variation/' + PDF_set + '/' + scale_names[scale_index] + '/' + \
                     str(eta_lept_index) + '_errs.txt', delimiter=',')
-                
+
                 if (subtraction_flag is True):
                     scales_vals[scale_index][eta_lept_index] -= np.loadtxt(
                         main_vals_directory + process + '/subtraction/' + z_def + '/' + \
@@ -121,21 +120,47 @@ def compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
                         main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                         fragmentation_set + '/' + FF_scale_choice + '/scale_variation/' + PDF_set + '/' + scale_names[scale_index] + '/' + \
                         str(eta_lept_index) + '_errs.txt', delimiter=',')
-            
+
             if (stop):
                 break
+
+        if (PDF_set == "NNPDF40_nlo_pch_as_01180"):
+            average = np.zeros((284, num_etac_bins))
+                    
+            for member in range(1, int(num_err_members_in_set + 1)):
+                average += np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
+                                                        fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
+                                                        str(member) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+                
+                if (subtraction_flag is True):
+                    average -= np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
+                                            fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
+                                            str(member) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+
+            average = average / (num_err_members_in_set * 1.)
+
+            pdf_errs_central = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
+                                            fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
+                                            str(0) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+
+            if (subtraction_flag is True):
+                pdf_errs_central -= np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
+                                            fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
+                                            str(0) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+
+            scales_vals[0][eta_lept_index] = average + scales_vals[0][eta_lept_index] - pdf_errs_central
     
         # Get pdf err values
         if (load_pdf_errs):
             pdf_errs_central = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
                                             str(0) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
-            
+
             if (subtraction_flag is True):
                 pdf_errs_central -= np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
                                             str(0) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
-            
+
             if (PDF_set == 'CT18NLO' or PDF_set == 'CT18ANLO' or PDF_set == 'MSHT20nlo_as118'):
                 # This loops through error members, but isn't directly the member id.
                 for i in range(1, int(num_err_members_in_set / 2 + 1)):
@@ -144,16 +169,16 @@ def compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
 
                     pdf_err_member_plus = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                            str(2 * (i - 1) + 1) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+                                            str(2 * i - 1) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
 
                     pdf_err_member_minus = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
                                             str(2 * i) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
-                    
+
                     if (subtraction_flag is True):
                         pdf_err_member_plus -= np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                                 fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                str(2 * (i - 1) + 1) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+                                                str(2 * i - 1) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
                         pdf_err_member_minus -= np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                                 fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
                                                 str(2 * i) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
@@ -180,22 +205,6 @@ def compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
                     pdf_err_minus[eta_lept_index] = pdf_err_minus[eta_lept_index] / 1.645
 
             if (PDF_set == 'NNPDF40_nlo_pch_as_01180'):
-                average = 0.
-                n_sum = 0
-                for member in range(1, int(num_err_members_in_set + 1)):
-                    average += np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
-                                                            fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                            str(member) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
-                    
-                    if (subtraction_flag is True):
-                        average -= np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
-                                                fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                str(member) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
-
-                average = average / num_err_members_in_set
-                
-                scales_vals[0][eta_lept_index] = average + scales_vals[0][eta_lept_index] - pdf_errs_central
-
                 sum_val = np.zeros((284, num_etac_bins))
 
                 for member in range(1, int(num_err_members_in_set + 1)):
@@ -226,7 +235,7 @@ def compute_normalized_3D_values_for_a_pdf_member(process, PDF_index, member_ind
         process_index = 2
     else:
         process_index = 3
-        
+
     # Here "normalized" means that the difference between the member value and the central value is added to the central value of the scale variation run.
     member_vals_normalized = [np.zeros((284, num_etac_bins)) for _ in range(5)]
 
@@ -240,8 +249,6 @@ def compute_normalized_3D_values_for_a_pdf_member(process, PDF_index, member_ind
                                                 fragmentation_set + '/frag_main_scale/scale_variation/' + PDF_set + '/central/' + \
                                                 str(eta_lept_index) + '_vals.txt', delimiter=',')
 
-        PDF_set = PDF_sets[PDF_index]
-
         pdf_central = np.zeros((284, num_etac_bins))
 
         if (PDF_set != "NNPDF40_nlo_pch_as_01180"):
@@ -251,6 +258,7 @@ def compute_normalized_3D_values_for_a_pdf_member(process, PDF_index, member_ind
                                 np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                                 fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
                                                 str(0) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+            
         elif (PDF_set == 'NNPDF40_nlo_pch_as_01180'):
             if (member_index < 2):
                 member_sum = np.zeros((284, num_etac_bins))
@@ -281,7 +289,7 @@ def compute_normalized_3D_values_for_a_pdf_member(process, PDF_index, member_ind
                                         str(member_index) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
 
         member_vals_normalized[eta_lept_index] = member_vals - pdf_central + scale_var_central
-    
+
     return member_vals_normalized
 
 
@@ -313,6 +321,7 @@ def compute_Rcpm_pdf_err_HESSIAN(PDF_index, Rcpm_central, which_cross_sections_i
         if (which_cross_sections_included == 'both'):
             Rcpm_plus = (WpDm_pdf_plus + WpDstarm_pdf_plus) / (WmDp_pdf_plus + WmDstarp_pdf_plus)
             Rcpm_minus = (WpDm_pdf_minus + WpDstarm_pdf_minus) / (WmDp_pdf_minus + WmDstarp_pdf_minus)
+
         elif (which_cross_sections_included == 'D'):
             Rcpm_plus = (WpDm_pdf_plus) / (WmDp_pdf_plus)
             Rcpm_minus = (WpDm_pdf_minus) / (WmDp_pdf_minus)
@@ -320,8 +329,8 @@ def compute_Rcpm_pdf_err_HESSIAN(PDF_index, Rcpm_central, which_cross_sections_i
             Rcpm_plus = (WpDstarm_pdf_plus) / (WmDstarp_pdf_plus)
             Rcpm_minus = (WpDstarm_pdf_minus) / (WmDstarp_pdf_minus)
 
-        Rcpm_err_plus += max(Rcpm_plus - Rcpm_central, Rcpm_central - Rcpm_minus, 0)**2
-        Rcpm_err_minus += max(Rcpm_central - Rcpm_plus, Rcpm_minus - Rcpm_central, 0)**2
+        Rcpm_err_plus += max(Rcpm_plus - Rcpm_central, Rcpm_minus - Rcpm_central, 0)**2
+        Rcpm_err_minus += max(Rcpm_central - Rcpm_plus, Rcpm_central - Rcpm_minus, 0)**2
 
     Rcpm_err_plus = np.sqrt(Rcpm_err_plus)
     Rcpm_err_minus = np.sqrt(Rcpm_err_minus)
@@ -335,7 +344,7 @@ def compute_Rcpm_pdf_err_HESSIAN(PDF_index, Rcpm_central, which_cross_sections_i
 
 def compute_Rcpm_pdf_err_MC(PDF_index, Rcpm_central, which_cross_sections_included):
     average = 0.
-    
+
     Rcpm_err_vals = np.zeros(num_err_members_in_sets[PDF_index])
 
     for member_index in range(1, num_err_members_in_sets[PDF_index] + 1):
@@ -432,10 +441,10 @@ def compute_Rcpm_pdf_err_eta_lept_HESSIAN(PDF_index, Rcpm_central, which_cross_s
             Rcpm_vals_minus_member[member_index - 1, eta_lept_index] = Rcpm_minus
 
             Rcpm_err_plus[eta_lept_index] += max(Rcpm_plus - Rcpm_central[eta_lept_index],
-                                Rcpm_central[eta_lept_index] - Rcpm_minus, 0)**2
+                                Rcpm_minus - Rcpm_central[eta_lept_index], 0)**2
 
             Rcpm_err_minus[eta_lept_index] += max(Rcpm_central[eta_lept_index] - Rcpm_plus,
-                                Rcpm_minus - Rcpm_central[eta_lept_index], 0)**2
+                                Rcpm_central[eta_lept_index] - Rcpm_minus, 0)**2
 
     np.savetxt(reweighting_input_directory + 'theory_values/HESSIAN/variation/eta_lept_' + which_cross_sections_included + '_' + \
                 PDF_sets[PDF_index] + '_plus.txt', Rcpm_vals_plus_member.T, delimiter=',')
@@ -571,11 +580,11 @@ def compute_Rcpm_pdf_err_pTD_HESSIAN(PDF_index, Rcpm_central, which_cross_sectio
                 Rcpm_vals_minus_member[member_index - 1, bin_index] = Rcpm_minus
 
                 Rcpm_err_plus[bin_index] += max(Rcpm_plus - Rcpm_central[bin_index],
-                                    Rcpm_central[bin_index] - Rcpm_minus,
+                                    Rcpm_minus - Rcpm_central[bin_index],
                                     0)**2
 
                 Rcpm_err_minus[bin_index] += max(Rcpm_central[bin_index] - Rcpm_plus,
-                                    Rcpm_minus - Rcpm_central[bin_index],
+                                    Rcpm_central[bin_index] - Rcpm_minus,
                                     0)**2
                 
                 WpDm_plus = 0.
@@ -758,12 +767,8 @@ def pTD_plot(PDF_sets, plot_errors_flag, theory_labels):
             PDF_set = PDF_sets[PDF_index]
             num_err_members_in_set = num_err_members_in_sets[PDF_index]
 
-            if (plot_errors_flag):
-                scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
+            scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
                                                                             process, True, True, True, 'frag_main_scale', z_def, fragmentation_set)
-            else:
-                scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                            process, False, False, True, 'frag_main_scale', z_def, fragmentation_set)
 
             HISTO_central_sigma_vals = np.zeros(5)
             HISTO_scales_dd_sigma_vals = np.zeros(5)
@@ -800,7 +805,6 @@ def pTD_plot(PDF_sets, plot_errors_flag, theory_labels):
 
             if (variation_flag):
                 if (QCD_order == "NLO"):
-                    print(PDF_set, HISTO_central_sigma_vals)
                     ax1.plot(places_inside_bins_log_scale[PDF_index, :], HISTO_central_sigma_vals, marker=markers[PDF_index],
                                 color=marker_color, markersize=5, linestyle='none',
                                 label=theory_labels[PDF_index], zorder=4)
@@ -813,13 +817,14 @@ def pTD_plot(PDF_sets, plot_errors_flag, theory_labels):
                         ax1.bar(places_inside_bins_right_log_scale[PDF_index, :], HISTO_scales_uu_sigma_vals - HISTO_scales_dd_sigma_vals, width=bar_widths[PDF_index],
                                     bottom=HISTO_central_sigma_vals + HISTO_scales_dd_sigma_vals, color=scale_var_color,
                                     zorder=2)
+                        
+                        print(HISTO_pdf_err_minus)
+                        print(HISTO_pdf_err_plus)
 
             else:
                 #ax1.hlines(HISTO_central_sigma_vals, pTD_bins[0:-1], pTD_bins[1:], color=line_colors[QCD_order_index], zorder=5, label='LO')
                 print('NOT IMPLEMENTED YET')
                 exit()
-
-            print(HISTO_central_sigma_vals)
 
         if (QCD_order == 'NLO'):
             ratios = np.zeros(5)
@@ -1371,12 +1376,8 @@ def pTD_varying_FF_fit(PDF_set, num_err_members, process, plot_errors_flag, FF_f
         for QCD_order_index in range(1, 2):
             QCD_order = QCD_orders[QCD_order_index]
 
-            if (plot_errors_flag):
-                scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members,
-                                                                            process, True, True, True, 'frag_main_scale', z_def, FF_fit)
-            else:
-                scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members,
-                                                                            process, False, False, True, 'frag_main_scale', z_def, FF_fit)
+            scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members,
+                                                                        process, True, True, True, 'frag_main_scale', z_def, FF_fit)
 
             HISTO_central_sigma_vals = np.zeros(5)
             HISTO_scales_dd_sigma_vals = np.zeros(5)
@@ -1967,12 +1968,9 @@ def z_def_difference(process, PDF_set, num_err_members_in_set, PDF_errors_flag):
     for z_def_index in range(2):
         z_def = z_def_here[z_def_index]
 
-        if (PDF_errors_flag):
-            scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
+        scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
                                                                         process, True, True, True, 'frag_main_scale', z_def, fragmentation_set)
-        else:
-            scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                        process, True, False, True, 'frag_main_scale', z_def, fragmentation_set)
+
 
         central_sigma_vals = np.zeros(5)
         scales_dd_sigma_vals = np.zeros(5)
@@ -2072,7 +2070,7 @@ def Rcpm(which_cross_sections_included):
 
     y_vals = [1, 2, 3]
 
-    for PDF_index in range(len(PDF_sets)):
+    for PDF_index in range(1, len(PDF_sets) - 1):
         PDF_set = PDF_sets[PDF_index]
         num_err_members_in_set = num_err_members_in_sets[PDF_index]
 
@@ -2107,6 +2105,11 @@ def Rcpm(which_cross_sections_included):
         Wp_star_scales_dd = sum(sum(sum(scales_vals[1])))
         Wp_star_scales_uu = sum(sum(sum(scales_vals[2])))
         Wp_star_MCerr = sum(sum(sum(scales_MCerrs[0])))
+
+        print(Wp_cross_section)
+        print(Wp_star_cross_section)
+        print(Wm_cross_section)
+        print(Wm_star_cross_section)
 
         if (which_cross_sections_included == 'both'):
             Rcpm = (Wp_cross_section + Wp_star_cross_section) / (Wm_cross_section + Wm_star_cross_section)
@@ -2277,22 +2280,22 @@ def Rcpm_pp_pPb():
 
         process_here = "W-D+"
         scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                    process_here, False, False, True, 'frag_main_scale', z_def, fragmentation_set)
+                                                                    process_here, False, True, True, 'frag_main_scale', z_def, fragmentation_set)
         Wm_cross_section += sum(sum(sum(scales_vals[0]))) / 2. * sign
 
         process_here = "W-Dstar+"
         scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                    process_here, False, False, True, 'frag_main_scale', z_def, fragmentation_set)
+                                                                    process_here, False, True, True, 'frag_main_scale', z_def, fragmentation_set)
         Wm_star_cross_section += sum(sum(sum(scales_vals[0]))) / 2. * sign
 
         process_here = "W+D-"
         scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                    process_here, False, False, True, 'frag_main_scale', z_def, fragmentation_set)
+                                                                    process_here, False, True, True, 'frag_main_scale', z_def, fragmentation_set)
         Wp_cross_section += sum(sum(sum(scales_vals[0]))) / 2. * sign
 
         process_here = "W+Dstar-"
         scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                    process_here, False, False, True, 'frag_main_scale', z_def, fragmentation_set)
+                                                                    process_here, False, True, True, 'frag_main_scale', z_def, fragmentation_set)
         Wp_star_cross_section += sum(sum(sum(scales_vals[0]))) / 2. * sign
 
         #print(Wm_cross_section)
@@ -2534,6 +2537,7 @@ def Rcpm_bin_integrated(kinematic_variable, which_cross_sections_included, plot_
     #--------------------------------------------------------------------------------------------------------------------------------------#
     #                                                             FILLING HISTOGRAMS                                                       #
     #--------------------------------------------------------------------------------------------------------------------------------------#
+
     Rcpm_atlas = np.zeros(5)
     Rcpm_atlas_error = np.zeros(5)
 
@@ -2567,7 +2571,7 @@ def Rcpm_bin_integrated(kinematic_variable, which_cross_sections_included, plot_
 
         corr_p_m = atlas_covariance_starless[4 - pTD_index, pTD_index]
         corr_sp_sm = atlas_covariance_star[4 - pTD_index, pTD_index]
-        
+
         if (which_cross_sections_included == 'both'):
             Rcpm_atlas[pTD_index] = (atlas_vals[1][pTD_index] + atlas_vals[3][pTD_index]) / \
                                         (atlas_vals[0][pTD_index] + atlas_vals[2][pTD_index])
@@ -2593,7 +2597,7 @@ def Rcpm_bin_integrated(kinematic_variable, which_cross_sections_included, plot_
 
     np.savetxt(reweighting_input_directory + 'experimental_values/' + kinematic_variable + '_' + which_cross_sections_included + '.txt', Rcpm_atlas, delimiter=',')
     
-    for PDF_index in range(len(PDF_sets)):
+    for PDF_index in range(1, len(PDF_sets) - 1):
         PDF_set = PDF_sets[PDF_index]
         num_err_members_in_set = num_err_members_in_sets[PDF_index]
 
@@ -2607,9 +2611,8 @@ def Rcpm_bin_integrated(kinematic_variable, which_cross_sections_included, plot_
 
         for process_index in range(len(processes_here)):
             scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(
-                PDF_set, num_err_members_in_set, processes_here[process_index], True, False, True, 'frag_main_scale', z_def, fragmentation_set)
+                PDF_set, num_err_members_in_set, processes_here[process_index], True, True, True, 'frag_main_scale', z_def, fragmentation_set)
 
-            
             if (kinematic_variable == 'pTD'):
                 for eta_lept_index in range(5):
                     bin_index = 0
@@ -2964,7 +2967,7 @@ def Rcpm_pTD_varying_FF_fit(PDF_set, which_cross_sections_included):
 
         for process_index in range(len(processes_here)):
             scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(
-                PDF_set, num_err_members_in_set, processes_here[process_index], False, False, True, 'frag_main_scale', z_def, FF_set_here)
+                PDF_set, num_err_members_in_set, processes_here[process_index], False, True, True, 'frag_main_scale', z_def, FF_set_here)
 
             for eta_lept_index in range(5):
                 bin_index = 0
@@ -3109,11 +3112,177 @@ def Rcpm_LO_bin_integrated(kinematic_quantity, which_cross_sections_included, PD
     print(Rcpm)
 
 
+def pTD_mc_variation(process, PDF_set, z_def, fragmentation_set):
+    # Atlas values. The rows from top to bottom are D+W-, D-W+, D*+W-, D*-W+.
+    atlas_vals = np.array([[15.04, 15.34, 13.78, 5.13, 0.93],
+                        [14.61, 15.12, 13.07, 4.84, 0.82],
+                        [14.50, 15.88, 14.19, 5.42, 1.07],
+                        [14.26, 15.60, 14.08, 5.11, 0.99]])
+
+    atlas_vals_up_err = np.array([[0.19+0.76, 0.14+0.78, 0.12+0.92, 0.07+0.34, 0.04+0.09],
+                                    [0.19+0.73, 0.15+0.75, 0.12+0.89, 0.07+0.31, 0.04+0.08],
+                                    [0.26+0.85, 0.19+0.73, 0.16+0.68, 0.10+0.31, 0.05+0.10],
+                                    [0.27+0.82, 0.20+0.74, 0.17+0.68, 0.10+0.30, 0.06+0.09]])
+
+    atlas_vals_down_err = np.array([[0.19+0.72, 0.14+0.75, 0.12+0.85, 0.07+0.31, 0.04+0.08],
+                                    [0.19+0.69, 0.15+0.72, 0.12+0.82, 0.07+0.29, 0.04+0.07],
+                                    [0.26+0.79, 0.19+0.69, 0.16+0.64, 0.10+0.29, 0.05+0.09],
+                                    [0.27+0.76, 0.20+0.70, 0.17+0.64, 0.10+0.28, 0.06+0.08]])
+
+    font_size = 17
+    axis_label_font_size = 19
+    axis_font_size = 14
+    legend_fontsize = 16
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [3, 1], 'hspace': 0}, figsize=(6, 6))
+
+    pTD_bins = np.array([8, 12, 20, 40, 80, 150])
+
+    pTD_data_min = 8.
+    pTD_data_bin_width = 0.5
+
+    bin_widths = np.diff(pTD_bins)
+
+    places_inside_bins = np.zeros((2, 5))
+    places_inside_bins_right = np.zeros((2, 5))
+    places_inside_bins_left = np.zeros((2, 5))
+
+    places_inside_bins[0, :] = pTD_bins[:-1]**(2 / 3) * pTD_bins[1:]**(1 / 3)
+    places_inside_bins[1, :] = pTD_bins[:-1]**(1 / 3) * pTD_bins[1:]**(2 / 3)
+
+    bar_width_over_bin_width = 1. / 9.
+    bar_width = bar_width_over_bin_width * bin_widths
+    shifts = np.zeros(5)
+
+    scalings = [0.93, 1.1]
+
+    for i in range(5):
+        shifts[i] = ((pTD_bins[i + 1] * 1.) / (pTD_bins[i] * 1.))**(bar_width_over_bin_width / 2.)
+
+    for i in range(2):
+        places_inside_bins_left[i, :] = places_inside_bins[i, :] / shifts
+        places_inside_bins_right[i, :] = places_inside_bins[i, :] * shifts
+
+    bin_midpoints = np.zeros(len(pTD_bins) - 1)
+    bin_midpoints_linear_scale = np.zeros(len(pTD_bins) - 1)
+
+    for i in range(len(pTD_bins) - 1):
+        bin_midpoints[i] = np.sqrt(pTD_bins[i] * pTD_bins[i + 1])
+        bin_midpoints_linear_scale[i] = (pTD_bins[i + 1] + pTD_bins[i]) / 2
+    
+    xmin = np.sqrt(pTD_bins[0:-1] * bin_midpoints)
+    xmax = np.sqrt(pTD_bins[1:] * bin_midpoints)
+
+    QCD_order = 'NLO'
+    
+    FF_scale_choices = ['frag_main_scale', 'frag_meson_pT_scale']
+    colors = ['red', 'blue']
+    labels = [r'$\mu_\text{frag} = M_W$', r'$\mu_\text{frag} = p_T(D)$']
+
+    scale_MW_vals = np.zeros(5)
+    scale_pTD_vals = np.zeros(5)
+
+
+    for i in range(len(FF_scale_choices)):
+        FF_scale_choice = FF_scale_choices[i]
+
+        scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set,
+                num_err_members_in_set, process, False, True, True, FF_scale_choice, z_def, fragmentation_set)
+
+        HISTO_central_sigma_vals = np.zeros(5)
+
+        scale_names = ['central', 'dd', 'uu']
+
+        for eta_lept_index in range(5):
+            bin_index = 0
+            for pTD_index in range(284):
+                if (pTD_data_min + (pTD_index + 1 / 2) * pTD_data_bin_width > pTD_bins[bin_index + 1]):
+                    if (bin_index == 5):
+                        break
+                    else:
+                        bin_index += 1
+                
+                HISTO_central_sigma_vals[bin_index] += sum(scales_vals[0][eta_lept_index][pTD_index, :])
+
+        if (i == 0):
+            scale_MW_vals = HISTO_central_sigma_vals
+        elif (i == 1):
+            scale_pTD_vals = HISTO_central_sigma_vals
+
+        ax1.hlines(HISTO_central_sigma_vals, pTD_bins[:-1], pTD_bins[1:],
+                    color=colors[i],
+                    label=labels[i], zorder=2)
+
+    ratio = scale_pTD_vals / scale_MW_vals
+
+    ax2.hlines(ratio, pTD_bins[:-1], pTD_bins[1:], zorder=3, color=colors[1])
+
+    plt.xscale('log', base=10)
+    ax1.set_ylim(0, 26)
+    plt.xlim(8, 150)
+    ax2.set_ylim(0.9, 1.1)
+
+    ax2.set_xlabel(r'$p_T(D)$ [GeV]', fontsize=axis_label_font_size)
+    ax1.set_ylabel('Cross section [pb]', fontsize=axis_label_font_size)
+    ax2.set_ylabel('Ratio', fontsize=axis_label_font_size)
+
+    ax1.set_yticks([10, 20])
+    #ax2.set_yticks([0.25, 0.5, 0.75, 1])
+
+    # Configure ticks to appear on all sides
+    ax1.tick_params(direction='in', top=True, right=True)
+
+    # Add minor ticks
+    ax1.minorticks_on()
+    ax1.tick_params(which='both', direction='in', top=True, right=True)
+
+    # Add minor ticks
+    ax2.minorticks_on()
+    ax2.tick_params(which='both', direction='in', top=True, right=True)
+
+    # Configure ticks to appear on all sides
+    ax2.tick_params(direction='in', top=True, right=True)
+
+    ax2.plot([8, 150], [1, 1], color=colors[0], zorder=1)
+
+    legend = ax1.legend(loc='upper right', framealpha=1, fontsize=legend_fontsize)
+
+    info_y_vals_1 = 23
+    info_y_vals_2 = 20.5
+    info_y_vals_3 = 18
+    info_y_vals_4 = 15.5
+
+    info_x_vals_1 = 9
+    info_x_vals_2 = 25
+
+    ax1.text(info_x_vals_1, info_y_vals_1, process_text + r'$\quad$OS-SS', fontsize=font_size)
+    ax1.text(info_x_vals_1, info_y_vals_2, r'$\sqrt{s} = 13$ TeV', fontsize=font_size)
+    ax1.text(info_x_vals_1, info_y_vals_3, PDF_set, fontsize=font_size)
+    ax1.text(info_x_vals_1, info_y_vals_4, frag_set_text, fontsize=font_size)
+
+    ax1.tick_params(axis='both', which='major', labelsize=axis_font_size)
+    ax2.tick_params(axis='both', which='major', labelsize=axis_font_size)
+
+    plt.xticks(pTD_bins, [f'{tick:.0f}' for tick in pTD_bins])
+
+    for i in range(1, len(pTD_bins) - 1):
+        ax1.axvline(pTD_bins[i], color='gray', linewidth=0.5, ymax=0.55, zorder=0)
+
+    for i in range(1, len(pTD_bins) - 1):
+        ax2.axvline(pTD_bins[i], color='gray', linewidth=0.5, ymax=1, zorder=0)
+
+    plt.tight_layout()
+    plt.savefig(plots_directory + process + '/' + fragmentation_set + "/" + process + '_dymamic_FF_scale_' + PDF_set + '.pdf')
+    plt.show()
+
+
+
 
 #pTD_plot(['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180'], True, theory_labels)
 #pTD_plot(['CT18ANLO', 'CT18ANNLO'], False, ['CT18ANLO', 'CT18ANNLO'])
 #pTD_effect_of_subtraction_plot()
 #pTD_dynamic_FF_scale('W-D+', 'CT18ANLO', 58, 'KKKS08_opal', 'minus')
+pTD_mc_variation('W-D+', 'CT18ANLO', 'minus', 'KKKS08_opal')
 #pTD_varying_FF_fit('CT18ANLO', 58, process, True, ['KKKS08_opal', 'KKKS08_global', 'SMSKA19'], ['KKKS08 OPAL', 'KKKS08 GLOBAL', 'SMSKA19'])
 #eta_lept_plot()
 #etaD_plot()
@@ -3124,7 +3293,7 @@ def Rcpm_LO_bin_integrated(kinematic_quantity, which_cross_sections_included, PD
 #Rcpm('Dstar')
 #Rcpm_pp_pPb()
 #total_cross_section()
-Rcpm_bin_integrated('pTD', 'both', True, ['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180'])
+#Rcpm_bin_integrated('pTD', 'both', True, ['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180'])
 #Rcpm_pTD_varying_FF_fit('CT18ANLO', 'both')
 #Rcpm_LO('D', 'MSHT20nlo_as118', 'minus', 'KKKS08_opal')
 #Rcpm_LO_bin_integrated('pTD', 'both', 'MSHT20nlo_as118')

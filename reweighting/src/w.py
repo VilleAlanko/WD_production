@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.linalg import inv
 
-PDF_set = 'MSHT20nlo_as118'
+PDF_set = 'CT18ANLO'
 which_cross_sections_included = 'both'
 
 y_plus_eta_lept = np.loadtxt('input/theory_values/HESSIAN/variation/eta_lept_' + which_cross_sections_included + '_' + PDF_set + '_plus.txt', delimiter=',')
@@ -21,9 +21,9 @@ D_pTD = (y_plus_pTD - y_minus_pTD) / 2.
 C_inverse_eta_lept = np.loadtxt('input/covariance_matrix/eta_lept_' + which_cross_sections_included + '.txt', delimiter=' ')
 C_inverse_pTD = np.loadtxt('input/covariance_matrix/pTD_' + which_cross_sections_included + '.txt', delimiter=' ')
 
-t = 0.3
+t = np.sqrt(10)
 
-if (t == np.sqrt(10)):
+if (t == np.sqrt(10) or t == np.sqrt(10) / 2.):
     num_decimals = 2
 else:
     num_decimals = 4
@@ -42,8 +42,9 @@ for k in range(N):
             for j in range(M):
                 B[k,n] += (D_eta_lept[i,k] * C_inverse_eta_lept[i,j] * D_eta_lept[j,n] +
                     D_pTD[i,k] * C_inverse_pTD[i,j] * D_pTD[j,n])
-
-B += (t**2) * np.eye(N)
+                
+        if (k == n):
+            B[k, n] += t**2
 
 B = 0.5 * (B + B.T)
 
@@ -62,7 +63,7 @@ print('P / delta chi^2 =', P)
 
 np.savetxt('output/wmin_' + PDF_set + '_' + which_cross_sections_included + '_t_' + str(round(t, num_decimals)) + '.txt', wmin)
 
-eps, v = np.linalg.eigh(B)
+eps, v = np.linalg.eig(B)
 
 dw = np.zeros((N, N))
 

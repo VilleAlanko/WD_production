@@ -81,7 +81,9 @@ def cov_Rcpm(starless, star, kinematic_quantity, which_cross_sections_included):
             A[eta_lept_index] = atlas_vals[1][eta_lept_index]
             B[eta_lept_index] = atlas_vals[0][eta_lept_index]
     else:
-        exit(1)
+        for eta_lept_index in range(5):
+            A[eta_lept_index] = atlas_vals[3][eta_lept_index]
+            B[eta_lept_index] = atlas_vals[2][eta_lept_index]
 
 
     Rcpm_derivatives = np.array([[-A[0] / B[0]**2, 0., 0., 0., 0., 1. / B[0], 0., 0., 0., 0., -A[0] / B[0]**2, 0., 0., 0., 0., 1. / B[0], 0., 0., 0., 0.],

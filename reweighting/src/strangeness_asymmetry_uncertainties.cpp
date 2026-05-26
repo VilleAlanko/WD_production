@@ -7,7 +7,7 @@ using namespace std;
 
 const double mu_fact2 = pow(80.385, 2);
 
-const double log10x_min = -5;
+const double log10x_min = -4;
 const double log10x_max = 0;
 const double log10x_step = 0.001;
 const int N = int((log10x_max - log10x_min) / log10x_step) + 1;
@@ -217,12 +217,12 @@ int OLD(string PDF_set, int num_err_members)
     return 0;
 }
 
-int NEW(string PDF_set, int num_err_members, string which_cross_sections_included)
+int NEW(string PDF_set, int num_err_members, string which_cross_sections_included, string tolerance)
 {
     vector <double> xs_best = load_1D_double_array_from_txt("output/new_PDF_vals/" + PDF_set + "/" +
-                which_cross_sections_included + "/flavor_" + to_string(flavor) + "_best.txt", 1);
+                which_cross_sections_included + "/flavor_" + to_string(flavor) + "_t_" + tolerance + "_best.txt", 1);
     vector <double> xsbar_best = load_1D_double_array_from_txt("output/new_PDF_vals/" + PDF_set + "/" +
-                which_cross_sections_included + "/flavor_" + to_string(-flavor) + "_best.txt", 1);
+                which_cross_sections_included + "/flavor_" + to_string(-flavor) + "_t_" + tolerance + "_best.txt", 1);
 
     array <double, N> err_plus_vals = {};
     array <double, N> err_minus_vals = {};
@@ -230,13 +230,13 @@ int NEW(string PDF_set, int num_err_members, string which_cross_sections_include
     if (PDF_set == "CT18ANLO" || PDF_set == "MSHT20nlo_as118")
     {
         vector <vector <double>> xs_plus = load_2D_double_array_from_txt("output/new_PDF_vals/" + PDF_set + "/" + 
-                which_cross_sections_included + "/flavor_" + to_string(flavor) + "_plus.txt", ',');
+                which_cross_sections_included + "/flavor_" + to_string(flavor) + "_t_" + tolerance + "_plus.txt", ',');
         vector <vector <double>> xs_minus = load_2D_double_array_from_txt("output/new_PDF_vals/" + PDF_set + "/" +
-                    which_cross_sections_included + "/flavor_" + to_string(flavor) + "_minus.txt", ',');
+                    which_cross_sections_included + "/flavor_" + to_string(flavor) + "_t_" + tolerance + "_minus.txt", ',');
         vector <vector <double>> xsbar_plus = load_2D_double_array_from_txt("output/new_PDF_vals/" + PDF_set + "/" +
-                    which_cross_sections_included + "/flavor_" + to_string(-flavor) + "_plus.txt", ',');
+                    which_cross_sections_included + "/flavor_" + to_string(-flavor) + "_t_" + tolerance + "_plus.txt", ',');
         vector <vector <double>> xsbar_minus = load_2D_double_array_from_txt("output/new_PDF_vals/" + PDF_set + "/" +
-                    which_cross_sections_included + "/flavor_" + to_string(-flavor) + "_minus.txt", ',');
+                    which_cross_sections_included + "/flavor_" + to_string(-flavor) + "_t_" + tolerance + "_minus.txt", ',');
 
         for (int x_index = 0; x_index < N; ++x_index)
         {
@@ -266,9 +266,9 @@ int NEW(string PDF_set, int num_err_members, string which_cross_sections_include
     else
     {
         vector <vector <double>> xs_errmem = load_2D_double_array_from_txt("output/new_PDF_vals/" + PDF_set + "/" + 
-                which_cross_sections_included + "/flavor_" + to_string(flavor) + "_errmem.txt", ',');
+                which_cross_sections_included + "/flavor_" + to_string(flavor) + "_t_" + tolerance + "_errmem.txt", ',');
         vector <vector <double>> xsbar_errmem = load_2D_double_array_from_txt("output/new_PDF_vals/" + PDF_set + "/" + 
-                which_cross_sections_included + "/flavor_" + to_string(-flavor) + "_errmem.txt", ',');
+                which_cross_sections_included + "/flavor_" + to_string(-flavor) + "_t_" + tolerance + "_errmem.txt", ',');
 
         vector <double> omega(num_err_members);
 
@@ -314,7 +314,7 @@ int NEW(string PDF_set, int num_err_members, string which_cross_sections_include
         
     }
 
-    string filename = "output/strangeness_asymmetry_errors/" + PDF_set + "_" + which_cross_sections_included + "_NEW_plus.txt";
+    string filename = "output/strangeness_asymmetry_errors/" + PDF_set + "_" + which_cross_sections_included + "_NEW_plus" + "_t_" + tolerance + ".txt";
 
     ofstream outfile1(filename, ios::out);
 
@@ -328,7 +328,7 @@ int NEW(string PDF_set, int num_err_members, string which_cross_sections_include
     }
     outfile1.close();
 
-    filename = "output/strangeness_asymmetry_errors/" + PDF_set + "_" + which_cross_sections_included + "_NEW_minus.txt";
+    filename = "output/strangeness_asymmetry_errors/" + PDF_set + "_" + which_cross_sections_included + "_NEW_minus" + "_t_" + tolerance + ".txt";
     ofstream outfile2(filename, ios::out);
 
     for (int x_index = 0; x_index < N; x_index++)
@@ -351,9 +351,13 @@ int main()
     cout << "Enter PDF set: ";
     cin >> PDF_set;
 
-    string which_cross_sections_included = "D";
+    string which_cross_sections_included;
     cout << "Which cross sections should be included? ";
     cin >> which_cross_sections_included;
+
+    string tolerance;
+    cout << "Enter tolerance: ";
+    cin >> tolerance;
 
     int num_err_members;
 
@@ -376,7 +380,7 @@ int main()
     }
 
     OLD(PDF_set, num_err_members);
-    NEW(PDF_set, num_err_members, which_cross_sections_included);
+    NEW(PDF_set, num_err_members, which_cross_sections_included, tolerance);
 
     return 0;
 }

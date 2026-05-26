@@ -182,7 +182,12 @@ void HESSIAN(int num_err_members, vector <int> flavors, vector <string> toleranc
             
             string filename = "output/new_PDF_vals/" + PDF_set + "/" + which_cross_sections_included + "/flavor_" + to_string(flavor) + "_t_" + 
                                                                 tolerances[tolerance_index] + "_best.txt";
+
             ofstream outfile2(filename, ios::out);
+
+            if (!outfile2.is_open()) {
+                cerr << "Error: Could not open file " << filename << endl;
+            }
 
             for (int x_index = 0; x_index < N; x_index++)
             {
