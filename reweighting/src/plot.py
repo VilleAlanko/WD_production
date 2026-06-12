@@ -6,6 +6,11 @@ from matplotlib.offsetbox import AnchoredOffsetbox, TextArea, VPacker
 import matplotlib as mpl
 import matplotlib.ticker as ticker
 from termcolor import colored
+import matplotlib.colors as mcolors
+
+def mix_with_black(color, t):
+    r, g, b = mcolors.to_rgb(color)
+    return (r * (1 - t), g * (1 - t), b * (1 - t))
 
 mpl.rcParams.update({
     "text.usetex": True,
@@ -27,7 +32,7 @@ for i in range(Nx):
     x[i] = 10**(log10x_min + i * log10x_step)
 
 font_size = 17
-axis_label_font_size = 18
+axis_label_font_size = 20
 axis_font_size = 14
 legend_fontsize = 14
 
@@ -70,8 +75,8 @@ def ratio_HESSIAN(PDF_set, which_cross_sections_included, flavor_and_valence_lis
         plt.ylim([lower_bounds[i], upper_bounds[i]])
         plt.xscale('log')
 
-        plt.xlabel(r'$x$')
-        plt.ylabel('Reweighted / Original', fontsize=axis_label_font_size)
+        plt.xlabel(r'$x$', fontsize=axis_label_font_size)
+        plt.ylabel(r'$\frac{\text{Reweighted}}{\text{Original}}$', fontsize=axis_label_font_size)
 
         plt.legend(fontsize=15, framealpha=1, loc='lower left')
         
@@ -83,18 +88,171 @@ def ratio_HESSIAN(PDF_set, which_cross_sections_included, flavor_and_valence_lis
         plt.close()
 
 
+def absolute_and_ratio_HESSIAN(PDF_set, which_cross_sections_included, flavor_and_valence_list, particle_names, tolerances, labels, colors,
+                               lower_bounds_ax1, upper_bounds_ax1,
+                               lower_bounds_ax2, upper_bounds_ax2,
+                               text_x1, text_y1, PDF_label):
+    font_size = 20
+    axis_label_font_size = 22
+    axis_font_size = 17
+    legend_fontsize = 15
+
+    for i in range(len(flavor_and_valence_list)):
+        fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [3, 1], 'hspace': 0}, figsize=(6, 6))
+
+        if (flavor_and_valence_list[i][1] != 2):
+            OLD_PDF = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_' + str(flavor_and_valence_list[i][0]) + 
+                                        '/best_vals_valence_' + str(flavor_and_valence_list[i][1]) + '.txt', delimiter=',')
+
+            OLD_ERR_MINUS = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_' + str(flavor_and_valence_list[i][0]) + 
+                                    '/err_minus_valence_' + str(flavor_and_valence_list[i][1]) + '.txt', delimiter=',')
+            OLD_ERR_PLUS = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_' + str(flavor_and_valence_list[i][0]) + 
+                                    '/err_plus_valence_' + str(flavor_and_valence_list[i][1]) + '.txt', delimiter=',')
+        else:
+            OLD_PDF = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_ids_' + str(flavor_and_valence_list[i][0]) + 
+                                        '_' + str(-flavor_and_valence_list[i][0]) + '/best_vals.txt', delimiter=',')
+
+            OLD_ERR_MINUS = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_ids_' + str(flavor_and_valence_list[i][0]) + 
+                                    '_' + str(-flavor_and_valence_list[i][0]) + '/err_minus.txt', delimiter=',')
+            OLD_ERR_PLUS = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_ids_' + str(flavor_and_valence_list[i][0]) + 
+                                    '_' + str(-flavor_and_valence_list[i][0]) + '/err_plus.txt', delimiter=',')
+
+        if (flavor_and_valence_list[i][0] == 21):
+            OLD_PDF /= 10.
+            OLD_ERR_MINUS /= 10.
+            OLD_ERR_PLUS /= 10.
+
+        if (flavor_and_valence_list[i][0] == 3 and flavor_and_valence_list[i][1] == 1):
+            OLD_PDF *= 100.
+            OLD_ERR_MINUS *= 100.
+            OLD_ERR_PLUS *= 100.
+        
+        if (flavor_and_valence_list[i][0] == 1 and flavor_and_valence_list[i][1] == 1):
+            OLD_PDF *= 10.
+            OLD_ERR_MINUS *= 10.
+            OLD_ERR_PLUS *= 10.
+        
+        ax1.plot(x, OLD_PDF, zorder=5, color='black', label='Original')
+
+        for tolerance_index in range(len(tolerances)):
+            tolerance = tolerances[tolerance_index]
+
+            NEW_PDF = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                                '/flavor_' + str(flavor_and_valence_list[i][0]) + '_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+            
+            if (flavor_and_valence_list[i][1] == 1):
+                NEW_PDF -= np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                                '/flavor_' + str(-flavor_and_valence_list[i][0]) + '_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+            if (flavor_and_valence_list[i][1] == 2):
+                NEW_PDF += np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                                '/flavor_' + str(-flavor_and_valence_list[i][0]) + '_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+            
+            if (flavor_and_valence_list[i][0] == 21):
+                NEW_PDF /= 10.
+            
+            if (flavor_and_valence_list[i][0] == 3 and flavor_and_valence_list[i][1] == 1):
+                NEW_PDF *= 100.
+            
+            if (flavor_and_valence_list[i][0] == 1 and flavor_and_valence_list[i][1] == 1):
+                NEW_PDF *= 10.
+            
+            ax1.plot(x, NEW_PDF, zorder=tolerance_index + 3, color=colors[tolerance_index], label=labels[tolerance_index])
+            ax2.plot(x, NEW_PDF / OLD_PDF, zorder=5, color=colors[tolerance_index])
+
+        ax1.fill_between(x, OLD_PDF - OLD_ERR_MINUS, OLD_PDF + OLD_ERR_PLUS, zorder=1, color='lightgray', alpha=0.5, label=r'Original PDF error (68\% C.L.)')
+        ax2.fill_between(x, (OLD_PDF + OLD_ERR_PLUS) / OLD_PDF, (OLD_PDF - OLD_ERR_MINUS) / OLD_PDF, zorder=1, color='lightgray', alpha=0.5)
+
+        ax2.plot([0, 2], [1, 1], color='black', zorder=1)
+
+        plt.xlim([10**(-3), 10**(-1)])
+        ax1.set_ylim([lower_bounds_ax1[i], upper_bounds_ax1[i]])
+        ax2.set_ylim([lower_bounds_ax2[i], upper_bounds_ax2[i]])
+        plt.xscale('log')
+
+        plt.xlabel(r'$x$', fontsize=axis_label_font_size)
+        ax2.set_ylabel(r'$\frac{\text{Reweighted}}{\text{Original}}$', fontsize=axis_label_font_size + 6)
+        ax1.set_ylabel(r'$x$' + particle_names[i] + r'$(x, \mu_\text{fact})$', fontsize=axis_label_font_size)
+
+        for ax in [ax1, ax2]:
+            ax.minorticks_on()
+            ax.tick_params(
+                which='both',    # major and minor ticks
+                direction='in',
+                left=True,
+                right=True,
+                bottom=True,
+                top=True,
+                labelsize=axis_font_size
+            )
+        
+        ax1.xaxis.set_zorder(100)
+        ax1.yaxis.set_zorder(100)
+
+        ax2.xaxis.set_zorder(100)
+        ax2.yaxis.set_zorder(100)
+
+        ax1.text(text_x1[i], text_y1[i], PDF_label, fontsize=font_size)
+        ax1.text(text_x1[i], text_y1[i] - (upper_bounds_ax1[i] - lower_bounds_ax1[i]) * 0.1, r'$\mu_\text{fact} = M_W$', fontsize=font_size)
+
+        if (flavor_and_valence_list[i][0] == 3 and flavor_and_valence_list[i][1] == 1):
+            ax1.text(0.01, 1.01, r'$\times 10^{-2}$',
+                transform=ax1.transAxes,
+                fontsize=axis_font_size, va='bottom', ha='left')
+        
+        if (flavor_and_valence_list[i][0] == 1 and flavor_and_valence_list[i][1] == 1):
+            ax1.text(0.01, 1.01, r'$\times 10^{-1}$',
+                transform=ax1.transAxes,
+                fontsize=axis_font_size, va='bottom', ha='left')
+        if (flavor_and_valence_list[i][0] == 21 and flavor_and_valence_list[i][1] == 0):
+            ax1.text(0.01, 1.01, r'$\times 10^{-1}$',
+                transform=ax1.transAxes,
+                fontsize=axis_font_size, va='bottom', ha='left')
+
+        ax1.legend(fontsize=legend_fontsize, framealpha=1, loc='upper left')
+
+        plt.tight_layout()
+
+        if (flavor_and_valence_list[i][1] != 2):
+            plt.savefig('plots/absolute_and_ratio/' + PDF_set + '_' + which_cross_sections_included + '_id_' + str(flavor_and_valence_list[i][0]) + 
+                        '_valence_' + str(flavor_and_valence_list[i][1]) + '.pdf')
+        else:
+            plt.savefig('plots/absolute_and_ratio/' + PDF_set + '_' + which_cross_sections_included + '_ids_' + str(flavor_and_valence_list[i][0]) + 
+                        str(-flavor_and_valence_list[i][0]) + '.pdf')
+
+        plt.close()
+
+
 def ratio_MC(PDF_set, which_cross_sections_included, flavor_and_valence_list, particle_names, lower_bounds, upper_bounds):
     for i in range(len(flavor_and_valence_list)):
         plt.figure(figsize=(6, 4))
 
         x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
-                    '/flavor_' + str(flavors[i]) + '_best.txt', delimiter=',', max_rows=1)
+                    '/flavor_' + str(flavor_and_valence_list[i][0]) + '_best.txt', delimiter=',', max_rows=1)
         NEW_PDF = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
                             '/flavor_' + str(flavor_and_valence_list[i][0]) + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
 
         OLD_PDF = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_' + str(flavor_and_valence_list[i][0]) + 
                                 '/best_vals_valence_' + str(flavor_and_valence_list[i][1]) + '.txt', delimiter=',')
         
+
+
+        if (flavor_and_valence_list[i][1] != 2):
+            OLD_PDF = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_' + str(flavor_and_valence_list[i][0]) + 
+                                    '/best_vals_valence_' + str(flavor_and_valence_list[i][1]) + '.txt', delimiter=',')
+            
+            OLD_ERR_MINUS = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_' + str(flavor_and_valence_list[i][0]) + 
+                                    '/err_minus_valence_' + str(flavor_and_valence_list[i][1]) + '.txt', delimiter=',')
+            OLD_ERR_PLUS = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_' + str(flavor_and_valence_list[i][0]) + 
+                                    '/err_plus_valence_' + str(flavor_and_valence_list[i][1]) + '.txt', delimiter=',')
+        else:
+            OLD_PDF = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_ids_' + str(flavor_and_valence_list[i][0]) + 
+                                    '_' + str(-flavor_and_valence_list[i][0]) + '/best_vals.txt', delimiter=',')
+            
+            OLD_ERR_MINUS = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_ids_' + str(flavor_and_valence_list[i][0]) + 
+                                    '_' + str(-flavor_and_valence_list[i][0]) + '/err_minus.txt', delimiter=',')
+            OLD_ERR_PLUS = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_ids_' + str(flavor_and_valence_list[i][0]) + 
+                                    '_' + str(flavor_and_valence_list[i][0]) + '/err_plus.txt', delimiter=',')
+            
         if (flavor_and_valence_list[i][1] == 1):
             NEW_PDF -= np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
                             '/flavor_' + str(-flavor_and_valence_list[i][0]) + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
@@ -136,6 +294,140 @@ def ratio_MC(PDF_set, which_cross_sections_included, flavor_and_valence_list, pa
         plt.tight_layout()
         plt.savefig('plots/ratio/' + PDF_set + '_' + which_cross_sections_included + '_id_' + str(flavor_and_valence_list[i][0]) + 
                     '_valence_' + str(flavor_and_valence_list[i][1]) + '.pdf')
+
+        plt.close()
+
+
+def absolute_and_ratio_MC(PDF_set, which_cross_sections_included, flavor_and_valence_list, particle_names,
+                        lower_bounds_ax1, upper_bounds_ax1,
+                        lower_bounds_ax2, upper_bounds_ax2,
+                        text_x1, text_y1, PDF_label):
+    font_size = 20
+    axis_label_font_size = 22
+    axis_font_size = 17
+    legend_fontsize = 15
+
+    for i in range(len(flavor_and_valence_list)):
+        fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [3, 1], 'hspace': 0}, figsize=(6, 6))
+
+        if (flavor_and_valence_list[i][1] != 2):
+            OLD_PDF = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_' + str(flavor_and_valence_list[i][0]) + 
+                                    '/best_vals_valence_' + str(flavor_and_valence_list[i][1]) + '.txt', delimiter=',')
+            OLD_ERR_MINUS = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_' + str(flavor_and_valence_list[i][0]) + 
+                                    '/err_minus_valence_' + str(flavor_and_valence_list[i][1]) + '.txt', delimiter=',')
+            OLD_ERR_PLUS = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_' + str(flavor_and_valence_list[i][0]) + 
+                                    '/err_plus_valence_' + str(flavor_and_valence_list[i][1]) + '.txt', delimiter=',')
+        else:
+            OLD_PDF = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_ids_' + str(flavor_and_valence_list[i][0]) + 
+                                    '_' + str(-flavor_and_valence_list[i][0]) + '/best_vals.txt', delimiter=',')
+            OLD_ERR_MINUS = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_ids_' + str(flavor_and_valence_list[i][0]) + 
+                                    '_' + str(-flavor_and_valence_list[i][0]) + '/err_minus.txt', delimiter=',')
+            OLD_ERR_PLUS = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_ids_' + str(flavor_and_valence_list[i][0]) + 
+                                    '_' + str(-flavor_and_valence_list[i][0]) + '/err_plus.txt', delimiter=',')
+        
+        if (flavor_and_valence_list[i][0] == 21):
+            OLD_PDF /= 10.
+            OLD_ERR_MINUS /= 10.
+            OLD_ERR_PLUS /= 10.
+
+        if (flavor_and_valence_list[i][0] == 3 and flavor_and_valence_list[i][1] == 1):
+            OLD_PDF *= 100.
+            OLD_ERR_MINUS *= 100.
+            OLD_ERR_PLUS *= 100.
+        
+        if (flavor_and_valence_list[i][0] == 1 and flavor_and_valence_list[i][1] == 1):
+            OLD_PDF *= 10.
+            OLD_ERR_MINUS *= 10.
+            OLD_ERR_PLUS *= 10.
+        
+        x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                    '/flavor_' + str(flavor_and_valence_list[i][0]) + '_best.txt', delimiter=',', max_rows=1)
+        
+        NEW_PDF = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                            '/flavor_' + str(flavor_and_valence_list[i][0]) + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+        
+        if (flavor_and_valence_list[i][1] == 1):
+            NEW_PDF -= np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                            '/flavor_' + str(-flavor_and_valence_list[i][0]) + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+        if (flavor_and_valence_list[i][1] == 2):
+            NEW_PDF += np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                            '/flavor_' + str(-flavor_and_valence_list[i][0]) + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+        
+        if (flavor_and_valence_list[i][0] == 21):
+            NEW_PDF /= 10.
+        
+        if (flavor_and_valence_list[i][0] == 3 and flavor_and_valence_list[i][1] == 1):
+            NEW_PDF *= 100.
+        if (flavor_and_valence_list[i][0] == 1 and flavor_and_valence_list[i][1] == 1):
+            NEW_PDF *= 10.
+
+        log10x_max = 0.
+        log10x_step = 0.001
+        N = int((log10x_max - log10x_min) / log10x_step) + 1
+
+        ax1.plot(x, NEW_PDF, zorder=1, color='red', label='Reweighted')
+        ax1.plot(x, OLD_PDF, zorder=2, color='black', label='Original')
+
+        ax2.plot(x, NEW_PDF / OLD_PDF, zorder=2, color='red')
+
+        ax1.fill_between(x, OLD_PDF - OLD_ERR_MINUS, OLD_PDF + OLD_ERR_PLUS, zorder=0, color='lightgray', alpha=0.5, label=r'Original PDF error (68\% C.L.)')
+        ax2.fill_between(x, (OLD_PDF + OLD_ERR_PLUS) / OLD_PDF, (OLD_PDF - OLD_ERR_MINUS) / OLD_PDF, zorder=1, color='lightgray', alpha=0.5)
+
+        ax2.plot([0, 2], [1, 1], color='black', zorder=1)
+
+        plt.xlim([10**(-3), 10**(-1)])
+        ax1.set_ylim([lower_bounds_ax1[i], upper_bounds_ax1[i]])
+        ax2.set_ylim([lower_bounds_ax2[i], upper_bounds_ax2[i]])
+        plt.xscale('log')
+
+        plt.xlabel(r'$x$', fontsize=axis_label_font_size)
+        ax2.set_ylabel(r'$\frac{\text{Reweighted}}{\text{Original}}$', fontsize=axis_label_font_size + 6)
+        ax1.set_ylabel(r'$x$' + particle_names[i] + r'$(x, \mu_\text{fact})$', fontsize=axis_label_font_size)
+
+        for ax in [ax1, ax2]:
+            ax.minorticks_on()
+            ax.tick_params(
+                which='both',    # major and minor ticks
+                direction='in',
+                left=True,
+                right=True,
+                bottom=True,
+                top=True,
+                labelsize=axis_font_size
+            )
+        
+        ax1.xaxis.set_zorder(100)
+        ax1.yaxis.set_zorder(100)
+
+        ax2.xaxis.set_zorder(100)
+        ax2.yaxis.set_zorder(100)
+
+        ax1.text(text_x1[i], text_y1[i], PDF_label, fontsize=font_size)
+        ax1.text(text_x1[i], text_y1[i] - (upper_bounds_ax1[i] - lower_bounds_ax1[i]) * 0.1, r'$\mu_\text{fact} = M_W$', fontsize=font_size)
+
+        if (flavor_and_valence_list[i][0] == 3 and flavor_and_valence_list[i][1] == 1):
+            ax1.text(0.01, 1.01, r'$\times 10^{-2}$',
+                transform=ax1.transAxes,
+                fontsize=axis_font_size, va='bottom', ha='left')
+        if (flavor_and_valence_list[i][0] == 1 and flavor_and_valence_list[i][1] == 1):
+            ax1.text(0.01, 1.01, r'$\times 10^{-1}$',
+                transform=ax1.transAxes,
+                fontsize=axis_font_size, va='bottom', ha='left')
+        if (flavor_and_valence_list[i][0] == 21 and flavor_and_valence_list[i][1] == 0):
+            ax1.text(0.01, 1.01, r'$\times 10^{-1}$',
+                transform=ax1.transAxes,
+                fontsize=axis_font_size, va='bottom', ha='left')
+
+        ax1.legend(fontsize=legend_fontsize, framealpha=1, loc='upper left')
+        
+        plt.tight_layout()
+
+        if (flavor_and_valence_list[i][1] != 2):
+            plt.savefig('plots/absolute_and_ratio/' + PDF_set + '_' + which_cross_sections_included + '_id_' + str(flavor_and_valence_list[i][0]) + 
+                    '_valence_' + str(flavor_and_valence_list[i][1]) + '.pdf')
+        else:
+            plt.savefig('plots/absolute_and_ratio/' + PDF_set + '_' + which_cross_sections_included + '_ids_' + str(flavor_and_valence_list[i][0]) + 
+                    '_' + str(-flavor_and_valence_list[i][0]) + '.pdf')
 
         plt.close()
 
@@ -246,10 +538,13 @@ def absolute(tolerance, which_cross_sections_included, flavors, valences):
 
         plt.plot(x, NEW_PDF, zorder=1, color='red', label='new')
         plt.plot(x, OLD_PDF, zorder=0, color='blue', label='old')
+        #plt.plot(x, NEW_PDF / OLD_PDF, color='purple')
 
         plt.plot([0, 2], [0, 0], color='black', zorder=0)
 
         plt.xlim([10**(-3), 10**(-1)])
+        plt.ylim(1.1 * min(OLD_PDF[int(len(OLD_PDF) / 4):]), 1.1 * max(NEW_PDF[int(len(NEW_PDF) / 4):]))
+        #plt.ylim(0.98, 1.02)
         plt.xscale('log')
 
         plt.ylabel(r'$x\cdot $ PDF', fontsize=axis_label_font_size)
@@ -265,7 +560,12 @@ def absolute(tolerance, which_cross_sections_included, flavors, valences):
 
 
 def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, which_cross_sections_included, tolerance):
-    markers = ['s', 'd', 'v']
+    font_size = 17
+    axis_label_font_size = 20
+    axis_font_size = 14
+    legend_fontsize = 13.5
+
+    markers = ['d', 'v', 'o']
     marker_color = 'black'
     theory_labels = ['CT18ANLO', 'MSHT20NLO', 'NNPDF40NLO4.0 (pch)']
     PDF_sets = ['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180']
@@ -281,7 +581,7 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, which_cross_sections_included,
     DATA = np.loadtxt('input/experimental_values/' + kinematic_quantity + '_' + which_cross_sections_included + '.txt')
     DATA_errors = np.loadtxt('input/exp_errors/' + kinematic_quantity + '_' + which_cross_sections_included + '.txt')
 
-    for PDF_index in range(len(PDF_sets) - 1):
+    for PDF_index in range(len(PDF_sets)):
         PDF_set = PDF_sets[PDF_index]
         if (PDF_set == 'CT18ANLO' or PDF_set == 'MSHT20nlo_as118'):
             OLD = np.loadtxt('input/theory_values/HESSIAN/best/' + kinematic_quantity + '_' + which_cross_sections_included + '_' + PDF_set + '_best.txt')
@@ -312,13 +612,12 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, which_cross_sections_included,
         if (kinematic_quantity == 'eta_lept'):
             bin_edges = np.array([0., 0.5, 1., 1.5, 2., 2.5])
             bar_width = 0.11
-            plt.xlabel(r'$|\eta(l)|$', fontsize=axis_label_font_size)
+            plt.xlabel(r'$|\eta_\text{lepton}|$', fontsize=axis_label_font_size)
             xmin = bin_edges[0:-1]
             xmax = bin_edges[1:]
             bin_midpoints = (xmin + xmax) / 2
             theory_val_places = [bin_midpoints - 1. / 4. * 0.5, bin_midpoints, bin_midpoints + 1. / 4. * 0.5]
 
-            
         elif (kinematic_quantity == 'pTD'):
             bin_edges = np.array([8., 12., 20., 40., 80., 150.])
             plt.xlabel(r'$p_T (D)$ [GeV]', fontsize=axis_label_font_size)
@@ -333,9 +632,9 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, which_cross_sections_included,
                                 bin_edges[:-1] * (bin_edges[1:] / bin_edges[:-1])**(2. / 4.),
                                 bin_edges[:-1] * (bin_edges[1:] / bin_edges[:-1])**(3. / 4.)]
         
-        ax1.plot(theory_val_places[PDF_index], (NEW + OLD) / 2., marker=markers[PDF_index],
-                                color=marker_color, markersize=5, linestyle='none',
-                                label=theory_labels[PDF_index], zorder=5)
+        #ax1.plot(theory_val_places[PDF_index], (NEW + OLD) / 2., marker=markers[PDF_index],
+        #                        color=marker_color, markersize=5, linestyle='none',
+        #                        label=theory_labels[PDF_index], zorder=5)
         
         before_reweighting = ax1.bar(theory_val_places[PDF_index] - bar_width / 4., OLD_err_minus + OLD_err_plus, width=bar_width / 2.,
                                 bottom=OLD - OLD_err_minus, color=old_color, zorder=3)
@@ -344,7 +643,9 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, which_cross_sections_included,
                                 bottom=NEW - NEW_err_down, color=new_color, zorder=3)
 
         ax1.hlines(NEW, theory_val_places[PDF_index], theory_val_places[PDF_index] + bar_width / 2., color='darkred', zorder=4)
-        ax1.hlines(OLD, theory_val_places[PDF_index] - bar_width / 2., theory_val_places[PDF_index], color='darkblue', zorder=4)
+        #ax1.hlines(OLD, theory_val_places[PDF_index] - bar_width / 2., theory_val_places[PDF_index], color='darkblue', zorder=4)
+        ax1.plot(theory_val_places[PDF_index] - bar_width / 4., OLD, linestyle='none', marker=markers[PDF_index], color=marker_color, markersize=5, zorder=5,
+                 label=theory_labels[PDF_index])
 
         #--------------------------------------------------------------------------------------------------------------------------------------#
         #                                                            AX2 PLOTTING (THEORY)                                                     #
@@ -357,11 +658,12 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, which_cross_sections_included,
         ratio_up_err_NEW = (NEW + NEW_err_up) / DATA - NEW / DATA
         ratio_down_err_NEW = NEW / DATA - (NEW - NEW_err_down) / DATA
 
-        ax2.plot(theory_val_places[PDF_index], ((NEW + OLD) / 2.) / DATA, marker=markers[PDF_index], color=marker_color,
-                    markersize=5, linestyle='none', zorder=5)
+        #ax2.plot(theory_val_places[PDF_index], ((NEW + OLD) / 2.) / DATA, marker=markers[PDF_index], color=marker_color,
+        #             markersize=5, linestyle='none', zorder=5)
 
         ax2.hlines(NEW / DATA, theory_val_places[PDF_index], theory_val_places[PDF_index] + bar_width / 2., color='darkred', zorder=4)
-        ax2.hlines(OLD / DATA, theory_val_places[PDF_index], theory_val_places[PDF_index] - bar_width / 2., color='darkblue', zorder=4)
+        #ax2.hlines(OLD / DATA, theory_val_places[PDF_index], theory_val_places[PDF_index] - bar_width / 2., color='darkblue', zorder=4)
+        ax2.plot(theory_val_places[PDF_index] - bar_width / 4., OLD / DATA, linestyle='none', marker=markers[PDF_index], color=marker_color, markersize=5, zorder=5 )
 
         ax2.bar(theory_val_places[PDF_index] - bar_width / 4., ratio_up_err_OLD + ratio_down_err_OLD, width=bar_width / 2.,
                             bottom=OLD / DATA - ratio_down_err_OLD, color=old_color, zorder=3)
@@ -446,7 +748,7 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, which_cross_sections_included,
     plt.close()
 
 
-def strangeness_asymmetry(PDF_set, which_cross_sections_included, plot_errors_flag, plot_mem_vals, tolerance):
+def strangeness_asymmetry(PDF_set, which_cross_sections_included, plot_errors_flag, tolerance):
     if (PDF_set == 'NNPDF40_nlo_pch_as_01180'):
         PDF_index = 2
         num_members = 100
@@ -455,17 +757,25 @@ def strangeness_asymmetry(PDF_set, which_cross_sections_included, plot_errors_fl
     
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [3, 1], 'hspace': 0}, figsize=(6, 6))
 
-    x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_3_t_' + tolerance + '_best.txt', delimiter=',', max_rows=1)
-    NEW_s = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_3_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
-    NEW_sbar = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_-3_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+    if (PDF_set != 'NNPDF40_nlo_pch_as_01180'):
+        x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_3_t_' + tolerance + '_best.txt', delimiter=',', max_rows=1)
+        NEW_s = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_3_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+        NEW_sbar = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_-3_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+    else:
+        x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_3_best.txt', delimiter=',', max_rows=1)
+        NEW_s = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_3_best.txt', delimiter=',', skiprows=1, max_rows=1)
+        NEW_sbar = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_-3_best.txt', delimiter=',', skiprows=1, max_rows=1)
+
     asymmetry_OLD = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_3/best_vals_valence_1.txt', delimiter=',')
     if (plot_errors_flag):
         OLD_asymmetry_error_plus = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_OLD_plus.txt', delimiter=',')
         OLD_asymmetry_error_minus = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_OLD_minus.txt', delimiter=',')
-        NEW_asymmetry_error_plus = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_' + \
-                                                which_cross_sections_included + '_NEW_plus_t_' + tolerance + '.txt', delimiter=',')
-        NEW_asymmetry_error_minus = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_' + \
-                                                which_cross_sections_included + '_NEW_minus_t_' + tolerance + '.txt', delimiter=',')
+
+        if (PDF_set != "NNPDF40_nlo_pch_as_01180"):
+            NEW_asymmetry_error_plus = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_' + \
+                                                    which_cross_sections_included + '_NEW_plus' + '_t_' + tolerance + '.txt', delimiter=',')
+            NEW_asymmetry_error_minus = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_' + \
+                                                    which_cross_sections_included + '_NEW_minus' + '_t_' + tolerance + '.txt', delimiter=',')
 
     asymmetry_NEW = NEW_s - NEW_sbar
 
@@ -474,6 +784,10 @@ def strangeness_asymmetry(PDF_set, which_cross_sections_included, plot_errors_fl
             asymmetry_NEW[x_index] = 0.
         if (asymmetry_OLD[x_index] != asymmetry_OLD[x_index]):
             asymmetry_OLD[x_index] = 0.
+    
+    print(x)
+    print(sum(asymmetry_OLD * (10**(np.log10(x) + log10x_step / 2.) - 10**(np.log10(x) - log10x_step / 2.))))
+    print(sum(asymmetry_NEW * (10**(np.log10(x) + log10x_step / 2.) - 10**(np.log10(x) - log10x_step / 2.))))
 
     ax1.plot(x, asymmetry_OLD * 10**2, color='black', zorder=2, label=PDF_set_labels[PDF_index])
     ax1.plot(x, asymmetry_NEW * 10**2, color='red', zorder=2, label='reweighted')
@@ -481,37 +795,30 @@ def strangeness_asymmetry(PDF_set, which_cross_sections_included, plot_errors_fl
     if (plot_errors_flag):
         PDF_uncertainty = ax1.fill_between(x, (asymmetry_OLD - OLD_asymmetry_error_minus) * 10**2, (asymmetry_OLD + OLD_asymmetry_error_plus) * 10**2,
                         color='lightgray', zorder=0, rasterized=True)
-        reweighted_PDF_uncertainty = ax1.fill_between(x, (asymmetry_NEW - NEW_asymmetry_error_minus) * 10**2, (asymmetry_NEW + NEW_asymmetry_error_plus) * 10**2,
+        if (PDF_set != "NNPDF40_nlo_pch_as_01180"):
+            reweighted_PDF_uncertainty = ax1.fill_between(x, (asymmetry_NEW - NEW_asymmetry_error_minus) * 10**2, (asymmetry_NEW + NEW_asymmetry_error_plus) * 10**2,
                         color='salmon', zorder=1, alpha=0.6, rasterized=True)
 
-    # ax2.plot(x, (asymmetry_NEW - asymmetry_OLD) * 10**2, color='red', zorder=2)
     ax2.plot(x, asymmetry_NEW / asymmetry_OLD, color='red', zorder=2)
 
     if (plot_errors_flag):
         ax2.fill_between(x, (asymmetry_OLD - OLD_asymmetry_error_minus) / asymmetry_OLD,
                         (asymmetry_OLD + OLD_asymmetry_error_plus) / asymmetry_OLD, color='lightgray', zorder=0, rasterized=True)
-        ax2.fill_between(x, (asymmetry_NEW + NEW_asymmetry_error_plus) / asymmetry_OLD,
+        if (PDF_set != "NNPDF40_nlo_pch_as_01180"):
+            ax2.fill_between(x, (asymmetry_NEW + NEW_asymmetry_error_plus) / asymmetry_OLD,
                         (asymmetry_NEW - NEW_asymmetry_error_minus) / asymmetry_OLD, color='salmon', zorder=1, alpha=0.6, rasterized=True)
-
-    if (plot_mem_vals):
-        mem_vals = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_OLD_mem_vals.txt', delimiter=',')
-
-        for x_index in range(len(asymmetry_OLD)):
-            if x_index % 100 == 0:
-                for mem in range(num_members):
-                    ax1.scatter(x[x_index], mem_vals[mem, x_index] * 10**2, color='black', s=0.1)
 
     plt.xscale('log')
 
     plt.xlim(10**(-4), 1)
     if (PDF_set == 'MSHT20nlo_as118'):
         ax1.set_ylim(-0.7, 2.3)
-        #ax2.set_ylim(-1e-1 * 6., 1e-0 * 0.9)
         ax2.set_ylim(-0.5, 3.5)
+        text_y1 = 1.9
     elif (PDF_set == 'NNPDF40_nlo_pch_as_01180'):
-        ax1.set_ylim(-6, 15)
+        ax1.set_ylim(-3, 8.5)
         ax2.set_ylim(-3, 7)
-    
+        text_y1 = 7.4
 
     ax1.plot([10**(-6), 2], [0, 0], color='black', zorder=1)
     ax2.plot([10**(-6), 2], [1, 1], color='black', zorder=1)
@@ -525,23 +832,32 @@ def strangeness_asymmetry(PDF_set, which_cross_sections_included, plot_errors_fl
     ax2.tick_params(axis='both', which='major', labelsize=axis_font_size)
 
     text_x = 10**(-4) * 1.8
-    text_y1 = 1.6
+    
 
     ax1.text(text_x, text_y1, r'$\mu_\text{fact} = M_W$', fontsize=font_size)
 
     if (which_cross_sections_included == 'D'):
-        ax1.text(text_x, 1.9, r'$R_c^\pm (D^\pm)$', fontsize=font_size)
+        ax1.text(text_x, 0.85 * text_y1, r'$R_c^\pm (D^\pm)$', fontsize=font_size)
     else:
-        ax1.text(text_x, 1.9, r'$R_c^\pm (D^\pm, D^{*\pm})$', fontsize=font_size)
+        ax1.text(text_x, 0.85 * text_y1, r'$R_c^\pm (D^\pm, D^{*\pm})$', fontsize=font_size)
 
     ax1.text(0.01, 1.01, r'$\times 10^{-2}$',
         transform=ax1.transAxes,
         fontsize=13, va='bottom', ha='left')
 
-    legend1 = ax1.legend(loc='lower left', fontsize=legend_fontsize, framealpha=1, bbox_to_anchor=(0., 0.5))
-    legend2 = ax1.legend([PDF_uncertainty, reweighted_PDF_uncertainty],
-                        ['PDF error (90% C.L.)', 'Reweighted'],
-                        loc='lower left', fontsize=legend_fontsize, framealpha=1, bbox_to_anchor=(0., 0.3))
+    if (PDF_set != "NNPDF40_nlo_pch_as_01180"):
+        legend1 = ax1.legend(loc='lower left', fontsize=legend_fontsize, framealpha=1, bbox_to_anchor=(0., 0.5))
+    else:
+        legend1 = ax1.legend(loc='lower left', fontsize=legend_fontsize, framealpha=1, bbox_to_anchor=(0., 0.55))
+
+    if (PDF_set != "NNPDF40_nlo_pch_as_01180"):
+        legend2 = ax1.legend([PDF_uncertainty, reweighted_PDF_uncertainty],
+                        [r'PDF error (90\% C.L.)', 'Reweighted'],
+                        loc='upper right', fontsize=legend_fontsize, framealpha=1)
+    else:
+        legend2 = ax1.legend([PDF_uncertainty],
+                        [r'PDF error (90\% C.L.)'],
+                        loc='upper right', fontsize=legend_fontsize, framealpha=1)
     ax1.add_artist(legend1)
 
     ax2.set_yticks([0, 1, 2, 3])
@@ -558,7 +874,10 @@ def strangeness_asymmetry(PDF_set, which_cross_sections_included, plot_errors_fl
 
     plt.tight_layout()
 
-    plt.savefig('plots/strangeness_asymmetry/strangeness_asymmetry_' + PDF_set + '_' + which_cross_sections_included + '_t_' + tolerance + '.pdf', dpi=300)
+    if (PDF_set != "NNPDF40_nlo_pch_as_01180"):
+        plt.savefig('plots/strangeness_asymmetry/strangeness_asymmetry_' + PDF_set + '_' + which_cross_sections_included + '_t_' + tolerance + '.pdf', dpi=300)
+    else:
+        plt.savefig('plots/strangeness_asymmetry/strangeness_asymmetry_' + PDF_set + '_' + which_cross_sections_included + '.pdf', dpi=300)
     plt.show()
 
 
@@ -571,18 +890,26 @@ def strangeness_asymmetry_v2(PDF_set, which_cross_sections_included, plot_errors
 
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [3, 1], 'hspace': 0}, figsize=(6, 6))
 
-    x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_3_t_' + tolerance + '_best.txt', delimiter=',', max_rows=1)
-    NEW_s = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_3_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
-    NEW_sbar = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_-3_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+    if (PDF_set != 'NNPDF40_nlo_pch_as_01180'):
+        x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_3_t_' + tolerance + '_best.txt', delimiter=',', max_rows=1)
+        NEW_s = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_3_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+        NEW_sbar = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_-3_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+    else:
+        x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_3_best.txt', delimiter=',', max_rows=1)
+        NEW_s = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_3_best.txt', delimiter=',', skiprows=1, max_rows=1)
+        NEW_sbar = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + '/flavor_-3_best.txt', delimiter=',', skiprows=1, max_rows=1)
+
     asymmetry_OLD = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_3/best_vals_valence_1.txt', delimiter=',')
 
     if (plot_errors_flag):
         OLD_asymmetry_error_plus = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_OLD_plus.txt', delimiter=',')
         OLD_asymmetry_error_minus = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_OLD_minus.txt', delimiter=',')
-        NEW_asymmetry_error_plus = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_' + \
-                                                which_cross_sections_included + '_NEW_plus' + '_t_' + tolerance + '.txt', delimiter=',')
-        NEW_asymmetry_error_minus = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_' + \
-                                                which_cross_sections_included + '_NEW_minus' + '_t_' + tolerance + '.txt', delimiter=',')
+
+        if (PDF_set != "NNPDF40_nlo_pch_as_01180"):
+            NEW_asymmetry_error_plus = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_' + \
+                                                    which_cross_sections_included + '_NEW_plus' + '_t_' + tolerance + '.txt', delimiter=',')
+            NEW_asymmetry_error_minus = np.loadtxt('output/strangeness_asymmetry_errors/' + PDF_set + '_' + \
+                                                    which_cross_sections_included + '_NEW_minus' + '_t_' + tolerance + '.txt', delimiter=',')
 
     asymmetry_NEW = NEW_s - NEW_sbar
 
@@ -612,14 +939,16 @@ def strangeness_asymmetry_v2(PDF_set, which_cross_sections_included, plot_errors
 
     plt.xscale('log')
 
-    plt.xlim(10**(-5), 1)
+    plt.xlim(10**(-4), 1)
     if (PDF_set == 'MSHT20nlo_as118'):
         ax1.set_ylim(-0.7, 2.3)
-        ax2.set_ylim(-0.7, 0.9)
-        #ax2.set_ylim(-0.5, 3.5)
+        #ax2.set_ylim(-1e-1 * 6., 1e-0 * 0.9)
+        ax2.set_ylim(-0.5, 3.5)
+        text_y1 = 1.6
     elif (PDF_set == 'NNPDF40_nlo_pch_as_01180'):
-        ax1.set_ylim(-6, 15)
+        ax1.set_ylim(-2.5, 3.5)
         ax2.set_ylim(-3, 7)
+        text_y1 = 2.8
 
     ax1.plot([10**(-6), 2], [0, 0], color='black', zorder=1)
     ax2.plot([10**(-6), 2], [0, 0], color='black', zorder=1)
@@ -632,9 +961,9 @@ def strangeness_asymmetry_v2(PDF_set, which_cross_sections_included, plot_errors
     ax1.tick_params(axis='both', which='major', labelsize=axis_font_size)
     ax2.tick_params(axis='both', which='major', labelsize=axis_font_size)
 
-    text_x = 10**(-5) * 1.8
-    text_y1 = 1.6
-
+    text_x = 10**(-4) * 1.8
+    textt_x2 = 10**(-3) * 1.8
+    
     ax1.text(text_x, text_y1, r'$\mu_\text{fact} = M_W$', fontsize=font_size)
 
     if (which_cross_sections_included == 'D'):
@@ -647,12 +976,13 @@ def strangeness_asymmetry_v2(PDF_set, which_cross_sections_included, plot_errors
         fontsize=13, va='bottom', ha='left')
 
     legend1 = ax1.legend(loc='lower left', fontsize=legend_fontsize, framealpha=1, bbox_to_anchor=(0., 0.5))
-    legend2 = ax1.legend([PDF_uncertainty, reweighted_PDF_uncertainty],
-                        ['PDF error (68\% C.L.)', 'Reweighted'],
-                        loc='lower left', fontsize=legend_fontsize, framealpha=1, bbox_to_anchor=(0., 0.3))
+    if (plot_errors_flag):
+        legend2 = ax1.legend([PDF_uncertainty, reweighted_PDF_uncertainty],
+                            ['PDF error (90\% C.L.)', 'Reweighted'],
+                            loc='upper right', fontsize=legend_fontsize, framealpha=1)
     ax1.add_artist(legend1)
 
-    #ax2.set_yticks([0, 1, 2, 3])
+    ax2.set_yticks([0, 1, 2, 3])
 
     # Configure ticks to appear on all sides
     ax1.tick_params(direction='in', top=True, right=True)
@@ -795,14 +1125,12 @@ def Rcpm_approximation(PDF_set, which_cross_sections_included, tolerances, color
 
     print(old_vals)
 
-    x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
-                '/flavor_3_t_' + tolerances[0] + '_best.txt', delimiter=',', max_rows=1)
-
-    plt.plot(x, old_vals, label='Original', color='black')
-
     if (PDF_set != 'NNPDF40_nlo_pch_as_01180'):
         for tolerance_index in range(len(tolerances)):
             tolerance = tolerances[tolerance_index]
+
+            x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                '/flavor_3_t_' + tolerances[0] + '_best.txt', delimiter=',', max_rows=1)
 
             s_new = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
                             '/flavor_3_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
@@ -815,7 +1143,7 @@ def Rcpm_approximation(PDF_set, which_cross_sections_included, tolerances, color
 
             new_vals = 1. - ((s_new - sbar_new) + (d_new - dbar_new) * epsilon) / s_new
 
-            print(new_vals)
+            print(new_vals / old_vals)
 
             plt.plot(x, new_vals, label=labels[tolerance_index], color=colors[tolerance_index])
 
@@ -832,6 +1160,10 @@ def Rcpm_approximation(PDF_set, which_cross_sections_included, tolerances, color
                             '/flavor_-1_best.txt', delimiter=',', skiprows=1, max_rows=1)
 
         new_vals = 1. - ((s_new - sbar_new) + (d_new - dbar_new) * epsilon) / s_new
+
+        plt.plot(x, new_vals, label='Reweighted', color='red')
+
+    plt.plot(x, old_vals, label='Original', color='black')
 
     plt.fill_between(x, 1. - (epsilon * dv_old + sv_old) / s_old + error_plus,
                         1. - (epsilon * dv_old + sv_old) / s_old - error_minus,
@@ -860,6 +1192,107 @@ def Rcpm_approximation(PDF_set, which_cross_sections_included, tolerances, color
     plt.legend(loc='lower left', fontsize=15)
     plt.tight_layout()
     plt.savefig('plots/Rcpm_approximation/' + PDF_set + '_' + which_cross_sections_included + '.pdf')
+    plt.show()
+
+
+def Rcpm_approximation_sp_sm(PDF_set, which_cross_sections_included, tolerances, colors, labels, PDF_set_label):
+    font_size = 20
+    axis_label_font_size = 22
+    axis_font_size = 19
+    legend_fontsize = 20
+
+    fig, ax = plt.subplots(figsize=(6, 6))
+    
+    sp_old = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_ids_3_-3/best_vals.txt', delimiter=',')
+    sm_old = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_3/best_vals_valence_1.txt', delimiter=',')
+    dv_old = np.loadtxt('/home/alankovh/Documents/PDFs/Values/' + PDF_set + '/flavor_id_1/best_vals_valence_1.txt', delimiter=',')
+    
+    error_plus = np.loadtxt('output/Rcpm_approximation_sp_sm_errors/' + PDF_set + '_OLD_plus.txt', delimiter=',')
+    error_minus = np.loadtxt('output/Rcpm_approximation_sp_sm_errors/' + PDF_set + '_OLD_minus.txt', delimiter=',')
+
+    epsilon = 0.222**2 / 0.975**2
+
+    old_vals = 1. - 2. * (sm_old + epsilon * dv_old) / sp_old
+
+    if (PDF_set != 'NNPDF40_nlo_pch_as_01180'):
+        for tolerance_index in range(len(tolerances)):
+            tolerance = tolerances[tolerance_index]
+
+            x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                '/flavor_3_t_' + tolerances[0] + '_best.txt', delimiter=',', max_rows=1)
+
+            s_new = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                            '/flavor_3_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+            d_new = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                                '/flavor_1_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+            sbar_new = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                                '/flavor_-3_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+            dbar_new = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                                '/flavor_-1_t_' + tolerance + '_best.txt', delimiter=',', skiprows=1, max_rows=1)
+
+            new_vals = 1. - 2. * ((s_new - sbar_new) + (d_new - dbar_new) * epsilon) / (s_new + sbar_new)
+
+            plt.plot(x, new_vals, label=labels[tolerance_index], color=colors[tolerance_index])
+
+    else:
+        x = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                '/flavor_3_best.txt', delimiter=',', max_rows=1)
+        s_new = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                        '/flavor_3_best.txt', delimiter=',', skiprows=1, max_rows=1)
+        d_new = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                            '/flavor_1_best.txt', delimiter=',', skiprows=1, max_rows=1)
+        sbar_new = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                            '/flavor_-3_best.txt', delimiter=',', skiprows=1, max_rows=1)
+        dbar_new = np.loadtxt('output/new_PDF_vals/' + PDF_set + '/' + which_cross_sections_included + \
+                            '/flavor_-1_best.txt', delimiter=',', skiprows=1, max_rows=1)
+
+        new_vals = 1. - 2. * ((s_new - sbar_new) + (d_new - dbar_new) * epsilon) / (s_new + sbar_new)
+
+        plt.plot(x, new_vals, label='Reweighted', color='red')
+
+    plt.plot(x, old_vals, label='Original', color='black')
+
+    plt.fill_between(x, 1. - 2. * (epsilon * dv_old + sm_old) / sp_old + error_plus,
+                        1. - 2. * (epsilon * dv_old + sm_old) / sp_old - error_minus,
+                        color='lightgray', alpha=0.5, zorder=0)
+    
+    ax.xaxis.set_major_locator(ticker.FixedLocator([1e-2, 1e-1]))
+    ax.set_xticklabels([r'$10^{-2}$', r'$10^{-1}$'])
+    ax.xaxis.set_minor_locator(ticker.LogLocator(base=10.0, subs=np.arange(2, 10)*0.1))
+    ax.xaxis.set_minor_formatter(ticker.NullFormatter())
+
+    ax.text(1e-2 * 1.1, 0.72, PDF_set_label, fontsize=font_size)
+    ax.text(1e-2 * 1.1, 0.66, r'$\mu_\text{fact} = M_W$', fontsize=font_size)
+
+    ax.set_xlim(1e-2, 1e-1)
+    ax.set_xscale('log')
+    ax.xaxis.set_major_locator(ticker.FixedLocator([1e-2, 1e-1]))
+    ax.xaxis.set_minor_locator(ticker.LogLocator(base=10.0, subs=np.arange(2, 10)*0.1))
+    ax.xaxis.set_minor_formatter(ticker.NullFormatter())
+
+    ax.minorticks_on()
+    ax.tick_params(
+        which='both',    # major and minor ticks
+        direction='in',
+        left=True,
+        right=True,
+        bottom=True,
+        top=True,
+        labelsize=axis_font_size
+    )
+        
+    ax.xaxis.set_zorder(100)
+    ax.yaxis.set_zorder(100)
+
+    plt.ylim([0.401, 1.1])
+    #plt.ylim([0.99, 1.01])
+
+    plt.xlabel(r'$x$', fontsize=axis_label_font_size)
+    plt.ylabel(r'$1 - 2 (\epsilon d_- + s_-) / s_+$', fontsize=axis_label_font_size)
+    
+    plt.legend(loc='lower left', fontsize=legend_fontsize)
+    plt.tight_layout()
+    plt.savefig('plots/Rcpm_approximation_sp_sm/Rcpm_approximation_sp_sm_' + PDF_set + '_' + which_cross_sections_included + '.pdf')
     plt.show()
 
 
@@ -936,35 +1369,47 @@ def Rcpm_approximation_v2(PDF_set, which_cross_sections_included, tolerances, co
     plt.savefig('plots/Rcpm_approximation/' + PDF_set + '_' + which_cross_sections_included + '.pdf')
     plt.show()
 
-
-#PDF_set = 'MSHT20nlo_as118'
+PDF_set = 'MSHT20nlo_as118'
 #PDF_set = 'NNPDF40_nlo_pch_as_01180'
-PDF_set = 'CT18ANLO'
-flavors = [1, 3, 21]
+#PDF_set = 'CT18ANLO'
 which_cross_sections_included = 'both'
 
 #ratio_HESSIAN(PDF_set, which_cross_sections_included, [[1, 1], [3, 0], [21, 0], [1, 0]],
-#              [r'$d_\text{valence}$', r'$s$', r'$g$', r'$d$'], ['3.16', '1.58'],
+#              [r'$d_\text{valence}$', r'$s$', r'$g$', r'$d$'], ['3.16', '1.58', '1', '0.1', '0.01'],
 #              [r'$t = \sqrt{10}$', r'$t = \sqrt{10} / 2$', r'$t = 0.1$', r'$t = 0.01$', r'$0.001$'], ['red', 'green', 'blue', 'purple', 'orange'],
 #              [0.9, 0.6, 0.9, 0.9], [1.1, 1.15, 1.05, 1.1])
 #ratio_HESSIAN(PDF_set, which_cross_sections_included, [[1, 1], [3, 0], [3, 1], [21, 0], [1, 0], [-3, 0]],
-#              [r'$d_\text{valence}$', r'$s$', r'$s_\text{valence}$', r'$g$', r'$d$', r'$\bar{s}$'], ['3.16', '1.58'],
-#              [r'$t = \sqrt{10}$', r'$t = \sqrt{10} / 2$', r'$t = 0.1$', r'$t = 0.01$'], ['red', 'blue', 'blue', 'purple', 'orange'],
-#              [0.9, 0.9, -1, 0.94, 0.9, 0.9], [1.1, 1.1, 3, 1.03, 1.1, 1.1])
-#ratio_MC(PDF_set, which_cross_sections_included, [[1, 1], [3, 1], [3, 0], [21, 0]], [r'$d_\text{valence}$', r'$s_\text{valence}$', r'$s$', r'$g$'],
-#                   [0.4, -3, 0.6, 0.94], [1.2, 7, 1.25, 1.03])
+#              [r'$d_\text{valence}$', r'$s$', r'$s_\text{valence}$', r'$g$', r'$d$', r'$\bar{s}$'], ['3.16', '1.58', '1', '0.1', '0.01', '0.0001'],
+#              [r'$t = \sqrt{10}$', r'$t = \sqrt{10} / 2$', r'$t = 1$', r'$t = 0.1$', r'$t = 0.01$', r'$t = 0.0001$'], ['red', 'blue', 'green', 'orange', 'purple', 'pink', 'cyan'],
+#              [0.9, 0.9, -5, 0.94, 0.9, 0.9], [1.1, 1.1, 3, 1.03, 1.1, 1.1])
+#absolute_and_ratio_HESSIAN('MSHT20nlo_as118', which_cross_sections_included, [[1, 1], [3, 1], [21, 0], [3, 2]],
+#              [r'$d_-$', r'$s_-$', r'$g$', r'$s_+$'], ['3.16', '1'],
+#              [r'Reweighted ($t = \sqrt{10}$)', r'Reweighted ($t = 1$)'], ['red', 'blue'],
+#              [1e-5, -0.5, 1e-5, 1e-5], [4, 2.4, 5, 4.8], [0.84, -3, 0.985, 0.92], [1.15, 4, 1.015, 1.08],
+#              [1e-3 * 1.2, 1e-3 * 1.2, 1e-2 * 1.7, 1e-2 * 1.7], [2, 0.9, 2, 2], 'MSHT20NLO')
+#absolute_and_ratio_HESSIAN('CT18ANLO', which_cross_sections_included, [[1, 1], [21, 0], [3, 2]],
+#              [r'$d_-$', r'$g$', r'$s$'], ['3.16', '1'],
+#              [r'Reweighted ($t = \sqrt{10}$)', r'Reweighted ($t = 1$)'], ['red', 'blue'],
+#              [1e-5, 1e-5, 1e-5], [4, 5, 4.8], [0.84, 0.977, 0.85], [1.15, 1.023, 1.15], [1e-3 * 1.2, 1e-2 * 1.9, 1e-2 * 1.9], [2, 2.4, 2.4], 'CT18ANLO')
+#ratio_MC('NNPDF40_nlo_pch_as_01180', which_cross_sections_included, [[1, 1], [3, 1], [3, 0], [21, 0], [-3, 0]], [r'$d_\text{valence}$', r'$s_\text{valence}$', r'$s$', r'$g$', r'$\bar{s}$'],
+#                   [0.4, -8, 0.6, 0.94, 0.9], [2, 7, 1.25, 1.03, 1.1])
+#absolute_and_ratio_MC('NNPDF40_nlo_pch_as_01180', which_cross_sections_included, [[1, 1], [3, 1], [3, 2], [21, 0]], [r'$d_-$', r'$s_-$', r'$s_+$', r'$g$'],
+#                   [-0.25, -3.5, 1e-5, 1e-5], [4, 12, 4.8, 5], [-0.3, -11, 0.955, 0.985], [2.3, 11, 1.045, 1.015], [1e-3 * 1.2, 1e-3 * 1.2, 1e-2 * 1.3, 1e-2 * 1.3],
+#                   [2.2, 6, 2.4, 2.4], 'NNPDF4.0NLO')
 #ratio_to_other_PDF('MSHT20nlo_as118', 'CT18ANLO', flavors, which_cross_sections_included)
 #ratio_of_ratio(1)
 #ratio_of_ratio(3)
-#absolute('0.01', 'both', [1, 1, 3, 3, 21], [1, 0, 1, 0, 0])
-Rcpm_approximation(PDF_set, which_cross_sections_included, ['3.16', '1.58'], ['red', 'blue', 'blue', 'orange', 'purple', 'pink'],
-                  [r'$t = \sqrt{10}$', r'$t = \sqrt{10} / 2$', r'$t = 0.3$', r'$t = 0.01$', r'$t = 0.001$', r'$t = 0.0001$'])
+#absolute('3.16', 'both', [1, 1, 3, 3, 21], [1, 0, 1, 0, 0])
+#Rcpm_approximation(PDF_set, which_cross_sections_included, ['3.16', '1'], ['red', 'blue'],
+#                 [r'$t = \sqrt{10}$', r'$t = 1$'])
+#Rcpm_approximation_sp_sm(PDF_set, which_cross_sections_included, ['3.16', '1'], ['red', 'blue'],
+#                [r'$t = \sqrt{10}$', r'$t = 1$'], 'NNPDF4.0NLO')
 #Rcpm_approximation_ratio(PDF_set, which_cross_sections_included, ['3.16', '1', '0.3', '0.01', '0.001'], ['red', 'green', 'blue', 'orange', 'purple', 'pink'],
 #                   [r'$t = \sqrt{10}$', r'$t = 1$', r'$t = 0.3$', r'$t = 0.01$', r'$t = 0.001$', r'$t = 0.0001$'])
 #Rcpm_approximation_v2(PDF_set, which_cross_sections_included, ['3.16', '1', '0.3'], ['red', 'green', 'blue', 'orange', 'purple', 'pink'],
 #                   [r'$t = \sqrt{10}$', r'$t = 1$', r'$t = 0.3$', r'$t = 0.01$', r'$t = 0.001$', r'$t = 0.0001$'])
-#Rcpm_OLD_and_NEW_and_DATA('eta_lept', which_cross_sections_included, '3.16')
-#Rcpm_OLD_and_NEW_and_DATA('pTD', which_cross_sections_included, '1.58')
-#strangeness_asymmetry(PDF_set, which_cross_sections_included, True, False, '1.58')
+Rcpm_OLD_and_NEW_and_DATA('eta_lept', which_cross_sections_included, '1')
+Rcpm_OLD_and_NEW_and_DATA('pTD', which_cross_sections_included, '1')
+#strangeness_asymmetry(PDF_set, which_cross_sections_included, True, '3.16')
 #weights(PDF_set, which_cross_sections_included, '3.16')
 

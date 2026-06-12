@@ -2,7 +2,7 @@ import numpy as np
 from numpy.linalg import inv
 
 PDF_set = 'CT18ANLO'
-which_cross_sections_included = 'both'
+which_cross_sections_included = 'D'
 
 y_plus_eta_lept = np.loadtxt('input/theory_values/HESSIAN/variation/eta_lept_' + which_cross_sections_included + '_' + PDF_set + '_plus.txt', delimiter=',')
 y_minus_eta_lept = np.loadtxt('input/theory_values/HESSIAN/variation/eta_lept_' + which_cross_sections_included + '_' + PDF_set + '_minus.txt', delimiter=',')
@@ -21,7 +21,7 @@ D_pTD = (y_plus_pTD - y_minus_pTD) / 2.
 C_inverse_eta_lept = np.loadtxt('input/covariance_matrix/eta_lept_' + which_cross_sections_included + '.txt', delimiter=' ')
 C_inverse_pTD = np.loadtxt('input/covariance_matrix/pTD_' + which_cross_sections_included + '.txt', delimiter=' ')
 
-t = np.sqrt(10)
+t = 1.
 
 if (t == np.sqrt(10) or t == np.sqrt(10) / 2.):
     num_decimals = 2

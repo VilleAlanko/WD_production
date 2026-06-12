@@ -2,7 +2,7 @@ import numpy as np
 from numpy.linalg import inv
 from pprint import pprint
 
-which_cross_sections_included = 'both'
+which_cross_sections_included = 'Dstar'
 
 # Experimental covariance matrices
 

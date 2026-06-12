@@ -1,7 +1,7 @@
 import numpy as np
 
 PDF_set = 'NNPDF40_nlo_pch_as_01180'
-which_cross_sections_included = 'both'
+which_cross_sections_included = 'D'
 
 num_members = 100
 N_data = 10

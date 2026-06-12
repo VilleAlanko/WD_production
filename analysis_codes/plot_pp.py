@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import copy
 import matplotlib as mpl
+from pathlib import Path
 
 mpl.rcParams.update({
     "text.usetex": True,
@@ -21,7 +22,7 @@ fragmentation_set = 'KKKS08_opal'
 # minus or plus
 z_def = 'minus'
 
-process = "W+Dstar-"
+process = 'W-D+'
 
 PDF_sets = ['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180']
 #PDF_sets = ['CT18ANLO', 'NNPDF40_nlo_pch_as_01180', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180']
@@ -70,7 +71,7 @@ plots_directory = '/home/alankovh/Documents/WD_production/plots/13 TeV/'
 reweighting_input_directory = '/home/alankovh/Documents/WD_production/reweighting/input/'
 
 def compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set, process, load_scale_variation, load_pdf_errs,
-                                subtraction_flag, FF_scale_choice, z_def, fragmentation_set):
+                                subtraction_flag, FF_scale_choice, z_def, fragmentation_set, m_charm_variation):
     central_vals = [np.zeros((284, num_etac_bins)) for _ in range(5)]
     dd_vals = [np.zeros((284, num_etac_bins)) for _ in range(5)]
     uu_vals = [np.zeros((284, num_etac_bins)) for _ in range(5)]
@@ -100,26 +101,29 @@ def compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
                     scales_vals[scale_index][eta_lept_index] = np.loadtxt(
                         main_vals_directory + process + '/NLO/' + z_def + '/' + \
                         fragmentation_set + '/' + FF_scale_choice + '/scale_variation/' + PDF_set + '/' + scale_names[scale_index] + '/' + \
-                        str(eta_lept_index) + '_vals.txt', delimiter=',')
+                        str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
                 except FileNotFoundError:
+                    print(main_vals_directory + process + '/NLO/' + z_def + '/' + \
+                        fragmentation_set + '/' + FF_scale_choice + '/scale_variation/' + PDF_set + '/' + scale_names[scale_index] + '/' + \
+                        str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt')
                     stop = True
                     break
                 
                 scales_MCerrs[scale_index][eta_lept_index] = np.loadtxt(
                     main_vals_directory + process + '/NLO/' + z_def + '/' + \
                     fragmentation_set + '/' + FF_scale_choice + '/scale_variation/' + PDF_set + '/' + scale_names[scale_index] + '/' + \
-                    str(eta_lept_index) + '_errs.txt', delimiter=',')
+                    str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_errs.txt', delimiter=',')
 
                 if (subtraction_flag is True):
                     scales_vals[scale_index][eta_lept_index] -= np.loadtxt(
                         main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                         fragmentation_set + '/' + FF_scale_choice + '/scale_variation/' + PDF_set + '/' + scale_names[scale_index] + '/' + \
-                        str(eta_lept_index) + '_vals.txt', delimiter=',')
+                        str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
 
                     scales_MCerrs[scale_index][eta_lept_index] -= np.loadtxt(
                         main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                         fragmentation_set + '/' + FF_scale_choice + '/scale_variation/' + PDF_set + '/' + scale_names[scale_index] + '/' + \
-                        str(eta_lept_index) + '_errs.txt', delimiter=',')
+                        str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_errs.txt', delimiter=',')
 
             if (stop):
                 break
@@ -130,23 +134,23 @@ def compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
             for member in range(1, int(num_err_members_in_set + 1)):
                 average += np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                                         fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                        str(member) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+                                                        str(member) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
                 
                 if (subtraction_flag is True):
                     average -= np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                            str(member) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+                                            str(member) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
 
             average = average / (num_err_members_in_set * 1.)
 
             pdf_errs_central = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                            str(0) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+                                            str(0) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
 
             if (subtraction_flag is True):
                 pdf_errs_central -= np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                            str(0) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+                                            str(0) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
 
             scales_vals[0][eta_lept_index] = average + scales_vals[0][eta_lept_index] - pdf_errs_central
     
@@ -154,12 +158,12 @@ def compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
         if (load_pdf_errs):
             pdf_errs_central = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                            str(0) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+                                            str(0) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
 
             if (subtraction_flag is True):
                 pdf_errs_central -= np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                            str(0) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+                                            str(0) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
 
             if (PDF_set == 'CT18NLO' or PDF_set == 'CT18ANLO' or PDF_set == 'MSHT20nlo_as118'):
                 # This loops through error members, but isn't directly the member id.
@@ -169,19 +173,18 @@ def compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
 
                     pdf_err_member_plus = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                            str(2 * i - 1) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+                                            str(2 * i - 1) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
 
                     pdf_err_member_minus = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                            str(2 * i) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
-
+                                            str(2 * i) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
                     if (subtraction_flag is True):
                         pdf_err_member_plus -= np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                                 fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                str(2 * i - 1) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+                                                str(2 * i - 1) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
                         pdf_err_member_minus -= np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                                 fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                str(2 * i) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+                                                str(2 * i) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
 
                     for pTD_index in range(284):
                         for etaD_index in range(num_etac_bins):
@@ -210,12 +213,12 @@ def compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
                 for member in range(1, int(num_err_members_in_set + 1)):
                     pdf_err_member = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                            str(member) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+                                                            str(member) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
                                                         
                     if (subtraction_flag is True):
                         pdf_err_member -= np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                                     fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                    str(member) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+                                                    str(member) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
 
                     sum_val += (average - pdf_err_member)**2
 
@@ -225,7 +228,7 @@ def compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
     return scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus
 
 
-def compute_normalized_3D_values_for_a_pdf_member(process, PDF_index, member_index):
+def compute_normalized_3D_values_for_a_pdf_member(process, PDF_index, member_index, m_charm_variation='central'):
     process_index = -1
     if (process == 'W-D+'):
         process_index = 0
@@ -244,21 +247,21 @@ def compute_normalized_3D_values_for_a_pdf_member(process, PDF_index, member_ind
     for eta_lept_index in range(5):
         scale_var_central = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                                 fragmentation_set + '/frag_main_scale/scale_variation/' + PDF_set + '/central/' + \
-                                                str(eta_lept_index) + '_vals.txt', delimiter=',') - \
+                                                str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',') - \
                                 np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                                 fragmentation_set + '/frag_main_scale/scale_variation/' + PDF_set + '/central/' + \
-                                                str(eta_lept_index) + '_vals.txt', delimiter=',')
+                                                str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
 
         pdf_central = np.zeros((284, num_etac_bins))
 
         if (PDF_set != "NNPDF40_nlo_pch_as_01180"):
             pdf_central = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                                 fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                str(0) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',') - \
+                                                str(0) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',') - \
                                 np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                                 fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                str(0) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
-            
+                                                str(0) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
+
         elif (PDF_set == 'NNPDF40_nlo_pch_as_01180'):
             if (member_index < 2):
                 member_sum = np.zeros((284, num_etac_bins))
@@ -266,10 +269,10 @@ def compute_normalized_3D_values_for_a_pdf_member(process, PDF_index, member_ind
                 for member_index_here in range(1, num_err_members_in_sets[PDF_index] + 1):
                     member_sum += np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                                     fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                    str(member_index_here) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',') - \
+                                                    str(member_index_here) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',') - \
                                     np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                                     fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                    str(member_index_here) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
+                                                    str(member_index_here) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
 
                 pdf_central = member_sum / (num_err_members_in_sets[PDF_index] * 1.)
                 pdf_centrals[process_index][PDF_index][eta_lept_index] = pdf_central
@@ -283,11 +286,10 @@ def compute_normalized_3D_values_for_a_pdf_member(process, PDF_index, member_ind
 
         member_vals = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                         fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                        str(member_index) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',') - \
+                                        str(member_index) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',') - \
                         np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                         fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                        str(member_index) + '_' + str(eta_lept_index) + '_vals.txt', delimiter=',')
-
+                                        str(member_index) + '_' + str(eta_lept_index) + '_m_charm_' + m_charm_variation + '_vals.txt', delimiter=',')
         member_vals_normalized[eta_lept_index] = member_vals - pdf_central + scale_var_central
 
     return member_vals_normalized
@@ -722,10 +724,10 @@ def pTD_plot(PDF_sets, plot_errors_flag, theory_labels):
                                     [0.26+0.79, 0.19+0.69, 0.16+0.64, 0.10+0.29, 0.05+0.09],
                                     [0.27+0.76, 0.20+0.70, 0.17+0.64, 0.10+0.28, 0.06+0.08]])
 
-    font_size = 17
+    font_size = 18
     axis_label_font_size = 21
-    axis_font_size = 15
-    legend_fontsize = 13
+    axis_font_size = 17
+    legend_fontsize = 12.9
 
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [3, 1], 'hspace': 0}, figsize=(6, 6))
 
@@ -768,7 +770,7 @@ def pTD_plot(PDF_sets, plot_errors_flag, theory_labels):
             num_err_members_in_set = num_err_members_in_sets[PDF_index]
 
             scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                            process, True, True, True, 'frag_main_scale', z_def, fragmentation_set)
+                                                                            process, True, True, True, 'frag_main_scale', z_def, fragmentation_set, 'central')
 
             HISTO_central_sigma_vals = np.zeros(5)
             HISTO_scales_dd_sigma_vals = np.zeros(5)
@@ -870,8 +872,6 @@ def pTD_plot(PDF_sets, plot_errors_flag, theory_labels):
                         linewidth=1, zorder=3)
     
     ax1.hlines(atlas_vals[atlas_index], pTD_bins[:-1], pTD_bins[1:], color='black', label='ATLAS', zorder=1)
-    #ax1.hlines(np.array([12.37307495, 13.34427756, 11.75877281,  4.27762968,  0.82701554]), pTD_bins[:-1], pTD_bins[1:], color='orange', zorder=10)
-    #ax2.hlines(np.array([12.37307495, 13.34427756, 11.75877281,  4.27762968,  0.82701554]) / atlas_vals[atlas_index], pTD_bins[:-1], pTD_bins[1:], color='orange', zorder=10)
     # Plot error bars for the Atlas values.
     ATLAS_uncertainty = ax1.bar(bin_midpoints_linear_scale, atlas_vals_down_err[atlas_index] + atlas_vals_up_err[atlas_index],
             bottom=atlas_vals[atlas_index] - atlas_vals_down_err[atlas_index], color=atlas_err_color,
@@ -883,29 +883,33 @@ def pTD_plot(PDF_sets, plot_errors_flag, theory_labels):
     plt.xscale('log', base=10)
     ax1.set_ylim(0, 30)
     plt.xlim(8, 150)
-    ax2.set_ylim(0.65, 1.15)
+    ax2.set_ylim(0.65, 1.18)
 
-    ax2.set_xlabel(r'$p_T (D)$ [GeV]', fontsize=axis_label_font_size - 2)
+    ax2.set_xlabel(r'$p_T (D)$ [GeV]', fontsize=axis_label_font_size)
     ax1.set_ylabel(r'Cross section [pb]', fontsize=axis_label_font_size)
     ax2.set_ylabel(r'$\frac{\mathrm{Theory}}{\mathrm{ATLAS}}$', 
                fontsize=axis_label_font_size * 1.3)
 
-    ax1.set_yticks([5, 10, 15, 20, 25, 30])
+    ax1.set_yticks([5, 10, 15, 20, 25])
     ax2.set_yticks([0.7, 0.8, 0.9, 1., 1.1])
 
-    # Configure ticks to appear on all sides
-    ax1.tick_params(direction='in', top=True, right=True)
+    ax1.xaxis.set_zorder(100)
+    ax1.yaxis.set_zorder(100)
 
-    # Add minor ticks
-    ax1.minorticks_on()
-    ax1.tick_params(which='both', direction='in', top=True, right=True)
+    ax2.xaxis.set_zorder(100)
+    ax2.yaxis.set_zorder(100)
 
-    # Add minor ticks
-    ax2.minorticks_on()
-    ax2.tick_params(which='both', direction='in', top=True, right=True)
-
-    # Configure ticks to appear on all sides
-    ax2.tick_params(direction='in', top=True, right=True)
+    for ax in [ax1, ax2]:
+        ax.minorticks_on()
+        ax.tick_params(
+            which='both',
+            direction='in',
+            left=True,
+            right=True,
+            bottom=False,
+            top=False,
+            labelsize=axis_font_size
+        )
 
     ax2.plot([8, 150], [1, 1], linewidth=1, color='black', zorder=1)
 
@@ -922,12 +926,9 @@ def pTD_plot(PDF_sets, plot_errors_flag, theory_labels):
     info_x_vals_1 = 9
     info_x_vals_2 = 25
 
-    ax1.text(info_x_vals_1, info_y_vals_1, process_text + '  OS-SS', fontsize=font_size)
+    ax1.text(info_x_vals_1, info_y_vals_1, process_text + r'\quad OS-SS', fontsize=font_size)
     ax1.text(info_x_vals_1, info_y_vals_2, r'$\sqrt{s} = 13$ TeV', fontsize=font_size)
     ax1.text(info_x_vals_1, info_y_vals_3, frag_set_text, fontsize=font_size)
-
-    ax1.tick_params(axis='both', which='major', labelsize=axis_font_size)
-    ax2.tick_params(axis='both', which='major', labelsize=axis_font_size)
 
     plt.xticks(pTD_bins, [f'{tick:.0f}' for tick in pTD_bins])
 
@@ -936,12 +937,17 @@ def pTD_plot(PDF_sets, plot_errors_flag, theory_labels):
 
     for i in range(1, len(pTD_bins) - 1):
         ax2.axvline(pTD_bins[i], color='gray', linewidth=0.5, ymax=1, zorder=0)
-
+    
     plt.tight_layout()
+
+    output_dir = Path(plots_directory + process + '/' + fragmentation_set)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
     if (len(PDF_sets) == 3):
-        plt.savefig(plots_directory + process + '/' + fragmentation_set + "/" + process + '_pT.pdf')
+        plt.savefig(output_dir / (process + '_pT.pdf'))
     else:
-        plt.savefig(plots_directory + process + '/' + fragmentation_set + "/" + process + '_pT_nlo_vs_nnlo_pdf.pdf')
+        plt.savefig(output_dir / (process + '_pT_nlo_vs_nnlo_pdf.pdf'))
+
     plt.show()
 
 
@@ -966,10 +972,10 @@ def pTD_effect_of_subtraction_plot():
                                         [0.26+0.79, 0.19+0.69, 0.16+0.64, 0.10+0.29, 0.05+0.09],
                                         [0.27+0.76, 0.20+0.70, 0.17+0.64, 0.10+0.28, 0.06+0.08]])
 
-        font_size = 17
-        axis_label_font_size = 19
-        axis_font_size = 14
-        legend_fontsize = 13
+        font_size = 18
+        axis_label_font_size = 21
+        axis_font_size = 17
+        legend_fontsize = 13.5
 
         fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [3, 1], 'hspace': 0}, figsize=(6, 6))
 
@@ -1013,15 +1019,14 @@ def pTD_effect_of_subtraction_plot():
         QCD_order = 'NLO'
         
         subtraction_flags = [True, False, True, False]
-        FF_scale_choices = ['frag_main_scale', 'frag_main_scale', 'frag_initial_scale', 'frag_initial_scale']
-        subtraction_flag_colors = ['red', 'blue', 'black', 'orange']
+        FF_scale_choices = ['frag_main_scale', 'frag_main_scale', 'frag_initial_scale']
+        subtraction_flag_colors = ['red', 'blue', 'black']
         subtraction_flag_labels = [r'With subtraction' + '\n' + r'($\mu_\text{frag} = M_W$)', r'Without subtraction' + '\n' + r'($\mu_\text{frag} = M_W$)',
-                                    r'With subtraction' + '\n' + r'($\mu_\text{frag} = m_c$)', r'Without subtraction' + '\n' + r'($\mu_\text{frag} = m_c$)']
+                                    r'With subtraction' + '\n' + r'($\mu_\text{frag} = m_c$)']
 
         without_subtraction_vals = np.zeros(5)
         with_subtraction_vals = np.zeros(5)
         initial_scale_with_subtraction = np.zeros(5)
-        initial_scale_without_subtraction = np.zeros(5)
 
 
         for i in range(len(FF_scale_choices)):
@@ -1029,7 +1034,7 @@ def pTD_effect_of_subtraction_plot():
             FF_scale_choice = FF_scale_choices[i]
 
             scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set,
-                    num_err_members_in_set, process, True, True, subtraction_flag, FF_scale_choice, z_def, fragmentation_set)
+                    num_err_members_in_set, process, True, True, subtraction_flag, FF_scale_choice, z_def, fragmentation_set, 'central')
 
             HISTO_central_sigma_vals = np.zeros(5)
 
@@ -1050,10 +1055,8 @@ def pTD_effect_of_subtraction_plot():
                 with_subtraction_vals = HISTO_central_sigma_vals
             elif (i == 1):
                 without_subtraction_vals = HISTO_central_sigma_vals
-            elif(i == 2):
-                initial_scale_with_subtraction = HISTO_central_sigma_vals
             else:
-                initial_scale_without_subtraction = HISTO_central_sigma_vals
+                initial_scale_with_subtraction = HISTO_central_sigma_vals
 
             ax1.hlines(HISTO_central_sigma_vals, pTD_bins[:-1], pTD_bins[1:],
                         color=subtraction_flag_colors[i],
@@ -1061,11 +1064,9 @@ def pTD_effect_of_subtraction_plot():
 
         ratios1 = initial_scale_with_subtraction / with_subtraction_vals
         ratios2 = without_subtraction_vals / with_subtraction_vals
-        ratios3 = initial_scale_without_subtraction / with_subtraction_vals
 
         ax2.hlines(ratios1, pTD_bins[:-1], pTD_bins[1:], zorder=3, color=subtraction_flag_colors[2])
         ax2.hlines(ratios2, pTD_bins[:-1], pTD_bins[1:], zorder=3, color=subtraction_flag_colors[1])
-        ax2.hlines(ratios3, pTD_bins[:-1], pTD_bins[1:], zorder=3, color=subtraction_flag_colors[3])
 
         ax2.hlines(np.zeros(5) + 1, pTD_bins[:-1], pTD_bins[1:], zorder=3, color=subtraction_flag_colors[2])
 
@@ -1083,30 +1084,42 @@ def pTD_effect_of_subtraction_plot():
         #        width=bin_widths, zorder=0, linewidth=1.5)
 
         plt.xscale('log', base=10)
-        ax1.set_ylim(0, 50)
+        ax1.set_ylim(0, 33)
         plt.xlim(8, 150)
-        ax2.set_ylim(0.5, 2.4)
+        ax2.set_ylim(0.4, 2.1)
+        ax2.set_yticks([0.5, 1., 1.5, 2])
 
         ax2.set_xlabel(r'$p_T(D)$ [GeV]', fontsize=axis_label_font_size)
         ax1.set_ylabel('Cross section [pb]', fontsize=axis_label_font_size)
         ax2.set_ylabel('Ratio', fontsize=axis_label_font_size)
 
-        ax1.set_yticks([10, 20, 30, 40, 50])
-        #ax2.set_yticks([0.25, 0.5, 0.75, 1])
+        ax1.set_yticks([5, 10, 15, 20, 25])
+        
+        for ax in [ax1, ax2]:
+            ax.minorticks_on()
+            ax.tick_params(
+                which='both',    # major and minor ticks
+                direction='in',
+                left=True,
+                right=True,
+                bottom=False,
+                top=False,
+                labelsize=axis_font_size
+            )
+        
+        ax1.xaxis.set_zorder(100)
+        ax1.yaxis.set_zorder(100)
 
-        # Configure ticks to appear on all sides
-        ax1.tick_params(direction='in', top=True, right=True)
+        ax2.xaxis.set_zorder(100)
+        ax2.yaxis.set_zorder(100)
+    
+        info_y_vals_1 = 29.5
+        info_y_vals_2 = 26.2
+        info_y_vals_3 = 22.9
+        info_y_vals_4 = 19.6
 
-        # Add minor ticks
-        ax1.minorticks_on()
-        ax1.tick_params(which='both', direction='in', top=True, right=True)
-
-        # Add minor ticks
-        ax2.minorticks_on()
-        ax2.tick_params(which='both', direction='in', top=True, right=True)
-
-        # Configure ticks to appear on all sides
-        ax2.tick_params(direction='in', top=True, right=True)
+        info_x_vals_1 = 9
+        info_x_vals_2 = 25
 
         ax2.plot([8, 150], [1, 1], color='red', zorder=5)
 
@@ -1114,15 +1127,7 @@ def pTD_effect_of_subtraction_plot():
         #legend2 = ax1.legend([pdf_err_bar_plot, scale_var_bar_plot], ["PDF uncertainty", "Scale variation"], loc='lower left', framealpha=1, fontsize=legend_fontsize)
         ax1.add_artist(legend1)
 
-        info_y_vals_1 = 43.5
-        info_y_vals_2 = 38.5
-        info_y_vals_3 = 33.5
-        info_y_vals_4 = 28.5
-
-        info_x_vals_1 = 9
-        info_x_vals_2 = 25
-
-        ax1.text(info_x_vals_1, info_y_vals_1, process_text, fontsize=font_size)
+        ax1.text(info_x_vals_1, info_y_vals_1, process_text + r'\quad OS-SS', fontsize=font_size)
         ax1.text(info_x_vals_1, info_y_vals_2, r'$\sqrt{s} = 13$ TeV', fontsize=font_size)
         ax1.text(info_x_vals_1, info_y_vals_3, theory_labels[PDF_index], fontsize=font_size)
         ax1.text(info_x_vals_1, info_y_vals_4, frag_set_text, fontsize=font_size)
@@ -1133,7 +1138,7 @@ def pTD_effect_of_subtraction_plot():
         plt.xticks(pTD_bins, [f'{tick:.0f}' for tick in pTD_bins])
 
         for i in range(1, len(pTD_bins) - 1):
-            ax1.axvline(pTD_bins[i], color='gray', linewidth=0.5, ymax=0.5, zorder=0)
+            ax1.axvline(pTD_bins[i], color='gray', linewidth=0.5, ymax=0.52, zorder=0)
 
         for i in range(1, len(pTD_bins) - 1):
             ax2.axvline(pTD_bins[i], color='gray', linewidth=0.5, ymax=1, zorder=0)
@@ -1160,10 +1165,10 @@ def pTD_dynamic_FF_scale(process, PDF_set, num_err_members_in_set, fragmentation
                                     [0.26+0.79, 0.19+0.69, 0.16+0.64, 0.10+0.29, 0.05+0.09],
                                     [0.27+0.76, 0.20+0.70, 0.17+0.64, 0.10+0.28, 0.06+0.08]])
 
-    font_size = 17
-    axis_label_font_size = 19
-    axis_font_size = 14
-    legend_fontsize = 16
+    font_size = 18
+    axis_label_font_size = 21
+    axis_font_size = 17
+    legend_fontsize = 18
 
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [3, 1], 'hspace': 0}, figsize=(6, 6))
 
@@ -1173,26 +1178,6 @@ def pTD_dynamic_FF_scale(process, PDF_set, num_err_members_in_set, fragmentation
     pTD_data_bin_width = 0.5
 
     bin_widths = np.diff(pTD_bins)
-
-    places_inside_bins = np.zeros((2, 5))
-    places_inside_bins_right = np.zeros((2, 5))
-    places_inside_bins_left = np.zeros((2, 5))
-
-    places_inside_bins[0, :] = pTD_bins[:-1]**(2 / 3) * pTD_bins[1:]**(1 / 3)
-    places_inside_bins[1, :] = pTD_bins[:-1]**(1 / 3) * pTD_bins[1:]**(2 / 3)
-
-    bar_width_over_bin_width = 1. / 9.
-    bar_width = bar_width_over_bin_width * bin_widths
-    shifts = np.zeros(5)
-
-    scalings = [0.93, 1.1]
-
-    for i in range(5):
-        shifts[i] = ((pTD_bins[i + 1] * 1.) / (pTD_bins[i] * 1.))**(bar_width_over_bin_width / 2.)
-
-    for i in range(2):
-        places_inside_bins_left[i, :] = places_inside_bins[i, :] / shifts
-        places_inside_bins_right[i, :] = places_inside_bins[i, :] * shifts
 
     bin_midpoints = np.zeros(len(pTD_bins) - 1)
     bin_midpoints_linear_scale = np.zeros(len(pTD_bins) - 1)
@@ -1207,20 +1192,21 @@ def pTD_dynamic_FF_scale(process, PDF_set, num_err_members_in_set, fragmentation
     QCD_order = 'NLO'
     
     FF_scale_choices = ['frag_main_scale', 'frag_meson_pT_scale']
-    colors = ['red', 'blue']
+    colors = ['blue', 'red']
     labels = [r'$\mu_\text{frag} = M_W$', r'$\mu_\text{frag} = p_T(D)$']
 
     scale_MW_vals = np.zeros(5)
     scale_pTD_vals = np.zeros(5)
 
-
     for i in range(len(FF_scale_choices)):
         FF_scale_choice = FF_scale_choices[i]
 
         scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set,
-                num_err_members_in_set, process, False, True, True, FF_scale_choice, z_def, fragmentation_set)
+                num_err_members_in_set, process, True, False, True, FF_scale_choice, z_def, fragmentation_set, 'central')
 
         HISTO_central_sigma_vals = np.zeros(5)
+        HISTO_scales_uu_sigma_vals = np.zeros(5)
+        HISTO_scales_dd_sigma_vals = np.zeros(5)
 
         scale_names = ['central', 'dd', 'uu']
 
@@ -1232,8 +1218,10 @@ def pTD_dynamic_FF_scale(process, PDF_set, num_err_members_in_set, fragmentation
                         break
                     else:
                         bin_index += 1
-                
+
                 HISTO_central_sigma_vals[bin_index] += sum(scales_vals[0][eta_lept_index][pTD_index, :])
+                HISTO_scales_dd_sigma_vals[bin_index] += sum(scales_vals[1][eta_lept_index][pTD_index, :])
+                HISTO_scales_uu_sigma_vals[bin_index] += sum(scales_vals[2][eta_lept_index][pTD_index, :])
 
         if (i == 0):
             scale_MW_vals = HISTO_central_sigma_vals
@@ -1244,39 +1232,55 @@ def pTD_dynamic_FF_scale(process, PDF_set, num_err_members_in_set, fragmentation
                     color=colors[i],
                     label=labels[i], zorder=2)
 
+        if (FF_scale_choice == 'frag_main_scale'):
+            ax1.bar((pTD_bins[1:] + pTD_bins[:-1]) / 2, HISTO_scales_uu_sigma_vals - HISTO_scales_dd_sigma_vals, width=bin_widths,
+                                    bottom=HISTO_central_sigma_vals + HISTO_scales_dd_sigma_vals, color=scale_var_color,
+                                    zorder=1, alpha=0.3, label='Scale variation')
+            ax2.bar((pTD_bins[1:] + pTD_bins[:-1]) / 2, (scale_MW_vals + HISTO_scales_uu_sigma_vals) / scale_MW_vals - (scale_MW_vals + HISTO_scales_dd_sigma_vals) / scale_MW_vals,
+                    width=bin_widths,
+                    bottom=(scale_MW_vals +HISTO_scales_dd_sigma_vals) / scale_MW_vals, color=scale_var_color, zorder=1, alpha=0.3)
+
     ratio = scale_pTD_vals / scale_MW_vals
 
     ax2.hlines(ratio, pTD_bins[:-1], pTD_bins[1:], zorder=3, color=colors[1])
-
+    
     plt.xscale('log', base=10)
     ax1.set_ylim(0, 26)
     plt.xlim(8, 150)
-    ax2.set_ylim(0.9, 1.1)
+    ax2.set_ylim(0.92, 1.08)
 
     ax2.set_xlabel(r'$p_T(D)$ [GeV]', fontsize=axis_label_font_size)
     ax1.set_ylabel('Cross section [pb]', fontsize=axis_label_font_size)
     ax2.set_ylabel('Ratio', fontsize=axis_label_font_size)
 
     ax1.set_yticks([10, 20])
-    #ax2.set_yticks([0.25, 0.5, 0.75, 1])
 
-    # Configure ticks to appear on all sides
-    ax1.tick_params(direction='in', top=True, right=True)
+    for ax in [ax1, ax2]:
+        ax.minorticks_on()
+        ax.tick_params(
+            which='both',    # major and minor ticks
+            direction='in',
+            left=True,
+            right=True,
+            bottom=False,
+            top=False,
+            labelsize=axis_font_size
+        )
+        
+    ax1.xaxis.set_zorder(100)
+    ax1.yaxis.set_zorder(100)
 
-    # Add minor ticks
-    ax1.minorticks_on()
-    ax1.tick_params(which='both', direction='in', top=True, right=True)
-
-    # Add minor ticks
-    ax2.minorticks_on()
-    ax2.tick_params(which='both', direction='in', top=True, right=True)
-
-    # Configure ticks to appear on all sides
-    ax2.tick_params(direction='in', top=True, right=True)
+    ax2.xaxis.set_zorder(100)
+    ax2.yaxis.set_zorder(100)
 
     ax2.plot([8, 150], [1, 1], color=colors[0], zorder=1)
 
-    legend = ax1.legend(loc='upper right', framealpha=1, fontsize=legend_fontsize)
+    handles, labels = ax1.get_legend_handles_labels()
+    print(len(handles))
+    print(len(labels))
+    order = [0,2,1]
+
+    legend = ax1.legend([handles[idx] for idx in order], [labels[idx] for idx in order], loc='upper right', framealpha=1, fontsize=legend_fontsize)
 
     info_y_vals_1 = 23
     info_y_vals_2 = 20.5
@@ -1297,10 +1301,10 @@ def pTD_dynamic_FF_scale(process, PDF_set, num_err_members_in_set, fragmentation
     plt.xticks(pTD_bins, [f'{tick:.0f}' for tick in pTD_bins])
 
     for i in range(1, len(pTD_bins) - 1):
-        ax1.axvline(pTD_bins[i], color='gray', linewidth=0.5, ymax=0.55, zorder=0)
+        ax1.axvline(pTD_bins[i], color='gray', linewidth=0.5, ymax=0.55, zorder=20)
 
     for i in range(1, len(pTD_bins) - 1):
-        ax2.axvline(pTD_bins[i], color='gray', linewidth=0.5, ymax=1, zorder=0)
+        ax2.axvline(pTD_bins[i], color='gray', linewidth=0.5, ymax=1, zorder=20)
 
     plt.tight_layout()
     plt.savefig(plots_directory + process + '/' + fragmentation_set + "/" + process + '_dymamic_FF_scale_' + PDF_set + '.pdf')
@@ -1324,9 +1328,9 @@ def pTD_varying_FF_fit(PDF_set, num_err_members, process, plot_errors_flag, FF_f
                                     [0.26+0.79, 0.19+0.69, 0.16+0.64, 0.10+0.29, 0.05+0.09],
                                     [0.27+0.76, 0.20+0.70, 0.17+0.64, 0.10+0.28, 0.06+0.08]])
 
-    font_size = 16
-    axis_label_font_size = 17
-    axis_font_size = 13
+    font_size = 18
+    axis_label_font_size = 21
+    axis_font_size = 17
     legend_fontsize = 13
 
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [3, 1], 'hspace': 0}, figsize=(6, 6))
@@ -1344,40 +1348,32 @@ def pTD_varying_FF_fit(PDF_set, num_err_members, process, plot_errors_flag, FF_f
     for i in range(len(pTD_bins) - 1):
         bin_midpoints[i] = np.sqrt(pTD_bins[i] * pTD_bins[i + 1])
         bin_midpoints_linear_scale[i] = (pTD_bins[i + 1] + pTD_bins[i]) / 2
-    
-    xmin = np.sqrt(pTD_bins[0:-1] * bin_midpoints)
-    xmax = np.sqrt(pTD_bins[1:] * bin_midpoints)
 
-    places_inside_bins = np.zeros((len(FF_fits), 5))
-    places_inside_bins_right = np.zeros((len(FF_fits), 5))
-    places_inside_bins_left = np.zeros((len(FF_fits), 5))
+    places_inside_bins_log_scale = np.zeros((len(FF_fits), 5))
+    places_inside_bins_right_log_scale = np.zeros((len(FF_fits), 5))
+    places_inside_bins_left_log_scale = np.zeros((len(FF_fits), 5))
     places_inside_bins_linear_scale = np.zeros((len(FF_fits), 5))
 
     for i in range(len(FF_fits)):
-        places_inside_bins[i, :] = pTD_bins[:-1] * (pTD_bins[1:] / pTD_bins[:-1])**((i * 1. + 1) / (len(FF_fits) * 1. + 1.))
+        places_inside_bins_log_scale[i, :] = pTD_bins[:-1] * (pTD_bins[1:] / pTD_bins[:-1])**((i * 1. + 1) / (len(FF_fits) * 1. + 1.))
         places_inside_bins_linear_scale[i, :] = pTD_bins[:-1] + (i * 1. + 1.) / (len(FF_fits) * 1. + 1.) * (pTD_bins[1:] - pTD_bins[:-1])
 
-    bar_width_over_bin_width = 1. / 9.
-    bar_width = bar_width_over_bin_width * bin_widths
-    shifts = np.zeros(5)
+    bar_widths = np.zeros((3, 5))
 
-    for i in range(5):
-        shifts[i] = ((pTD_bins[i + 1] * 1.) / (pTD_bins[i] * 1.))**(bar_width_over_bin_width / 2.)
+    width_parameter = np.array([1.023, 1.03, 1.04, 1.04, 1.035])
+    bar_widths = places_inside_bins_log_scale * width_parameter - places_inside_bins_log_scale / width_parameter
 
     for i in range(len(FF_fits)):
-        places_inside_bins_left[i, :] = places_inside_bins[i, :] / shifts
-        places_inside_bins_right[i, :] = places_inside_bins[i, :] * shifts
-
-    scalings = [0.9, 1., 1.18]
+        places_inside_bins_left_log_scale[i, :] = places_inside_bins_log_scale[i, :] / width_parameter
+        places_inside_bins_right_log_scale[i, :] = places_inside_bins_log_scale[i, :] * width_parameter
 
     for FF_index in range(len(FF_fits)):
-        FF_fit = FF_fits[FF_index]
-
         for QCD_order_index in range(1, 2):
             QCD_order = QCD_orders[QCD_order_index]
+            FF_fit = FF_fits[FF_index]
 
             scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members,
-                                                                        process, True, True, True, 'frag_main_scale', z_def, FF_fit)
+                                                                            process, True, True, True, 'frag_main_scale', z_def, FF_fit, 'central')
 
             HISTO_central_sigma_vals = np.zeros(5)
             HISTO_scales_dd_sigma_vals = np.zeros(5)
@@ -1414,25 +1410,26 @@ def pTD_varying_FF_fit(PDF_set, num_err_members, process, plot_errors_flag, FF_f
 
             if (variation_flag):
                 if (QCD_order == "NLO"):
-                    ax1.plot(places_inside_bins[FF_index, :], HISTO_central_sigma_vals, marker=markers[FF_index],
+                    ax1.plot(places_inside_bins_log_scale[FF_index, :], HISTO_central_sigma_vals, marker=markers[FF_index],
                                 color=marker_color, markersize=5, linestyle='none',
                                 label=theory_labels_here[FF_index], zorder=4)
 
                     if (plot_errors_flag):
-                        ax1.bar(places_inside_bins_left[FF_index, :], HISTO_pdf_err_plus + HISTO_pdf_err_minus, width=bar_width * scalings[FF_index],
+                        ax1.bar(places_inside_bins_left_log_scale[FF_index, :], HISTO_pdf_err_plus + HISTO_pdf_err_minus, width=bar_widths[FF_index],
                                     bottom=HISTO_central_sigma_vals - HISTO_pdf_err_minus, color=pdf_err_color,
                                     zorder=3)
 
-                        ax1.bar(places_inside_bins_right[FF_index, :], HISTO_scales_uu_sigma_vals - HISTO_scales_dd_sigma_vals, width=bar_width * scalings[FF_index],
+                        ax1.bar(places_inside_bins_right_log_scale[FF_index, :], HISTO_scales_uu_sigma_vals - HISTO_scales_dd_sigma_vals, width=bar_widths[FF_index],
                                     bottom=HISTO_central_sigma_vals + HISTO_scales_dd_sigma_vals, color=scale_var_color,
                                     zorder=2)
+                        
+                        print(HISTO_pdf_err_minus)
+                        print(HISTO_pdf_err_plus)
 
             else:
                 #ax1.hlines(HISTO_central_sigma_vals, pTD_bins[0:-1], pTD_bins[1:], color=line_colors[QCD_order_index], zorder=5, label='LO')
                 print('NOT IMPLEMENTED YET')
                 exit()
-            
-            print(HISTO_central_sigma_vals)
 
         if (QCD_order == 'NLO'):
             ratios = np.zeros(5)
@@ -1465,16 +1462,16 @@ def pTD_varying_FF_fit(PDF_set, num_err_members, process, plot_errors_flag, FF_f
                     ratios_theory_pdf_err_var_up[eta_lept_index] = (HISTO_central_sigma_vals[eta_lept_index] + HISTO_pdf_err_plus[eta_lept_index]) / \
                                                                         HISTO_central_sigma_vals[eta_lept_index]
                                                         
-            ax2.plot(places_inside_bins[FF_index, :], ratios, zorder=4, marker=markers[FF_index],
+            ax2.plot(places_inside_bins_log_scale[FF_index, :], ratios, zorder=4, marker=markers[FF_index],
                         color=marker_color, markersize=5, linestyle='none')
 
             if (plot_errors_flag):
-                scale_var_bar_plot = ax2.bar(places_inside_bins_right[FF_index, :], ratios_theory_scale_var_var_up - ratios_theory_scale_var_var_down,
-                        bottom=ratios - 1. + ratios_theory_scale_var_var_down, width=bar_width * scalings[FF_index], color=scale_var_color,
+                scale_var_bar_plot = ax2.bar(places_inside_bins_right_log_scale[FF_index, :], ratios_theory_scale_var_var_up - ratios_theory_scale_var_var_down,
+                        bottom=ratios - 1. + ratios_theory_scale_var_var_down, width=bar_widths[FF_index], color=scale_var_color,
                         linewidth=1, zorder=3)
                 
-                pdf_err_bar_plot = ax2.bar(places_inside_bins_left[FF_index, :], ratios_theory_pdf_err_var_up - ratios_theory_pdf_err_var_down,
-                        bottom=ratios - 1. + ratios_theory_pdf_err_var_down, width=bar_width * scalings[FF_index], color=pdf_err_color,
+                pdf_err_bar_plot = ax2.bar(places_inside_bins_left_log_scale[FF_index, :], ratios_theory_pdf_err_var_up - ratios_theory_pdf_err_var_down,
+                        bottom=ratios - 1. + ratios_theory_pdf_err_var_down, width=bar_widths[FF_index], color=pdf_err_color,
                         linewidth=1, zorder=3)
     
     ax1.hlines(atlas_vals[atlas_index], pTD_bins[:-1], pTD_bins[1:], color='black', label='ATLAS', zorder=1)
@@ -1487,50 +1484,47 @@ def pTD_varying_FF_fit(PDF_set, num_err_members, process, plot_errors_flag, FF_f
                     width=bin_widths, zorder=0, linewidth=1.5)
 
     plt.xscale('log', base=10)
-    ax1.set_ylim(0, 34)
+    ax1.set_ylim(0, 30)
     plt.xlim(8, 150)
-    ax2.set_ylim(0.75, 2.05)
+    ax2.set_ylim(0.65, 1.35)
 
-    ax2.set_xlabel(r'$p_T(D)$ [GeV]', fontsize=axis_label_font_size)
+    ax2.set_xlabel(r'$p_T (D)$ [GeV]', fontsize=axis_label_font_size)
     ax1.set_ylabel(r'Cross section [pb]', fontsize=axis_label_font_size)
     ax2.set_ylabel(r'$\frac{\mathrm{Theory}}{\mathrm{ATLAS}}$', 
                fontsize=axis_label_font_size * 1.3)
 
     ax1.set_yticks([5, 10, 15, 20, 25, 30])
-    ax2.set_yticks([0.8, 1., 1.2, 1.4, 1.6, 1.8, 2.0])
+    #ax2.set_yticks([0.7, 0.8, 0.9, 1., 1.1])
 
-    # Configure ticks to appear on all sides
-    ax1.tick_params(direction='in', top=True, right=True)
-
-    # Add minor ticks
-    ax1.minorticks_on()
-    ax1.tick_params(which='both', direction='in', top=True, right=True)
-
-    # Add minor ticks
-    ax2.minorticks_on()
-    ax2.tick_params(which='both', direction='in', top=True, right=True)
-
-    # Configure ticks to appear on all sides
-    ax2.tick_params(direction='in', top=True, right=True)
+    for ax in [ax1, ax2]:
+        ax.minorticks_on()
+        ax.tick_params(
+            which='both',    # major and minor ticks
+            direction='in',
+            left=True,
+            right=True,
+            bottom=False,
+            top=False
+        )
 
     ax2.plot([8, 150], [1, 1], linewidth=1, color='black', zorder=1)
 
-    legend1 = ax1.legend(loc='upper right', framealpha=1, fontsize=legend_fontsize + 1)
+    legend1 = ax1.legend(loc='upper right', framealpha=1, fontsize=legend_fontsize + 2)
     if (plot_errors_flag):
         legend2 = ax1.legend([ATLAS_uncertainty, pdf_err_bar_plot, scale_var_bar_plot],
-                            ["ATLAS error", "PDF error (68\% C.L.)", "Scale variation"], loc='lower left', framealpha=1, fontsize=legend_fontsize - 1)
+                            ["ATLAS error", "PDF error (68\% C.L.)", "Scale variation"], loc='lower left', framealpha=1, fontsize=legend_fontsize)
         ax1.add_artist(legend1)
 
-    info_y_vals_1 = 30.5
-    info_y_vals_2 = 27.5
-    info_y_vals_3 = 24.5
+    info_y_vals_1 = 26.5
+    info_y_vals_2 = 23
+    info_y_vals_3 = 19.5
 
     info_x_vals_1 = 9
     info_x_vals_2 = 25
 
-    ax1.text(info_x_vals_1, info_y_vals_1, process_text + '  OS-SS', fontsize=font_size)
+    ax1.text(info_x_vals_1, info_y_vals_1, process_text + r'\quad OS-SS', fontsize=font_size)
     ax1.text(info_x_vals_1, info_y_vals_2, r'$\sqrt{s} = 13$ TeV', fontsize=font_size)
-    ax1.text(info_x_vals_1, info_y_vals_3, 'CT18ANLO', fontsize=font_size)
+    ax1.text(info_x_vals_1, info_y_vals_3, PDF_set, fontsize=font_size)
 
     ax1.tick_params(axis='both', which='major', labelsize=axis_font_size)
     ax2.tick_params(axis='both', which='major', labelsize=axis_font_size)
@@ -1542,10 +1536,14 @@ def pTD_varying_FF_fit(PDF_set, num_err_members, process, plot_errors_flag, FF_f
 
     for i in range(1, len(pTD_bins) - 1):
         ax2.axvline(pTD_bins[i], color='gray', linewidth=0.5, ymax=1, zorder=0)
-
+    
     plt.tight_layout()
 
-    plt.savefig(plots_directory + process + '/' + PDF_set + '_pT_varying_FF_fit.pdf')
+    output_dir = Path(plots_directory + process)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    plt.savefig(output_dir / (process + '_varying_FF_fit_pT.pdf'))
+
     plt.show()
 
 
@@ -1566,9 +1564,9 @@ def eta_lept_plot():
                                     [0.18+0.46, 0.17+0.50, 0.17+0.61, 0.16+0.40, 0.16+0.36],
                                     [0.18+0.48, 0.18+0.52, 0.18+0.58, 0.16+0.37, 0.16+0.34]])
 
-    font_size = 17
+    font_size = 18
     axis_label_font_size = 21
-    axis_font_size = 15
+    axis_font_size = 17
     legend_fontsize = 13
 
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [3, 1], 'hspace': 0}, figsize=(6, 6))
@@ -1586,7 +1584,7 @@ def eta_lept_plot():
             num_err_members_in_set = num_err_members_in_sets[PDF_index]
 
             scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                        process, True, True, True, 'frag_main_scale', z_def, fragmentation_set)
+                                                                        process, True, True, True, 'frag_main_scale', z_def, fragmentation_set, 'central')
 
             HISTO_central_sigma_vals = np.zeros(5)
             HISTO_scales_dd_sigma_vals = np.zeros(5)
@@ -1689,7 +1687,7 @@ def eta_lept_plot():
     ax2.set_ylim(0.6, 1.1)
     plt.xlim(0, 2.5)
 
-    ax2.set_xlabel(r'$|\eta_\mathrm{lepton}|$', fontsize=axis_label_font_size - 2)
+    ax2.set_xlabel(r'$|\eta_\mathrm{lepton}|$', fontsize=axis_label_font_size)
     ax1.set_ylabel(r'Cross section [pb]', fontsize=axis_label_font_size)
     ax2.set_ylabel(r'$\frac{\mathrm{Theory}}{\mathrm{ATLAS}}$', 
             fontsize=axis_label_font_size * 1.3)
@@ -1697,7 +1695,7 @@ def eta_lept_plot():
     ax1.tick_params(axis='both', which='major', labelsize=axis_font_size)
     ax2.tick_params(axis='both', which='major', labelsize=axis_font_size)
 
-    #ax2.set_yticks([0.8, 1.])
+    ax2.set_yticks([0.7, 0.8, 0.9, 1.])
     ax1.set_yticks([5, 10, 15, 20])
 
     info_xval_1 = 0.1
@@ -1705,25 +1703,29 @@ def eta_lept_plot():
     info_yval_2 = 17.8
     info_yval_3 = 15.8
 
-    ax1.text(info_xval_1, info_yval_1, process_text + '  OS-SS', fontsize=font_size)
+    ax1.text(info_xval_1, info_yval_1, process_text + r'\quad OS-SS', fontsize=font_size)
     ax1.text(info_xval_1, info_yval_2, r'$\sqrt{s} = 13$ TeV', fontsize=font_size)
     ax1.text(info_xval_1, info_yval_3, frag_set_text, fontsize=font_size)
 
-    # Configure ticks to appear on all sides
-    ax1.tick_params(direction='in', top=True, right=True)
-
-    # Add minor ticks
-    ax1.minorticks_on()
-    ax1.tick_params(which='both', direction='in', top=True, right=True)
-
-    # Configure ticks to appear on all sides
-    ax2.tick_params(direction='in', top=True, right=True)
-
-    # Add minor ticks
-    ax2.minorticks_on()
-    ax2.tick_params(which='both', direction='in', top=True, right=True)
+    for ax in [ax1, ax2]:
+        ax.minorticks_on()
+        ax.tick_params(
+            which='both',    # major and minor ticks
+            direction='in',
+            left=True,
+            right=True,
+            bottom=False,
+            top=False,
+            labelsize=axis_font_size
+        )
 
     ax2.plot([0, 2.5], [1, 1], linewidth=1, color='black', zorder=1)
+
+    ax1.xaxis.set_zorder(100)
+    ax1.yaxis.set_zorder(100)
+
+    ax2.xaxis.set_zorder(100)
+    ax2.yaxis.set_zorder(100)
 
 
     legend1 = ax1.legend(loc='upper right', framealpha=1, fontsize=legend_fontsize)
@@ -1732,7 +1734,11 @@ def eta_lept_plot():
     ax1.add_artist(legend1)
 
     plt.tight_layout()
-    plt.savefig(plots_directory + process + '/' + fragmentation_set + "/" + process + '_eta_lept.pdf')
+
+    output_dir = Path(plots_directory + process + '/' + fragmentation_set)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    plt.savefig(output_dir / (process + '_eta_lept.pdf'))
     plt.show()
 
 
@@ -1758,7 +1764,7 @@ def etaD_plot():
             num_err_members_in_set = num_err_members_in_sets[PDF_index]
 
             scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                        process, True, True, True, 'frag_main_scale', z_def, fragmentation_set)
+                                                                        process, True, True, True, 'frag_main_scale', z_def, fragmentation_set, 'central')
 
             HISTO_central_sigma_vals = np.zeros(len(etaD_bins) - 1)
             HISTO_scales_dd_sigma_vals = np.zeros(len(etaD_bins) - 1)
@@ -1860,12 +1866,12 @@ def etaD_plot():
 
 
 def z_variation(QCD_order, PDF_set):
-    font_size = 17
-    axis_label_font_size = 19
-    axis_font_size = 14
-    legend_fontsize = 13
+    font_size = 18
+    axis_label_font_size = 21
+    axis_font_size = 17
+    legend_fontsize = 18
 
-    fig, ax = plt.subplots(figsize=(6, 5.5))
+    fig, ax = plt.subplots(figsize=(6, 6))
 
     vals = np.loadtxt(main_vals_directory + process + '/' + QCD_order + '/' + z_def + '/' + \
                                                     fragmentation_set + '/frag_main_scale/scale_variation/' + PDF_set + '/central/z_variation.txt')
@@ -1879,7 +1885,6 @@ def z_variation(QCD_order, PDF_set):
     z_bins = np.linspace(0., 1., N + 1)
 
     z_point = 0.
-
     
     for i in range(N - 1):
         if (vals[i] / vals[0] > 0.999 and vals[i + 1] / vals[0] < 0.999):
@@ -1907,6 +1912,7 @@ def z_variation(QCD_order, PDF_set):
     plt.ylim(0., 45.)
 
     plt.xticks([0.05, 0.2, 0.4, 0.6, 0.8, 1.])
+    plt.yticks([5, 10, 15, 20, 25, 30, 35, 40, 45])
 
     text_x = 0.1
     text_y1 = 24
@@ -1914,22 +1920,26 @@ def z_variation(QCD_order, PDF_set):
     text_y3 = 16
     text_y4 = 12
 
-
-    plt.text(text_x, text_y1, r'$W^-D^+$  OS-SS', fontsize=font_size)
+    plt.text(text_x, text_y1, r'$W^-D^+$ \quad OS-SS', fontsize=font_size)
     plt.text(text_x, text_y2, r'$\sqrt{s} = 13$ TeV', fontsize=font_size)
     plt.text(text_x, text_y3, 'CT18ANLO', fontsize=font_size)
     plt.text(text_x, text_y4, 'KKKS08 OPAL', fontsize=font_size)
 
-    ax.tick_params(axis='both', which='major', labelsize=axis_font_size)
+    ax.minorticks_on()
+    ax.tick_params(
+        which='both',    # major and minor ticks
+        direction='in',
+        left=True,
+        right=True,
+        bottom=True,
+        top=True,
+        labelsize=axis_font_size
+    )
+        
+    ax.xaxis.set_zorder(100)
+    ax.yaxis.set_zorder(100)
 
-    plt.tick_params(direction='in', top=True, right=True)
-    plt.minorticks_on()
-    plt.tick_params(which='both', direction='in', top=True, right=True)
-
-    ax.tick_params(axis='x', pad=8)
-    #ax.tick_params(axis='y', pad=8)
-
-    plt.legend(fontsize=15)
+    plt.legend(fontsize=legend_fontsize)
 
     fig.tight_layout()
     plt.savefig(plots_directory + process + '/' + fragmentation_set + "/" + process + '_z.pdf')
@@ -1940,10 +1950,10 @@ def z_variation(QCD_order, PDF_set):
 def z_def_difference(process, PDF_set, num_err_members_in_set, PDF_errors_flag):
     fig, ax = plt.subplots(figsize=(6, 6))
 
-    font_size = 16
-    axis_label_font_size = 17
-    axis_font_size = 13
-    legend_fontsize = 14
+    font_size = 18
+    axis_label_font_size = 21
+    axis_font_size = 17
+    legend_fontsize = 16
 
     z_def_here = ['minus', 'plus']
 
@@ -1969,7 +1979,7 @@ def z_def_difference(process, PDF_set, num_err_members_in_set, PDF_errors_flag):
         z_def = z_def_here[z_def_index]
 
         scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                        process, True, True, True, 'frag_main_scale', z_def, fragmentation_set)
+                                                                        process, False, False, True, 'frag_main_scale', z_def, fragmentation_set, 'central')
 
 
         central_sigma_vals = np.zeros(5)
@@ -2042,18 +2052,26 @@ def z_def_difference(process, PDF_set, num_err_members_in_set, PDF_errors_flag):
     plt.xlim(8., 150.)
     plt.ylim(-0.3, 1.5)
 
-    plt.tick_params(direction='in', top=True, right=True)
-    plt.minorticks_on()
-    plt.tick_params(which='both', direction='in', top=True, right=True)
-
-    plt.tick_params(axis='both', which='major', labelsize=axis_font_size)
+    ax.minorticks_on()
+    ax.tick_params(
+        which='both',    # major and minor ticks
+        direction='in',
+        left=True,
+        right=True,
+        bottom=False,
+        top=False,
+        labelsize=axis_font_size
+    )
+        
+    ax.xaxis.set_zorder(100)
+    ax.yaxis.set_zorder(100)
 
     ax.text(0.01, 1.01, r'$\times 10^{-2}$',
         transform=ax.transAxes,
-        fontsize=13, va='bottom', ha='left')
+        fontsize=axis_font_size, va='bottom', ha='left')
 
-    plt.ylabel(r'$\frac{\sigma(z_-) - \sigma(z_+)}{\sigma(z_-)}$', fontsize=axis_label_font_size * 1.3)
-    plt.xlabel(r'$p_{T, D} \ \mathrm{[GeV]}$', fontsize=axis_label_font_size)
+    plt.ylabel(r'$\frac{\sigma(z_-) - \sigma(z_+)}{\sigma(z_-)}$', fontsize=axis_label_font_size * 1.5)
+    plt.xlabel(r'$p_T(D) \ \mathrm{[GeV]}$', fontsize=axis_label_font_size)
     plt.tight_layout()
 
     plt.savefig(plots_directory + process + '/' + fragmentation_set + "/" + process + '_z_def_difference.pdf')
@@ -2061,22 +2079,22 @@ def z_def_difference(process, PDF_set, num_err_members_in_set, PDF_errors_flag):
 
 
 def Rcpm(which_cross_sections_included):
-    font_size = 16
-    axis_label_font_size = 18
-    axis_font_size = 14
-    legend_fontsize = 14
+    font_size = 18
+    axis_label_font_size = 19
+    axis_font_size = 17
+    legend_fontsize = 15.5
 
-    fig, ax = plt.subplots(figsize=(6, 6))
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [4, 5], 'hspace': 0}, figsize=(6, 6))
 
     y_vals = [1, 2, 3]
 
-    for PDF_index in range(1, len(PDF_sets) - 1):
+    for PDF_index in range(len(PDF_sets)):
         PDF_set = PDF_sets[PDF_index]
         num_err_members_in_set = num_err_members_in_sets[PDF_index]
 
         process_here = "W-D+"
         scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                    process_here, True, False, True, 'frag_main_scale', z_def, fragmentation_set)
+                                                                    process_here, True, False, True, 'frag_main_scale', z_def, fragmentation_set, 'central')
         Wm_cross_section = sum(sum(sum(scales_vals[0])))
         Wm_scales_dd = sum(sum(sum(scales_vals[1])))
         Wm_scales_uu = sum(sum(sum(scales_vals[2])))
@@ -2084,7 +2102,7 @@ def Rcpm(which_cross_sections_included):
 
         process_here = "W-Dstar+"
         scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                    process_here, True, False, True, 'frag_main_scale', z_def, fragmentation_set)
+                                                                    process_here, True, False, True, 'frag_main_scale', z_def, fragmentation_set, 'central')
         Wm_star_cross_section = sum(sum(sum(scales_vals[0])))
         Wm_star_scales_dd = sum(sum(sum(scales_vals[1])))
         Wm_star_scales_uu = sum(sum(sum(scales_vals[2])))
@@ -2092,7 +2110,7 @@ def Rcpm(which_cross_sections_included):
 
         process_here = "W+D-"
         scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                    process_here, True, False, True, 'frag_main_scale', z_def, fragmentation_set)
+                                                                    process_here, True, False, True, 'frag_main_scale', z_def, fragmentation_set, 'central')
         Wp_cross_section = sum(sum(sum(scales_vals[0])))
         Wp_scales_dd = sum(sum(sum(scales_vals[1])))
         Wp_scales_uu = sum(sum(sum(scales_vals[2])))
@@ -2100,7 +2118,7 @@ def Rcpm(which_cross_sections_included):
 
         process_here = "W+Dstar-"
         scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                    process_here, True, False, True, 'frag_main_scale', z_def, fragmentation_set)
+                                                                    process_here, True, False, True, 'frag_main_scale', z_def, fragmentation_set, 'central')
         Wp_star_cross_section = sum(sum(sum(scales_vals[0])))
         Wp_star_scales_dd = sum(sum(sum(scales_vals[1])))
         Wp_star_scales_uu = sum(sum(sum(scales_vals[2])))
@@ -2176,12 +2194,12 @@ def Rcpm(which_cross_sections_included):
         print('Rcpm (' + which_cross_sections_included + ') with ' + PDF_set + ': ' + str(round(Rcpm, 5)) + \
                 '(+' + str(round(Rcpm_error_up, 5)) + '-' + str(round(Rcpm_error_down, 5)) + ').')
     
-        ax.plot(Rcpm, 4 - y_vals[PDF_index], marker=markers[PDF_index], color=marker_color,
+        ax2.plot(Rcpm, 4 - y_vals[PDF_index], marker=markers[PDF_index], color=marker_color,
                 linestyle='none', label=theory_labels[PDF_index], zorder=6)
 
         pdf_err = patches.Rectangle((Rcpm - Rcpm_pdf_err_down, 3 - PDF_index - 0.2),
                     Rcpm_pdf_err_down + Rcpm_pdf_err_up, 0.4, facecolor=pdf_err_color, zorder=5)
-        ax.add_patch(pdf_err)
+        ax2.add_patch(pdf_err)
 
         #scale_var = patches.Rectangle((Rcpm - Rcpm_scale_var_down, 3 - PDF_index - 0.2),
         #            Rcpm_scale_var_down + Rcpm_scale_var_up, 0.4, facecolor='green', zorder=7)
@@ -2189,40 +2207,51 @@ def Rcpm(which_cross_sections_included):
 
         total_err = patches.Rectangle((Rcpm - Rcpm_error_down, 3 - PDF_index  - 0.2),
                                         Rcpm_error_down + Rcpm_error_up, 0.4, facecolor=scale_var_color, zorder=4)
-        ax.add_patch(total_err)
+        ax2.add_patch(total_err)
 
-    atlas_val = 0.971
+    if (which_cross_sections_included == 'both'):
+        atlas_val = 0.971
 
-    atlas_syst_up = 0.011
-    atlas_syst_down = 0.011
+        atlas_syst_up = 0.011
+        atlas_syst_down = 0.011
 
-    atlas_stat_up = 0.006
-    atlas_stat_down = 0.006
+        atlas_stat_up = 0.006
+        atlas_stat_down = 0.006
+    elif (which_cross_sections_included == 'D'):
+        atlas_val = 0.965
+
+        atlas_syst_up = 0.012
+        atlas_syst_down = 0.012
+
+        atlas_stat_up = 0.007
+        atlas_stat_down = 0.007
+    else:
+        exit(1)
 
     plt.plot([atlas_val, atlas_val], [0, 4], color='black', zorder=3)
-    plt.plot([-100, 100], [4, 4], color='black', zorder=3)
 
     atlas_stat_err = patches.Rectangle((atlas_val - atlas_stat_down, -1), atlas_stat_up + atlas_stat_down, 5, facecolor="darkgray", alpha=1, zorder=2)
-    ax.add_patch(atlas_stat_err)
+    ax2.add_patch(atlas_stat_err)
     atlas_total_err = patches.Rectangle((atlas_val - np.sqrt(atlas_syst_down**2 + atlas_stat_down**2), -1),
                                         np.sqrt(atlas_syst_up**2 + atlas_stat_up**2) + np.sqrt(atlas_syst_down**2 + atlas_stat_down**2),
                                         5, facecolor="lightgray", alpha=1, zorder=1)
-    ax.add_patch(atlas_total_err)
+    ax2.add_patch(atlas_total_err)
 
     plt.xlim(0.885, 1)
-    plt.ylim(0, 6.7)
+    ax1.set_ylim(100, 104)
+    ax2.set_ylim(0, 4)
 
     if (which_cross_sections_included == 'both'):
-        ax.set_xlabel(r'$R_c^\pm(D^\pm, D^{*\pm})$', fontsize=axis_label_font_size)
+        ax2.set_xlabel(r'$R_c^\pm(D^\pm, D^{*\pm})$', fontsize=axis_label_font_size)
     elif (which_cross_sections_included == 'D'):
-        ax.set_xlabel(r'$R_c^\pm(D^\pm)$', fontsize=axis_label_font_size)
+        ax2.set_xlabel(r'$R_c^\pm(D^\pm)$', fontsize=axis_label_font_size)
     else:
-        ax.set_xlabel(r'$R_c^\pm(D^{*\pm})$', fontsize=axis_label_font_size)
+        ax2.set_xlabel(r'$R_c^\pm(D^{*\pm})$', fontsize=axis_label_font_size)
 
     info_xval_1 = 0.89
-    info_yval_1 = 6.2
-    info_yval_2 = 5.8
-    info_yval_3 = 5.4
+    info_yval_1 = 103.2
+    info_yval_2 = 102.5
+    info_yval_3 = 101.8
 
     """
     if (which_cross_sections_included == 'both'):
@@ -2233,28 +2262,50 @@ def Rcpm(which_cross_sections_included):
         ax.text(info_xval_1, info_yval_1, r'$D^*$', fontsize=font_size)
     """
 
-    plt.tick_params(direction='in', top=True, right=True)
-    plt.minorticks_on()
-    plt.tick_params(which='both', direction='in', top=True, right=True)
+    ax2.minorticks_on()
+    ax2.tick_params(
+        which='both',    # major and minor ticks
+        direction='in',
+        left=False,
+        right=False,
+        bottom=True,
+        top=True,
+        labelsize=axis_font_size
+    )
 
-    ax.text(info_xval_1, info_yval_1, r'$\sqrt{s} = 13$ TeV', fontsize=font_size)
-    ax.text(info_xval_1, info_yval_2, frag_set_text, fontsize=font_size)
-    ax.text(info_xval_1, info_yval_3, 'OS-SS', fontsize=font_size)
+    ax1.text(info_xval_1, info_yval_1, r'$\sqrt{s} = 13$ TeV', fontsize=font_size)
+    ax1.text(info_xval_1, info_yval_2, frag_set_text, fontsize=font_size)
+    ax1.text(info_xval_1, info_yval_3, 'OS-SS', fontsize=font_size)
 
-    legend1 = ax.legend(fontsize=legend_fontsize, bbox_to_anchor=(0.99, 0.88), loc='center right')
-    legend2 = ax.legend([pdf_err, total_err], ["PDF error (68\% C.L.)", "Total theory error"], loc='center right',
-                        bbox_to_anchor=(0.99, 0.69), framealpha=1, fontsize=legend_fontsize)
-    legend3 = ax.legend([atlas_stat_err, atlas_total_err], ['ATLAS stat. error', 'ATLAS tot. error'],
-                        loc='center left', bbox_to_anchor=(0.01, 0.69), framealpha=1, fontsize=legend_fontsize)
-    ax.add_artist(legend1)
-    ax.add_artist(legend2)
+    ax2.xaxis.set_zorder(100)
+    ax2.yaxis.set_zorder(100)
 
-    ax.tick_params(axis='both', which='major', labelsize=axis_font_size)
-    ax.set_yticklabels([])
+    # The next plottings are for legends.
+    pdf_err = plt.Rectangle((0, 0), 1, 1, facecolor=pdf_err_color, zorder=5)
+    total_err = plt.Rectangle((0, 0), 1, 1, facecolor=scale_var_color, zorder=4)
+    atlas_stat_err = plt.Rectangle((0, 0), 1, 1, facecolor="darkgray", alpha=1, zorder=2)
+    atlas_total_err = plt.Rectangle((0, 0), 1, 1, facecolor="lightgray", alpha=1, zorder=1)
+    ax1.plot([0, 0], [1, 1], marker=markers[0], color='black', label=theory_labels[0], linestyle='none', zorder=6)
+    ax1.plot([0, 0], [1, 1], marker=markers[1], color='black', label=theory_labels[1], linestyle='none', zorder=6)
+    ax1.plot([0, 0], [1, 1], marker=markers[2], color='black', label=theory_labels[2], linestyle='none', zorder=6)
+
+    legend1 = ax1.legend(fontsize=legend_fontsize, loc='upper right', framealpha=1)
+    legend2 = ax1.legend([pdf_err, total_err], ["PDF error (68\% C.L.)", "Total theory error"], loc='lower right', framealpha=1, fontsize=legend_fontsize)
+    legend3 = ax1.legend([atlas_stat_err, atlas_total_err], ['ATLAS stat. error', 'ATLAS tot. error'],
+                        loc='lower left', framealpha=1, fontsize=legend_fontsize)
+    ax1.add_artist(legend1)
+    ax1.add_artist(legend2)
+
+    ax2.set_yticklabels([])
+    ax1.set_yticklabels([])
+    plt.xticks([0.9, 0.92, 0.94, 0.96, 0.98], fontsize=axis_font_size)
 
     plt.tight_layout()
 
-    plt.savefig(plots_directory + 'Rcpm/Rcpm_' + which_cross_sections_included + '.pdf')
+    output_dir = Path(plots_directory + 'Rcpm')
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    plt.savefig(output_dir / ('Rcpm_' + which_cross_sections_included + '.pdf'))
     plt.show()
 
 
@@ -2280,22 +2331,22 @@ def Rcpm_pp_pPb():
 
         process_here = "W-D+"
         scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                    process_here, False, True, True, 'frag_main_scale', z_def, fragmentation_set)
+                                                                    process_here, False, True, True, 'frag_main_scale', z_def, fragmentation_set, 'central')
         Wm_cross_section += sum(sum(sum(scales_vals[0]))) / 2. * sign
 
         process_here = "W-Dstar+"
         scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                    process_here, False, True, True, 'frag_main_scale', z_def, fragmentation_set)
+                                                                    process_here, False, True, True, 'frag_main_scale', z_def, fragmentation_set, 'central')
         Wm_star_cross_section += sum(sum(sum(scales_vals[0]))) / 2. * sign
 
         process_here = "W+D-"
         scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                    process_here, False, True, True, 'frag_main_scale', z_def, fragmentation_set)
+                                                                    process_here, False, True, True, 'frag_main_scale', z_def, fragmentation_set, 'central')
         Wp_cross_section += sum(sum(sum(scales_vals[0]))) / 2. * sign
 
         process_here = "W+Dstar-"
         scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                    process_here, False, True, True, 'frag_main_scale', z_def, fragmentation_set)
+                                                                    process_here, False, True, True, 'frag_main_scale', z_def, fragmentation_set, 'central')
         Wp_star_cross_section += sum(sum(sum(scales_vals[0]))) / 2. * sign
 
         #print(Wm_cross_section)
@@ -2309,10 +2360,10 @@ def Rcpm_pp_pPb():
 
 
 def total_cross_section():
-    font_size = 16
-    axis_label_font_size = 17
-    axis_font_size = 13
-    legend_fontsize = 14.5
+    font_size = 19
+    axis_label_font_size = 22
+    axis_font_size = 17
+    legend_fontsize = 15.8
 
     if (process == 'W-D+'):
         atlas_val = 50.2
@@ -2347,14 +2398,15 @@ def total_cross_section():
         atlas_syst_up = 1.9
         atlas_syst_down = 1.8
 
-    fig, ax = plt.subplots(figsize=(6, 6))
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [4, 5], 'hspace': 0}, figsize=(6, 6))
+
     y_vals = [1, 2, 3]
     for PDF_set_index in range(len(PDF_sets)):
         PDF_set = PDF_sets[PDF_set_index]
         num_err_members_in_set = num_err_members_in_sets[PDF_set_index]
 
         scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set, num_err_members_in_set,
-                                                                    process, True, True, True, 'frag_main_scale', z_def, fragmentation_set)
+                                                                    process, True, True, True, 'frag_main_scale', z_def, fragmentation_set, 'central')
 
         val = sum(sum(sum(scales_vals[0])))
 
@@ -2373,13 +2425,12 @@ def total_cross_section():
                 linestyle='none', label=theory_labels[PDF_set_index], zorder=5)
 
         scale_var = patches.Rectangle((val + scales_uu, 3 - PDF_set_index - 0.25), scales_dd - scales_uu, 0.25, facecolor=scale_var_color, zorder=4)
-        ax.add_patch(scale_var)
+        ax2.add_patch(scale_var)
 
         pdf_err = patches.Rectangle((val - pdf_err_down, 3 - PDF_set_index), pdf_err_up + pdf_err_down, 0.25, facecolor=pdf_err_color, zorder=4)
-        ax.add_patch(pdf_err)
+        ax2.add_patch(pdf_err)
 
     plt.plot([atlas_val, atlas_val], [0, 4], color='black', zorder=3)
-    plt.plot([-100, 100], [4, 4], color='black', zorder=7)
 
     atlas_tot_err = patches.Rectangle((atlas_val - np.sqrt(atlas_syst_down**2 + atlas_stat_down**2), -1),
                                     np.sqrt(atlas_syst_down**2 + atlas_stat_down**2) + np.sqrt(atlas_syst_up**2 + atlas_stat_up**2),
@@ -2388,37 +2439,58 @@ def total_cross_section():
                                     np.sqrt(atlas_stat_down**2) + np.sqrt(atlas_stat_up**2),
                                     5, facecolor="darkgray", alpha=1, zorder=2)
     
-    ax.add_patch(atlas_tot_err)
-    ax.add_patch(atlas_stat_err)
+    ax2.add_patch(atlas_tot_err)
+    ax2.add_patch(atlas_stat_err)
 
-    plt.xlim(35, 55)
-    plt.ylim(0, 7.)
+    plt.xlim(34, 54)
+    ax1.set_ylim(100, 104)
+    ax2.set_ylim(0, 4)
 
-    ax.set_xlabel('Cross section [pb]', fontsize=axis_label_font_size)
+    ax2.set_xlabel('Cross section [pb]', fontsize=axis_label_font_size)
 
-    info_xval_1 = 36
+    info_xval_1 = 35
     info_xval_2 = 1.
-    info_yval_1 = 6.4
-    info_yval_2 = 5.9
-    info_yval_3 = 5.4
+    info_yval_1 = 103.2
+    info_yval_2 = 102.5
+    info_yval_3 = 101.8
 
-    ax.text(info_xval_1, info_yval_1, process_text + '  OS-SS', fontsize=font_size)
-    ax.text(info_xval_1, info_yval_2, r'$\sqrt{s} = 13$ TeV', fontsize=font_size)
-    ax.text(info_xval_1, info_yval_3, frag_set_text, fontsize=font_size)
+    ax1.text(info_xval_1, info_yval_1, process_text + r'\quad OS-SS', fontsize=font_size)
+    ax1.text(info_xval_1, info_yval_2, r'$\sqrt{s} = 13$ TeV', fontsize=font_size)
+    ax1.text(info_xval_1, info_yval_3, frag_set_text, fontsize=font_size)
 
-    legend1 = ax.legend(fontsize=legend_fontsize, bbox_to_anchor=(1, 0.696), loc='center right')
-    legend2 = ax.legend([pdf_err, scale_var], ["PDF error (68\% C.L.)", "Scale variation"], framealpha=1, fontsize=legend_fontsize, loc='upper right')
-    legend3 = ax.legend([atlas_stat_err, atlas_tot_err], ["ATLAS stat. error", "ATLAS tot. error"], bbox_to_anchor=(0., 0.665), framealpha=1, fontsize=legend_fontsize, loc='center left')
+    # For legends.
+    ax1.plot([0, 0], [1, 1], marker=markers[0], color='black', label=theory_labels[0], linestyle='none', zorder=5)
+    ax1.plot([0, 0], [1, 1], marker=markers[1], color='black', label=theory_labels[1], linestyle='none', zorder=5)
+    ax1.plot([0, 0], [1, 1], marker=markers[2], color='black', label=theory_labels[2], linestyle='none', zorder=5)
 
-    ax.add_artist(legend1)
-    ax.add_artist(legend2)
+    legend1 = ax1.legend(fontsize=legend_fontsize, loc='lower right', framealpha=1)
+    legend2 = ax1.legend([pdf_err, scale_var], ["PDF error (68\% C.L.)", "Scale variation"], framealpha=1, fontsize=legend_fontsize, loc='upper right')
+    legend3 = ax1.legend([atlas_stat_err, atlas_tot_err], ["ATLAS stat. error", "ATLAS tot. error"], framealpha=1, fontsize=legend_fontsize, loc='lower left')
 
-    ax.tick_params(axis='both', which='major', labelsize=axis_font_size)
-    ax.set_yticklabels([])
+    ax1.add_artist(legend1)
+    ax1.add_artist(legend2)
 
-    ax.minorticks_on()
-    ax.tick_params(which='both', direction='in', top=True, right=True)
-    ax.tick_params(direction='in', top=True, right=True)
+    ax2.tick_params(axis='both', which='major', labelsize=axis_font_size)
+    ax1.set_yticklabels([])
+    ax2.set_yticklabels([])
+
+    ax2.minorticks_on()
+    ax2.tick_params(
+        which='both',    # major and minor ticks
+        direction='in',
+        left=False,
+        right=False,
+        bottom=True,
+        top=True,
+        labelsize=axis_font_size
+    )
+    ax1.tick_params(top=False, bottom=False, right=False, left=False)
+
+    ax1.xaxis.set_zorder(100)
+    ax1.yaxis.set_zorder(100)
+
+    ax2.xaxis.set_zorder(100)
+    ax2.yaxis.set_zorder(100)
 
     plt.tight_layout()
 
@@ -2428,8 +2500,8 @@ def total_cross_section():
 
 def Rcpm_bin_integrated(kinematic_variable, which_cross_sections_included, plot_errors_flag, PDF_sets):
     font_size = 17
-    axis_label_font_size = 20
-    axis_font_size = 15
+    axis_label_font_size = 21
+    axis_font_size = 17
     legend_fontsize = 14
     
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [3, 1], 'hspace': 0}, figsize=(6, 6))
@@ -2561,9 +2633,6 @@ def Rcpm_bin_integrated(kinematic_variable, which_cross_sections_included, plot_
         Rcpm_atlas[pTD_index] = (atlas_vals[1][pTD_index] + atlas_vals[3][pTD_index]) / \
                                         (atlas_vals[0][pTD_index] + atlas_vals[2][pTD_index])
 
-        A = atlas_vals[1][pTD_index] + atlas_vals[3][pTD_index]
-        B = atlas_vals[0][pTD_index] + atlas_vals[2][pTD_index]
-
         var_sigma_p = atlas_covariance_starless[4 - pTD_index, 5 + pTD_index]
         var_sigma_m = atlas_covariance_starless[9 - pTD_index, pTD_index]
         var_sigma_sp = atlas_covariance_star[4 - pTD_index, 5 + pTD_index]
@@ -2573,6 +2642,9 @@ def Rcpm_bin_integrated(kinematic_variable, which_cross_sections_included, plot_
         corr_sp_sm = atlas_covariance_star[4 - pTD_index, pTD_index]
 
         if (which_cross_sections_included == 'both'):
+            A = atlas_vals[1][pTD_index] + atlas_vals[3][pTD_index]
+            B = atlas_vals[0][pTD_index] + atlas_vals[2][pTD_index]
+
             Rcpm_atlas[pTD_index] = (atlas_vals[1][pTD_index] + atlas_vals[3][pTD_index]) / \
                                         (atlas_vals[0][pTD_index] + atlas_vals[2][pTD_index])
 
@@ -2580,12 +2652,18 @@ def Rcpm_bin_integrated(kinematic_variable, which_cross_sections_included, plot_
                                                          A**2 / B**4 * (var_sigma_m + var_sigma_sm) - \
                                                          2. * A / B**3 * (corr_p_m + corr_sp_sm))
         elif (which_cross_sections_included == 'D'):
+            A = atlas_vals[1][pTD_index]
+            B = atlas_vals[0][pTD_index]
+
             Rcpm_atlas[pTD_index] = atlas_vals[1][pTD_index] / atlas_vals[0][pTD_index]
 
             Rcpm_atlas_error[pTD_index] = np.sqrt(1. / B**2 * (var_sigma_p) + \
                                                          A**2 / B**4 * (var_sigma_m) - \
                                                          2. * A / B**3 * (corr_p_m))
         elif (which_cross_sections_included == 'Dstar'):
+            A = atlas_vals[3][pTD_index]
+            B = atlas_vals[2][pTD_index]
+
             Rcpm_atlas[pTD_index] = atlas_vals[3][pTD_index] / atlas_vals[2][pTD_index]
 
             Rcpm_atlas_error[pTD_index] = np.sqrt(1. / B**2 * (var_sigma_sp) + \
@@ -2597,7 +2675,7 @@ def Rcpm_bin_integrated(kinematic_variable, which_cross_sections_included, plot_
 
     np.savetxt(reweighting_input_directory + 'experimental_values/' + kinematic_variable + '_' + which_cross_sections_included + '.txt', Rcpm_atlas, delimiter=',')
     
-    for PDF_index in range(1, len(PDF_sets) - 1):
+    for PDF_index in range(len(PDF_sets)):
         PDF_set = PDF_sets[PDF_index]
         num_err_members_in_set = num_err_members_in_sets[PDF_index]
 
@@ -2611,7 +2689,7 @@ def Rcpm_bin_integrated(kinematic_variable, which_cross_sections_included, plot_
 
         for process_index in range(len(processes_here)):
             scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(
-                PDF_set, num_err_members_in_set, processes_here[process_index], True, True, True, 'frag_main_scale', z_def, fragmentation_set)
+                PDF_set, num_err_members_in_set, processes_here[process_index], True, True, True, 'frag_main_scale', z_def, fragmentation_set, 'central')
 
             if (kinematic_variable == 'pTD'):
                 for eta_lept_index in range(5):
@@ -2876,7 +2954,9 @@ def Rcpm_bin_integrated(kinematic_variable, which_cross_sections_included, plot_
     #--------------------------------------------------------------------------------------------------------------------------------------#
     #                                                        MAKING THE PLOT LOOK PRETTY :)                                                #
     #--------------------------------------------------------------------------------------------------------------------------------------#
-    ax2.set_yticks([0.85, 0.9, 0.95, 1., 1.05, 1.1])
+
+    ax1.set_yticks([0.8, 0.85, 0.9, 0.95, 1, 1.05, 1.1, 1.15, 1.2])
+    ax2.set_yticks([0.9, 1, 1.1])
 
     plt.xlim(bin_edges[0], bin_edges[-1])
     ax1.set_ylim(0.755, 1.2)
@@ -2922,14 +3002,23 @@ def Rcpm_bin_integrated(kinematic_variable, which_cross_sections_included, plot_
         ax1.text(text_x, text_y2, 'SMSKA19', fontsize=font_size)
     ax1.text(text_x, text_y3, 'OS-SS', fontsize=font_size)
     
-    ax1.tick_params(axis='both', which='major', labelsize=axis_font_size)
-    ax2.tick_params(axis='both', which='major', labelsize=axis_font_size)
-    ax1.tick_params(direction='in', top=True, right=True)
-    ax1.minorticks_on()
-    ax1.tick_params(which='both', direction='in', top=True, right=True)
-    ax2.minorticks_on()
-    ax2.tick_params(which='both', direction='in', top=True, right=True)
-    ax2.tick_params(direction='in', top=True, right=True)
+    ax1.xaxis.set_zorder(100)
+    ax1.yaxis.set_zorder(100)
+
+    ax2.xaxis.set_zorder(100)
+    ax2.yaxis.set_zorder(100)
+
+    for ax in [ax1, ax2]:
+        ax.minorticks_on()
+        ax.tick_params(
+            which='both',    # major and minor ticks
+            direction='in',
+            left=True,
+            right=True,
+            bottom=False,
+            top=False,
+            labelsize=axis_font_size
+        )
 
     plt.tight_layout()
 
@@ -2938,9 +3027,9 @@ def Rcpm_bin_integrated(kinematic_variable, which_cross_sections_included, plot_
 
 
 def Rcpm_pTD_varying_FF_fit(PDF_set, which_cross_sections_included):
-    font_size = 16
-    axis_label_font_size = 17
-    axis_font_size = 13
+    font_size = 17
+    axis_label_font_size = 21
+    axis_font_size = 17
     legend_fontsize = 14
 
     scalings = [0.9, 1., 1.18]
@@ -2954,7 +3043,7 @@ def Rcpm_pTD_varying_FF_fit(PDF_set, which_cross_sections_included):
 
     bin_widths = np.diff(pTD_bins)
 
-    FF_sets = ['opal', 'global']
+    FF_sets = ['KKKS08_opal', 'KKKS08_global']
     HISTO_Rcpm_central = [np.zeros(5) for _ in range(len(FF_sets))]
 
     for FF_index in range(len(FF_sets)):
@@ -2967,7 +3056,7 @@ def Rcpm_pTD_varying_FF_fit(PDF_set, which_cross_sections_included):
 
         for process_index in range(len(processes_here)):
             scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(
-                PDF_set, num_err_members_in_set, processes_here[process_index], False, True, True, 'frag_main_scale', z_def, FF_set_here)
+                PDF_set, num_err_members_in_set, processes_here[process_index], False, False, True, 'frag_main_scale', z_def, FF_set_here, 'central')
 
             for eta_lept_index in range(5):
                 bin_index = 0
@@ -3013,45 +3102,51 @@ def Rcpm_pTD_varying_FF_fit(PDF_set, which_cross_sections_included):
 
     # DECORATIONS
     for i in range(1, 3):
-        ax.axvline(pTD_bins[i], color='gray', linewidth=0.5, ymax=0.5)
+        ax.axvline(pTD_bins[i], color='gray', linewidth=0.5, ymax=0.6)
     for i in range(3, 5):
         ax.axvline(pTD_bins[i], color='gray', linewidth=0.5)
 
     ax.text(0.01, 1.01, r'$\times 10^{-3}$',
         transform=ax.transAxes,
-        fontsize=14, va='bottom', ha='left')
+        fontsize=17, va='bottom', ha='left')
 
     #--------------------------------------------------------------------------------------------------------------------------------------#
     #                                                        MAKING THE PLOT LOOK PRETTY :)                                                #
     #--------------------------------------------------------------------------------------------------------------------------------------#
 
     ax.set_xlim(8, 150)
-    ax.set_ylim(0, 0.6)
+    #ax.set_ylim(-0.5, 0.6)
 
     plt.xscale('log')
 
-    plt.xlabel(r'$p_T (D)$', fontsize=axis_label_font_size)
-    ax.set_ylabel(r'$\frac{R_c^\pm(\text{Global}) - R_c^\pm(\text{Opal})}{R_c^\pm(\text{Global})}$', fontsize=axis_label_font_size * 1.3)
+    plt.xlabel(r'$p_T (D)$ [GeV]', fontsize=axis_label_font_size)
+    ax.set_ylabel(r'$\frac{R_c^\pm(\text{Global}) - R_c^\pm(\text{OPAL})}{R_c^\pm(\text{Global})}$', fontsize=axis_label_font_size * 1.3)
 
-    text_x = 11
-    text_y1 = 3.5
-    text_y2 = 3.1
-    text_y3 = 2.7
-    text_y4 = 2.3
+    text_x = 9
+    text_y1 = 6.3
+    text_y2 = 5.3
+    text_y3 = 4.3
+    text_y4 = 3.3
 
-    ax.text(text_x, text_y1, r'$R_c^\pm(D^\pm, D^{*\pm})$', fontsize=font_size)
+    ax.text(text_x, text_y1, r'$R_c^\pm(D^\pm, D^{*\pm})$\quad OS-SS', fontsize=font_size)
     ax.text(text_x, text_y2, r'$\sqrt{s} = 13$ TeV', fontsize=font_size)
     ax.text(text_x, text_y3, 'CT18ANLO', fontsize=font_size)
     ax.text(text_x, text_y4, 'KKKS08', fontsize=font_size)
 
-    ax.tick_params(direction='in', top=True, right=True)
+    plt.plot([0, 200], [0, 0], color='black', zorder=0)
+
     ax.minorticks_on()
-    ax.tick_params(which='both', direction='in', top=True, right=True)
+    ax.tick_params(
+        which='both',    # major and minor ticks
+        direction='in',
+        left=True,
+        right=True,
+        bottom=False,
+        top=False
+    )
 
-    ax.tick_params(axis='both', which='major', labelsize=axis_font_size)
-
-    ax.set_yticks([1, 2, 3, 4])
-    plt.xticks(pTD_bins, [f'{tick:.0f}' for tick in pTD_bins])
+    plt.xticks(pTD_bins, [f'{tick:.0f}' for tick in pTD_bins], fontsize=axis_font_size)
+    plt.yticks(np.arange(-4, 8, 1), fontsize=axis_font_size)
 
     plt.tight_layout()
 
@@ -3112,7 +3207,7 @@ def Rcpm_LO_bin_integrated(kinematic_quantity, which_cross_sections_included, PD
     print(Rcpm)
 
 
-def pTD_mc_variation(process, PDF_set, z_def, fragmentation_set):
+def pTD_mc_variation(PDF_set, z_def, fragmentation_set, fragmentation_scale_choice):
     # Atlas values. The rows from top to bottom are D+W-, D-W+, D*+W-, D*-W+.
     atlas_vals = np.array([[15.04, 15.34, 13.78, 5.13, 0.93],
                         [14.61, 15.12, 13.07, 4.84, 0.82],
@@ -3174,24 +3269,23 @@ def pTD_mc_variation(process, PDF_set, z_def, fragmentation_set):
     xmax = np.sqrt(pTD_bins[1:] * bin_midpoints)
 
     QCD_order = 'NLO'
-    
-    FF_scale_choices = ['frag_main_scale', 'frag_meson_pT_scale']
-    colors = ['red', 'blue']
-    labels = [r'$\mu_\text{frag} = M_W$', r'$\mu_\text{frag} = p_T(D)$']
 
-    scale_MW_vals = np.zeros(5)
-    scale_pTD_vals = np.zeros(5)
+    m_charm_variations = ['central', 'up', 'down']
+    colors = ['black', 'red', 'blue']
+    labels = [r'$m_c = 1.3$ GeV', r'$m_c = 1.4$ GeV', r'$m_c = 1.2$ GeV']
 
+    mc_central_vals = np.zeros(5)
+    mc_down_vals = np.zeros(5)
+    mc_up_vals = np.zeros(5)
 
-    for i in range(len(FF_scale_choices)):
-        FF_scale_choice = FF_scale_choices[i]
+    for i in range(len(m_charm_variations)):
+        m_charm_variation = m_charm_variations[i]
 
         scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus = compute_general_3D_vals_NLO(PDF_set,
-                num_err_members_in_set, process, False, True, True, FF_scale_choice, z_def, fragmentation_set)
+                1, process, False, False, True, fragmentation_scale_choice, z_def, fragmentation_set, m_charm_variation)
 
         HISTO_central_sigma_vals = np.zeros(5)
-
-        scale_names = ['central', 'dd', 'uu']
+        HISTO_central_sigma_MC_errs = np.zeros(5)
 
         for eta_lept_index in range(5):
             bin_index = 0
@@ -3203,24 +3297,41 @@ def pTD_mc_variation(process, PDF_set, z_def, fragmentation_set):
                         bin_index += 1
                 
                 HISTO_central_sigma_vals[bin_index] += sum(scales_vals[0][eta_lept_index][pTD_index, :])
+                HISTO_central_sigma_MC_errs[bin_index] += sum(scales_MCerrs[0][eta_lept_index][pTD_index, :]**2)
+
+        HISTO_central_sigma_MC_errs = np.sqrt(HISTO_central_sigma_MC_errs)
 
         if (i == 0):
-            scale_MW_vals = HISTO_central_sigma_vals
+            mc_central_vals = HISTO_central_sigma_vals
         elif (i == 1):
-            scale_pTD_vals = HISTO_central_sigma_vals
+            mc_up_vals = HISTO_central_sigma_vals
+        else:
+            mc_down_vals = HISTO_central_sigma_vals
 
         ax1.hlines(HISTO_central_sigma_vals, pTD_bins[:-1], pTD_bins[1:],
                     color=colors[i],
                     label=labels[i], zorder=2)
 
-    ratio = scale_pTD_vals / scale_MW_vals
+        if (i == 0):
+            ax1.bar(places_inside_bins[i, :], 2 * HISTO_central_sigma_MC_errs, bottom=HISTO_central_sigma_vals - HISTO_central_sigma_MC_errs,
+                    width=bar_width, color='gray', zorder=1, label='MC error')
+            ax2.bar((pTD_bins[1:] + pTD_bins[:-1]) / 2., (HISTO_central_sigma_vals + HISTO_central_sigma_MC_errs) / HISTO_central_sigma_vals - \
+                    (HISTO_central_sigma_vals - HISTO_central_sigma_MC_errs) / HISTO_central_sigma_vals,
+                    bottom=(HISTO_central_sigma_vals - HISTO_central_sigma_MC_errs) / HISTO_central_sigma_vals, color='gray', width=pTD_bins[1:] - pTD_bins[:-1], zorder=1000)
 
-    ax2.hlines(ratio, pTD_bins[:-1], pTD_bins[1:], zorder=3, color=colors[1])
+    ratio1 = mc_up_vals / mc_central_vals
+    ratio2 = mc_down_vals / mc_central_vals
+
+    print(ratio1)
+    print(ratio2)
+
+    ax2.hlines(ratio1, pTD_bins[:-1], pTD_bins[1:], zorder=3, color=colors[1])
+    ax2.hlines(ratio2, pTD_bins[:-1], pTD_bins[1:], zorder=3, color=colors[2])
 
     plt.xscale('log', base=10)
     ax1.set_ylim(0, 26)
     plt.xlim(8, 150)
-    ax2.set_ylim(0.9, 1.1)
+    ax2.set_ylim(0.95, 1.01)
 
     ax2.set_xlabel(r'$p_T(D)$ [GeV]', fontsize=axis_label_font_size)
     ax1.set_ylabel('Cross section [pb]', fontsize=axis_label_font_size)
@@ -3272,28 +3383,26 @@ def pTD_mc_variation(process, PDF_set, z_def, fragmentation_set):
         ax2.axvline(pTD_bins[i], color='gray', linewidth=0.5, ymax=1, zorder=0)
 
     plt.tight_layout()
-    plt.savefig(plots_directory + process + '/' + fragmentation_set + "/" + process + '_dymamic_FF_scale_' + PDF_set + '.pdf')
+    plt.savefig(plots_directory + process + '/' + fragmentation_set + "/" + process + '_varying_mc_' + PDF_set + '_' + fragmentation_scale_choice + '.pdf')
     plt.show()
-
-
 
 
 #pTD_plot(['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180'], True, theory_labels)
 #pTD_plot(['CT18ANLO', 'CT18ANNLO'], False, ['CT18ANLO', 'CT18ANNLO'])
 #pTD_effect_of_subtraction_plot()
 #pTD_dynamic_FF_scale('W-D+', 'CT18ANLO', 58, 'KKKS08_opal', 'minus')
-pTD_mc_variation('W-D+', 'CT18ANLO', 'minus', 'KKKS08_opal')
-#pTD_varying_FF_fit('CT18ANLO', 58, process, True, ['KKKS08_opal', 'KKKS08_global', 'SMSKA19'], ['KKKS08 OPAL', 'KKKS08 GLOBAL', 'SMSKA19'])
+#pTD_mc_variation('CT18ANLO', 'minus', 'KKKS08_opal', 'frag_main_scale')
+#pTD_varying_FF_fit('CT18ANLO', 58, process, True, ['KKKS08_opal', 'KKKS08_global', 'SMSKA19'], ['KKKS08 OPAL', 'KKKS08 global', 'SMSKA19'])
 #eta_lept_plot()
 #etaD_plot()
 #z_variation("NLO", 'CT18ANLO')
 #z_def_difference(process, 'CT18ANLO', 58, False)
-#Rcpm('both')
+Rcpm('both')
 #Rcpm('D')
 #Rcpm('Dstar')
 #Rcpm_pp_pPb()
 #total_cross_section()
 #Rcpm_bin_integrated('pTD', 'both', True, ['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180'])
 #Rcpm_pTD_varying_FF_fit('CT18ANLO', 'both')
-#Rcpm_LO('D', 'MSHT20nlo_as118', 'minus', 'KKKS08_opal')
+#Rcpm_LO('both', 'MSHT20nlo_as118', 'minus', 'KKKS08_opal')
 #Rcpm_LO_bin_integrated('pTD', 'both', 'MSHT20nlo_as118')
