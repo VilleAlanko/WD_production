@@ -2,9 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import copy
+import os
 
 # opal or global
-fragmentation_set = 'opal'
+fragmentation_set = 'KKKS08_opal'
 # minus or plus
 z_def = 'minus'
 # Do subtraction
@@ -14,20 +15,20 @@ process = 'W-D+'
 
 num_etac_bins = 22
 
-if (fragmentation_set == 'opal'):
+if (fragmentation_set == 'KKKS08_opal'):
     frag_set_text = 'KKKS08 OPAL'
 else:
     frag_set_text = ' KKKS08 GLOBAL'
 
-PDF_sets = ['NNPDF30_nlo_as_01180_Np', 'NNPDF30_nlo_as_01180_NPb', 'EPPS21nlo_Ep', 'EPPS21nlo_EPb']
-#PDF_sets = ['EPPS21nlo_pp', 'EPPS21nlo_pPb']
+#PDF_sets = ['NNPDF30_nlo_as_01180_Np', 'NNPDF30_nlo_as_01180_NPb', 'EPPS21nlo_pp', 'EPPS21nlo_pPb']
+PDF_sets = ['EPPS21nlo_pp', 'EPPS21nlo_pPb']
 #theory_labels = ['pp', 'pPb']
-theory_labels = ['nNNPDF30_nlo', 'EPPS21nlo']
+theory_labels = ['nNNPDF30NLO', 'EPPS21nlo']
 num_err_members_in_sets = [200, 200, 106, 106]
 
 pdf_centrals = [[np.zeros((284, num_etac_bins)) for _ in range(len(PDF_sets))] for _ in range(4)]
 
-markers = ['v', 's']
+markers = ['v', 's', 'o', 'd']
 marker_color = 'black'
 
 scale_var_color = 'cornflowerblue'
@@ -91,25 +92,25 @@ def compute_general_2D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
             try:
                 scales_vals[scale_index] = np.loadtxt(
                     main_vals_directory + process + '/NLO/' + z_def + '/' + \
-                    fragmentation_set + '/' + FF_scale_choice + '/scale_variation/' + PDF_set + '/' + scale_names[scale_index] + '/0_vals.txt', delimiter=',') * scaling
+                    fragmentation_set + '/' + FF_scale_choice + '/scale_variation/' + PDF_set + '/' + scale_names[scale_index] + '/0_m_charm_central_vals.txt', delimiter=',') * scaling
             except FileNotFoundError:
                 stop = True
                 print(main_vals_directory + process + '/NLO/' + z_def + '/' + \
-                    fragmentation_set + '/' + FF_scale_choice + '/scale_variation/' + PDF_set + '/' + scale_names[scale_index] + '/0_vals.txt')
+                    fragmentation_set + '/' + FF_scale_choice + '/scale_variation/' + PDF_set + '/' + scale_names[scale_index] + '/0_m_charm_central_vals.txt')
                 break
             
             scales_MCerrs[scale_index] = np.loadtxt(
                 main_vals_directory + process + '/NLO/' + z_def + '/' + \
-                fragmentation_set + '/' + FF_scale_choice + '/scale_variation/' + PDF_set + '/' + scale_names[scale_index] + '/0_errs.txt', delimiter=',') * scaling
+                fragmentation_set + '/' + FF_scale_choice + '/scale_variation/' + PDF_set + '/' + scale_names[scale_index] + '/0_m_charm_central_errs.txt', delimiter=',') * scaling
             
             if (subtraction_flag is True):
                 scales_vals[scale_index] -= np.loadtxt(
                     main_vals_directory + process + '/subtraction/' + z_def + '/' + \
-                    fragmentation_set + '/scale_variation/' + PDF_set + '/' + scale_names[scale_index] + '/0_vals.txt', delimiter=',') * scaling
+                    fragmentation_set + '/' + FF_scale_choice + '/scale_variation/' + PDF_set + '/' + scale_names[scale_index] + '/0_m_charm_central_vals.txt', delimiter=',') * scaling
 
                 scales_MCerrs[scale_index] -= np.loadtxt(
                     main_vals_directory + process + '/subtraction/' + z_def + '/' + \
-                    fragmentation_set + '/scale_variation/' + PDF_set + '/' + scale_names[scale_index] + '/0_errs.txt', delimiter=',') * scaling
+                    fragmentation_set + '/' + FF_scale_choice + '/scale_variation/' + PDF_set + '/' + scale_names[scale_index] + '/0_m_charm_central_errs.txt', delimiter=',') * scaling
             
         if (stop):
             break
@@ -118,12 +119,12 @@ def compute_general_2D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
     if (load_pdf_errs):
         pdf_errs_central = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                         fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                        str(0) + '_0_vals.txt', delimiter=',') * scaling
+                                        str(0) + '_0_m_charm_central_vals.txt', delimiter=',') * scaling
         
         if (subtraction_flag is True):
             pdf_errs_central -= np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                         fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                        str(0) + '_0_vals.txt', delimiter=',') * scaling
+                                        str(0) + '_0_m_charm_central_vals.txt', delimiter=',') * scaling
         
         if (PDF_set == 'EPPS21nlo_Ep' or PDF_set == 'EPPS21nlo_EPb'):
             # This loops through error members, but isn't directly the member id.
@@ -133,19 +134,19 @@ def compute_general_2D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
 
                 pdf_err_member_plus = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                         fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                        str(2 * (i - 1) + 1) + '_0_vals.txt', delimiter=',') * scaling
+                                        str(2 * (i - 1) + 1) + '_0_m_charm_central_vals.txt', delimiter=',') * scaling
 
                 pdf_err_member_minus = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                         fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                        str(2 * i) + '_0_vals.txt', delimiter=',') * scaling
+                                        str(2 * i) + '_0_m_charm_central_vals.txt', delimiter=',') * scaling
                 
                 if (subtraction_flag is True):
                     pdf_err_member_plus -= np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                            str(2 * (i - 1) + 1) + '_0_vals.txt', delimiter=',') * scaling
+                                            str(2 * (i - 1) + 1) + '_0_m_charm_central_vals.txt', delimiter=',') * scaling
                     pdf_err_member_minus -= np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                            str(2 * i) + '_0_vals.txt', delimiter=',') * scaling
+                                            str(2 * i) + '_0_m_charm_central_vals.txt', delimiter=',') * scaling
 
                 for pTD_index in range(284):
                     for etaD_index in range(num_etac_bins):
@@ -170,12 +171,12 @@ def compute_general_2D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
             for member in range(1, int(num_err_members_in_set + 1)):
                 average += np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                                         fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                        str(member) + '_0_vals.txt', delimiter=',') * scaling
+                                                        str(member) + '_0_m_charm_central_vals.txt', delimiter=',') * scaling
                 
                 if (subtraction_flag is True):
                     average -= np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                            str(member) + '_0_vals.txt', delimiter=',') * scaling
+                                            str(member) + '_0_m_charm_central_vals.txt', delimiter=',') * scaling
 
             average = average / num_err_members_in_set
             
@@ -186,12 +187,12 @@ def compute_general_2D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
             for member in range(1, int(num_err_members_in_set + 1)):
                 pdf_err_member = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                                         fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                        str(member) + '_0_vals.txt', delimiter=',') * scaling
+                                                        str(member) + '_0_m_charm_central_vals.txt', delimiter=',') * scaling
                                                     
                 if (subtraction_flag is True):
                     pdf_err_member -= np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                                 fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                str(member) + '_0_vals.txt', delimiter=',') * scaling
+                                                str(member) + '_0_m_charm_central_vals.txt', delimiter=',') * scaling
 
                 sum_val += (average - pdf_err_member)**2
 
@@ -203,7 +204,7 @@ def compute_general_2D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
     return scales_vals, scales_MCerrs, pdf_err_plus, pdf_err_minus
 
 
-def compute_normalized_2D_values_for_a_pdf_member(process, PDF_index, PDF_set, member_index):
+def compute_normalized_2D_values_for_a_pdf_member(process, PDF_index, PDF_set, member_index, FF_scale_choice):
     process_index = -1
     if (process == 'W-D+'):
         process_index = 0
@@ -221,20 +222,20 @@ def compute_normalized_2D_values_for_a_pdf_member(process, PDF_index, PDF_set, m
 
     scale_var_central = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                             fragmentation_set + '/frag_main_scale/scale_variation/' + PDF_set + '/central/' + \
-                                            '0_vals.txt', delimiter=',') / 2. - \
+                                            '0_m_charm_central_vals.txt', delimiter=',') / 2. - \
                             np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
-                                            fragmentation_set + '/scale_variation/' + PDF_set + '/central/' + \
-                                            '0_vals.txt', delimiter=',') / 2.
-
+                                            fragmentation_set + '/' + FF_scale_choice + '/scale_variation/' + PDF_set + '/central/' + \
+                                            '0_m_charm_central_vals.txt', delimiter=',') / 2.
+    """
     pdf_central = np.zeros((284, num_etac_bins))
 
     if (PDF_set == 'EPPS21nlo_Ep' or PDF_set == 'EPPS21nlo_EPb'):
         pdf_central = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                            str(0) + '_0_vals.txt', delimiter=',') / 2. - \
+                                            str(0) + '_0_m_charm_central_vals.txt', delimiter=',') / 2. - \
                             np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                            str(0) + '_0_vals.txt', delimiter=',') / 2.
+                                            str(0) + '_0_m_charm_central_vals.txt', delimiter=',') / 2.
     else:
         if (member_index < 2):
             member_sum = np.zeros((284, num_etac_bins))
@@ -242,10 +243,10 @@ def compute_normalized_2D_values_for_a_pdf_member(process, PDF_index, PDF_set, m
             for member_index_here in range(1, num_err_members + 1):
                 member_sum += np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                                 fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                str(member_index_here) + '_0_vals.txt', delimiter=',') / 2. - \
+                                                str(member_index_here) + '_0_m_charm_central_vals.txt', delimiter=',') / 2. - \
                                 np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                                 fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                str(member_index_here) + '_0_vals.txt', delimiter=',') / 2.
+                                                str(member_index_here) + '_0_m_charm_central_vals.txt', delimiter=',') / 2.
 
             pdf_central = member_sum / num_err_members
 
@@ -256,19 +257,20 @@ def compute_normalized_2D_values_for_a_pdf_member(process, PDF_index, PDF_set, m
 
     member_vals = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                     fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                    str(member_index) + '_0_vals.txt', delimiter=',') / 2. - \
+                                    str(member_index) + '_0_m_charm_central_vals.txt', delimiter=',') / 2. - \
                     np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                     fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                    str(member_index) + '_0_vals.txt', delimiter=',') / 2.
-
-    member_vals_normalized = member_vals - pdf_central + scale_var_central
+                                    str(member_index) + '_0_m_charm_central_vals.txt', delimiter=',') / 2.
+    """
+    #member_vals_normalized = member_vals - pdf_central + scale_var_central
+    member_vals_normalized = scale_var_central
     
     return member_vals_normalized
 
 
 def compute_LO_integrated_cross_section(PDF_set, process, z_def, fragmentation_set):
     return sum(sum(np.loadtxt(main_vals_directory + process + '/LO/' + z_def + '/' + \
-                    fragmentation_set + '/scale_variation/' + PDF_set + '/central/0_vals.txt', delimiter=',')))
+                    fragmentation_set + '/scale_variation/' + PDF_set + '/central/0_m_charm_central_vals.txt', delimiter=',')))
 
 
 def pTD_plot(PDF_sets, plot_errors_flag, theory_labels):
@@ -573,7 +575,7 @@ def etaD_plot(PDF_sets, plot_errors_flag, theory_labels):
         else:
             HISTO_ratio = HISTO_ratio / HISTO_central_sigma_vals
 
-        colors_here = ['red', 'black']
+        colors_here = ['red', 'black', 'orange', 'purple']
 
         ax1.plot(bin_midpoints, HISTO_central_sigma_vals, marker=markers[PDF_index],
                         color=colors_here[PDF_index], markersize=5, linestyle='none',
@@ -716,7 +718,7 @@ def total_cross_section(W_sign):
     else:
         processes = ['W+D-', 'W+Dstar-']
 
-    for PDF_set_index in range(len(PDF_sets)):
+    for PDF_set_index in range(2, len(PDF_sets)):
         PDF_set = PDF_sets[PDF_set_index]
 
         vals = np.zeros(num_err_members_in_sets[PDF_set_index] + 1)
@@ -726,7 +728,7 @@ def total_cross_section(W_sign):
 
         sum_quantity = 0.
 
-        for member_index in range(num_err_members_in_sets[PDF_set_index] + 1):
+        for member_index in range(1):
             for process in processes:
                 process_index = -1
                 if (process == 'W-D+'):
@@ -741,10 +743,12 @@ def total_cross_section(W_sign):
                 num_err_members_in_set = num_err_members_in_sets[PDF_set_index]
                 
                 if (process_index == 0 or process_index == 2):
-                    vals[member_index] += sum(sum(compute_normalized_2D_values_for_a_pdf_member(process, PDF_set_index, PDF_set, member_index))) * 208.
+                    vals[member_index] += sum(sum(compute_normalized_2D_values_for_a_pdf_member(process, PDF_set_index, PDF_set, member_index, 'frag_main_scale'))) * 208.
                 else:
-                    vals_star[member_index] += sum(sum(compute_normalized_2D_values_for_a_pdf_member(process, PDF_set_index, PDF_set, member_index))) * 208.
-
+                    vals_star[member_index] += sum(sum(compute_normalized_2D_values_for_a_pdf_member(process, PDF_set_index, PDF_set, member_index, 'frag_main_scale'))) * 208.
+        
+        sum_quantity = vals[0] + vals_star[0]
+        """
         if (PDF_set == 'EPPS21nlo_Ep' or PDF_set == 'EPPS21nlo_EPb'):
             # This is not directly member_index.
             for member_index in range(1, int(num_err_members_in_sets[PDF_set_index] / 2) + 1):
@@ -758,6 +762,7 @@ def total_cross_section(W_sign):
             err_minus = np.sqrt(err_minus)
 
             sum_quantity = vals[0] + vals_star[0]
+        
         else:
             sum_quantity = sum(vals[1:] + vals_star[1:]) / (len(vals) * 1. - 1.)
 
@@ -768,12 +773,14 @@ def total_cross_section(W_sign):
 
             vals[0] = sum(vals[1:]) / (num_err_members_in_sets[PDF_set_index] * 1.)
             vals_star[0] = sum(vals_star[1:]) / (num_err_members_in_sets[PDF_set_index] * 1.)
+        """
 
         vals[0] = vals[0] * 1e-3
         vals_star[0] = vals_star[0] * 1e-3
 
-        print(PDF_set + ": " + str(sum_quantity) + r' $+$ ' + str(err_plus) + r' $-$ ' + str(err_minus))
+        #print(PDF_set + ": " + str(sum_quantity) + r' $+$ ' + str(err_plus) + r' $-$ ' + str(err_minus))
 
+        print(sum_quantity / 208.)
         plt.plot([sum_quantity / 208., sum_quantity / 208.], [y_vals[PDF_set_index] - 0.25, y_vals[PDF_set_index] + 0.25], color='black', zorder=5, solid_capstyle='butt')
 
         if (PDF_set == 'NNPDF30_nlo_as_01180_NPb' or PDF_set == 'EPPS21nlo_EPb'):
@@ -793,14 +800,14 @@ def total_cross_section(W_sign):
 
             ax.add_patch(expected_uncertainty)
 
-            pdf_err = patches.Rectangle((sum_quantity / 208. - err_minus / 208., y_vals[PDF_set_index]), err_plus / 208. + err_minus / 208.,
-                                        0.25, facecolor=pdf_err_color, zorder=4)
+            #pdf_err = patches.Rectangle((sum_quantity / 208. - err_minus / 208., y_vals[PDF_set_index]), err_plus / 208. + err_minus / 208.,
+            #                            0.25, facecolor=pdf_err_color, zorder=4)
 
-        else:
-            pdf_err = patches.Rectangle((sum_quantity / 208. - err_minus / 208., y_vals[PDF_set_index] - 0.25), err_plus / 208. + err_minus / 208.,
-                                        0.5, facecolor=pdf_err_color, zorder=4)
+        #else:
+            #pdf_err = patches.Rectangle((sum_quantity / 208. - err_minus / 208., y_vals[PDF_set_index] - 0.25), err_plus / 208. + err_minus / 208.,
+            #                            0.5, facecolor=pdf_err_color, zorder=4)
 
-        ax.add_patch(pdf_err)
+        #ax.add_patch(pdf_err)
 
         if (PDF_set == 'EPPS21nlo_Ep' or PDF_set == 'NNPDF30_nlo_as_01180_Np'):
             ax.text(sum_quantity / 208. - err_minus / 208. - 3.5, y_vals[PDF_set_index] - 0.1, r'$pp$', fontsize=font_size)
@@ -833,8 +840,8 @@ def total_cross_section(W_sign):
     ax.text(info_xval_1, info_yval_2, r'$\sqrt{s} = 8.5$ TeV', fontsize=font_size)
     ax.text(info_xval_1, info_yval_3, frag_set_text, fontsize=font_size)
 
-    plt.legend([pdf_err, expected_uncertainty], ["PDF error (90% C.L.)", "Expected measurement\nerror"],
-                        bbox_to_anchor=(1., 0.72), framealpha=1, fontsize=legend_fontsize, loc='center right')
+    #plt.legend([pdf_err, expected_uncertainty], ["PDF error (90% C.L.)", "Expected measurement\nerror"],
+    #                    bbox_to_anchor=(1., 0.72), framealpha=1, fontsize=legend_fontsize, loc='center right')
 
     ax.tick_params(axis='both', which='major', labelsize=axis_font_size)
     ax.set_yticklabels([])
@@ -846,12 +853,14 @@ def total_cross_section(W_sign):
 
     plt.tight_layout()
 
-    plt.savefig(plots_directory + 'integrated/' + fragmentation_set + '/W_' + W_sign + '_integrated.pdf')
+    filename = plots_directory + 'integrated/' + fragmentation_set + '/W_' + W_sign + '_integrated.pdf'
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    plt.savefig(filename)
     plt.show()
 
 
 #pTD_plot(PDF_sets, True, ['pp', 'pPb'])
-#etaD_plot(PDF_sets, False, ['pp', 'pPb'])
+etaD_plot(PDF_sets, False, ['pp', 'pPb'])
 #Rcpm(PDF_sets)
 #total_cross_section('minus')
 
