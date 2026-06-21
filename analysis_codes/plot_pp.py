@@ -809,7 +809,7 @@ def pTD_plot(PDF_sets, plot_errors_flag, theory_labels):
                 if (QCD_order == "NLO"):
                     ax1.plot(places_inside_bins_log_scale[PDF_index, :], HISTO_central_sigma_vals, marker=markers[PDF_index],
                                 color=marker_color, markersize=5, linestyle='none',
-                                label=theory_labels[PDF_index], zorder=4)
+                                label=theory_labels[PDF_index], zorder=4, markeredgecolor='black')
 
                     if (plot_errors_flag):
                         ax1.bar(places_inside_bins_left_log_scale[PDF_index, :], HISTO_pdf_err_plus + HISTO_pdf_err_minus, width=bar_widths[PDF_index],
@@ -1018,15 +1018,14 @@ def pTD_effect_of_subtraction_plot():
 
         QCD_order = 'NLO'
         
-        subtraction_flags = [True, False, True, False]
-        FF_scale_choices = ['frag_main_scale', 'frag_main_scale', 'frag_initial_scale']
-        subtraction_flag_colors = ['red', 'blue', 'black']
-        subtraction_flag_labels = [r'With subtraction' + '\n' + r'($\mu_\text{frag} = M_W$)', r'Without subtraction' + '\n' + r'($\mu_\text{frag} = M_W$)',
-                                    r'With subtraction' + '\n' + r'($\mu_\text{frag} = m_c$)']
+        subtraction_flags = [True, True, True]
+        FF_scale_choices = ['frag_initial_scale', 'frag_main_scale', 'frag_main_scale_no_large_log']
+        subtraction_flag_colors = ['blue', 'black', 'red']
+        subtraction_flag_labels = [r'$\mu_\text{frag} = m_c$', r'$\mu_\text{frag} = M_W$', r'$\hspace{-0.5cm}\mu_\text{frag} = M_W$' + '\n' + r'(large log double-counted)']
 
-        without_subtraction_vals = np.zeros(5)
-        with_subtraction_vals = np.zeros(5)
-        initial_scale_with_subtraction = np.zeros(5)
+        double_counting = np.zeros(5)
+        correct = np.zeros(5)
+        initial_scale = np.zeros(5)
 
 
         for i in range(len(FF_scale_choices)):
@@ -1051,24 +1050,24 @@ def pTD_effect_of_subtraction_plot():
                     
                     HISTO_central_sigma_vals[bin_index] += sum(scales_vals[0][eta_lept_index][pTD_index, :])
 
-            if (i == 0):
-                with_subtraction_vals = HISTO_central_sigma_vals
-            elif (i == 1):
-                without_subtraction_vals = HISTO_central_sigma_vals
+            if (i == 1):
+                correct = HISTO_central_sigma_vals
+            elif (i == 2):
+                double_counting = HISTO_central_sigma_vals
             else:
-                initial_scale_with_subtraction = HISTO_central_sigma_vals
+                initial_scale = HISTO_central_sigma_vals
 
             ax1.hlines(HISTO_central_sigma_vals, pTD_bins[:-1], pTD_bins[1:],
                         color=subtraction_flag_colors[i],
                         label=subtraction_flag_labels[i], zorder=2)
+        
+        ratios1 = initial_scale / correct
+        ratios2 = double_counting / correct
 
-        ratios1 = initial_scale_with_subtraction / with_subtraction_vals
-        ratios2 = without_subtraction_vals / with_subtraction_vals
+        ax2.hlines(ratios1, pTD_bins[:-1], pTD_bins[1:], zorder=3, color=subtraction_flag_colors[0])
+        ax2.hlines(ratios2, pTD_bins[:-1], pTD_bins[1:], zorder=3, color=subtraction_flag_colors[2])
 
-        ax2.hlines(ratios1, pTD_bins[:-1], pTD_bins[1:], zorder=3, color=subtraction_flag_colors[2])
-        ax2.hlines(ratios2, pTD_bins[:-1], pTD_bins[1:], zorder=3, color=subtraction_flag_colors[1])
-
-        ax2.hlines(np.zeros(5) + 1, pTD_bins[:-1], pTD_bins[1:], zorder=3, color=subtraction_flag_colors[2])
+        ax2.hlines(np.zeros(5) + 1, pTD_bins[:-1], pTD_bins[1:], zorder=3, color=subtraction_flag_colors[1])
 
         #ax1.hlines(atlas_vals[atlas_index], np.sqrt(bin_midpoints * (bin_midpoints - bin_widths / 15.)),
         #            np.sqrt(bin_midpoints * (bin_midpoints + bin_widths / 15.)), zorder=3, color='black')
@@ -1120,8 +1119,6 @@ def pTD_effect_of_subtraction_plot():
 
         info_x_vals_1 = 9
         info_x_vals_2 = 25
-
-        ax2.plot([8, 150], [1, 1], color='red', zorder=5)
 
         legend1 = ax1.legend(loc='upper right', framealpha=1, fontsize=legend_fontsize)
         #legend2 = ax1.legend([pdf_err_bar_plot, scale_var_bar_plot], ["PDF uncertainty", "Scale variation"], loc='lower left', framealpha=1, fontsize=legend_fontsize)
@@ -1276,8 +1273,6 @@ def pTD_dynamic_FF_scale(process, PDF_set, num_err_members_in_set, fragmentation
     ax2.plot([8, 150], [1, 1], color=colors[0], zorder=1)
 
     handles, labels = ax1.get_legend_handles_labels()
-    print(len(handles))
-    print(len(labels))
     order = [0,2,1]
 
     legend = ax1.legend([handles[idx] for idx in order], [labels[idx] for idx in order], loc='upper right', framealpha=1, fontsize=legend_fontsize)
@@ -2195,7 +2190,7 @@ def Rcpm(which_cross_sections_included):
                 '(+' + str(round(Rcpm_error_up, 5)) + '-' + str(round(Rcpm_error_down, 5)) + ').')
     
         ax2.plot(Rcpm, 4 - y_vals[PDF_index], marker=markers[PDF_index], color=marker_color,
-                linestyle='none', label=theory_labels[PDF_index], zorder=6)
+                linestyle='none', label=theory_labels[PDF_index], zorder=6, markersize=8)
 
         pdf_err = patches.Rectangle((Rcpm - Rcpm_pdf_err_down, 3 - PDF_index - 0.2),
                     Rcpm_pdf_err_down + Rcpm_pdf_err_up, 0.4, facecolor=pdf_err_color, zorder=5)
@@ -2422,7 +2417,7 @@ def total_cross_section():
         pdf_err_down = sum(sum(sum(pdf_err_minus)))
 
         plt.plot(val, 4 - y_vals[PDF_set_index], marker=markers[PDF_set_index], color=marker_color,
-                linestyle='none', label=theory_labels[PDF_set_index], zorder=5)
+                linestyle='none', label=theory_labels[PDF_set_index], zorder=5, markersize=8)
 
         scale_var = patches.Rectangle((val + scales_uu, 3 - PDF_set_index - 0.25), scales_dd - scales_uu, 0.25, facecolor=scale_var_color, zorder=4)
         ax2.add_patch(scale_var)
@@ -2445,6 +2440,8 @@ def total_cross_section():
     plt.xlim(34, 54)
     ax1.set_ylim(100, 104)
     ax2.set_ylim(0, 4)
+
+    ax1.set_xticks([36, 38, 40, 42, 44, 46, 48, 50, 52])
 
     ax2.set_xlabel('Cross section [pb]', fontsize=axis_label_font_size)
 
@@ -2900,11 +2897,6 @@ def Rcpm_bin_integrated(kinematic_variable, which_cross_sections_included, plot_
     else:
         places_inside_bins_here = places_inside_bins_linear_scale
     
-    # ATLAS
-    ax1.hlines(Rcpm_atlas, bin_edges[:-1], bin_edges[1:], color='black', zorder=1, label='ATLAS')
-    ATLAS_uncertainty = ax1.bar(bin_midpoints_linear_scale, 2 * Rcpm_atlas_error, bottom=Rcpm_atlas - Rcpm_atlas_error,
-            width=bin_widths, color=atlas_err_color, zorder=0)
-    
     # THEORY
     for PDF_index in range(len(PDF_sets)):
         ax1.plot(places_inside_bins_here[PDF_index, :], HISTO_Rcpm_central[PDF_index], marker=markers[PDF_index],
@@ -2937,6 +2929,11 @@ def Rcpm_bin_integrated(kinematic_variable, which_cross_sections_included, plot_
 
     ax2.bar(bin_midpoints_linear_scale, 2 * Rcpm_atlas_error / Rcpm_atlas, bottom=1. - Rcpm_atlas_error / Rcpm_atlas,
         width=bin_widths, color=atlas_err_color, zorder=0)
+    
+    # ATLAS
+    ax1.hlines(Rcpm_atlas, bin_edges[:-1], bin_edges[1:], color='black', zorder=1, label='ATLAS')
+    ATLAS_uncertainty = ax1.bar(bin_midpoints_linear_scale, 2 * Rcpm_atlas_error, bottom=Rcpm_atlas - Rcpm_atlas_error,
+            width=bin_widths, color=atlas_err_color, zorder=0)
 
     # DECORATIONS
     for i in range(1, len(bin_edges) - 3):
@@ -3030,7 +3027,7 @@ def Rcpm_pTD_varying_FF_fit(PDF_set, which_cross_sections_included):
     font_size = 17
     axis_label_font_size = 21
     axis_font_size = 17
-    legend_fontsize = 14
+    legend_fontsize = 18
 
     scalings = [0.9, 1., 1.18]
     
@@ -3043,7 +3040,7 @@ def Rcpm_pTD_varying_FF_fit(PDF_set, which_cross_sections_included):
 
     bin_widths = np.diff(pTD_bins)
 
-    FF_sets = ['KKKS08_opal', 'KKKS08_global']
+    FF_sets = ['KKKS08_opal', 'KKKS08_global', 'SMSKA19']
     HISTO_Rcpm_central = [np.zeros(5) for _ in range(len(FF_sets))]
 
     for FF_index in range(len(FF_sets)):
@@ -3085,20 +3082,22 @@ def Rcpm_pTD_varying_FF_fit(PDF_set, which_cross_sections_included):
                                                         HISTO_central_sigma_vals[3][pTD_index]
 
 
-    varying_FF_fit_ratio = np.zeros(5)
+    ratio_1 = np.zeros(5)
+    ratio_2 = np.zeros(5)
 
     print(HISTO_Rcpm_central[0])
     print(HISTO_Rcpm_central[1])
 
     for pTD_index in range(len(pTD_bins) - 1):
-        varying_FF_fit_ratio[pTD_index] = (HISTO_Rcpm_central[1][pTD_index] - HISTO_Rcpm_central[0][pTD_index]) / HISTO_Rcpm_central[1][pTD_index] * 1e3
+        ratio_1[pTD_index] = (HISTO_Rcpm_central[1][pTD_index] - HISTO_Rcpm_central[0][pTD_index]) / HISTO_Rcpm_central[1][pTD_index] * 1e3
+        ratio_2[pTD_index] = (HISTO_Rcpm_central[2][pTD_index] - HISTO_Rcpm_central[0][pTD_index]) / HISTO_Rcpm_central[2][pTD_index] * 1e3
 
     #--------------------------------------------------------------------------------------------------------------------------------------#
     #                                                                   PLOTTING                                                           #
     #--------------------------------------------------------------------------------------------------------------------------------------#
 
-    print(varying_FF_fit_ratio)
-    ax.hlines(varying_FF_fit_ratio, pTD_bins[:-1], pTD_bins[1:], color='red', zorder=1)
+    ax.hlines(ratio_1, pTD_bins[:-1], pTD_bins[1:], color='red', zorder=1, label='KKKS08 global')
+    ax.hlines(ratio_2, pTD_bins[:-1], pTD_bins[1:], color='blue', zorder=1, label='SMSKA19')
 
     # DECORATIONS
     for i in range(1, 3):
@@ -3120,18 +3119,17 @@ def Rcpm_pTD_varying_FF_fit(PDF_set, which_cross_sections_included):
     plt.xscale('log')
 
     plt.xlabel(r'$p_T (D)$ [GeV]', fontsize=axis_label_font_size)
-    ax.set_ylabel(r'$\frac{R_c^\pm(\text{Global}) - R_c^\pm(\text{OPAL})}{R_c^\pm(\text{Global})}$', fontsize=axis_label_font_size * 1.3)
+    ax.set_ylabel(r'$\frac{R_c^\pm - R_c^\pm(\text{KKKS08 OPAL})}{R_c^\pm}$', fontsize=axis_label_font_size * 1.3)
 
     text_x = 9
-    text_y1 = 6.3
-    text_y2 = 5.3
-    text_y3 = 4.3
+    text_y1 = 6.8
+    text_y2 = 5.4
+    text_y3 = 4.
     text_y4 = 3.3
 
-    ax.text(text_x, text_y1, r'$R_c^\pm(D^\pm, D^{*\pm})$\quad OS-SS', fontsize=font_size)
+    ax.text(text_x, text_y1, r'$R_c^\pm(D^\pm)$\quad OS-SS', fontsize=font_size)
     ax.text(text_x, text_y2, r'$\sqrt{s} = 13$ TeV', fontsize=font_size)
     ax.text(text_x, text_y3, 'CT18ANLO', fontsize=font_size)
-    ax.text(text_x, text_y4, 'KKKS08', fontsize=font_size)
 
     plt.plot([0, 200], [0, 0], color='black', zorder=0)
 
@@ -3146,7 +3144,9 @@ def Rcpm_pTD_varying_FF_fit(PDF_set, which_cross_sections_included):
     )
 
     plt.xticks(pTD_bins, [f'{tick:.0f}' for tick in pTD_bins], fontsize=axis_font_size)
-    plt.yticks(np.arange(-4, 8, 1), fontsize=axis_font_size)
+    plt.yticks(np.arange(-5, 8, 1), fontsize=axis_font_size)
+
+    plt.legend(fontsize=legend_fontsize, loc='lower left', framealpha=1)
 
     plt.tight_layout()
 
@@ -3387,7 +3387,7 @@ def pTD_mc_variation(PDF_set, z_def, fragmentation_set, fragmentation_scale_choi
     plt.show()
 
 
-#pTD_plot(['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180'], True, theory_labels)
+pTD_plot(['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180'], True, theory_labels)
 #pTD_plot(['CT18ANLO', 'CT18ANNLO'], False, ['CT18ANLO', 'CT18ANNLO'])
 #pTD_effect_of_subtraction_plot()
 #pTD_dynamic_FF_scale('W-D+', 'CT18ANLO', 58, 'KKKS08_opal', 'minus')
@@ -3397,12 +3397,12 @@ def pTD_mc_variation(PDF_set, z_def, fragmentation_set, fragmentation_scale_choi
 #etaD_plot()
 #z_variation("NLO", 'CT18ANLO')
 #z_def_difference(process, 'CT18ANLO', 58, False)
-Rcpm('both')
+#Rcpm('both')
 #Rcpm('D')
 #Rcpm('Dstar')
 #Rcpm_pp_pPb()
 #total_cross_section()
-#Rcpm_bin_integrated('pTD', 'both', True, ['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180'])
-#Rcpm_pTD_varying_FF_fit('CT18ANLO', 'both')
+#Rcpm_bin_integrated('eta_lept', 'D', True, ['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180'])
+#Rcpm_pTD_varying_FF_fit('CT18ANLO', 'D')
 #Rcpm_LO('both', 'MSHT20nlo_as118', 'minus', 'KKKS08_opal')
 #Rcpm_LO_bin_integrated('pTD', 'both', 'MSHT20nlo_as118')

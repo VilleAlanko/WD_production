@@ -3,6 +3,17 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import copy
 import os
+import matplotlib as mpl
+
+mpl.rcParams.update({
+    "text.usetex": True,
+    "font.family": "serif",
+    "font.weight": "bold"
+})
+mpl.rcParams['text.latex.preamble'] = r'''
+\usepackage{amsmath}
+\usepackage{xcolor}
+'''
 
 # opal or global
 fragmentation_set = 'KKKS08_opal'
@@ -20,11 +31,12 @@ if (fragmentation_set == 'KKKS08_opal'):
 else:
     frag_set_text = ' KKKS08 GLOBAL'
 
-#PDF_sets = ['NNPDF30_nlo_as_01180_Np', 'NNPDF30_nlo_as_01180_NPb', 'EPPS21nlo_pp', 'EPPS21nlo_pPb']
-PDF_sets = ['EPPS21nlo_pp', 'EPPS21nlo_pPb']
+PDF_sets = ['NNPDF30_nlo_as_01180_pp', 'NNPDF30_nlo_as_01180_pPb', 'EPPS21nlo_pp', 'EPPS21nlo_pPb']
+#PDF_sets = ['EPPS21nlo_pp', 'EPPS21nlo_pPb']
 #theory_labels = ['pp', 'pPb']
-theory_labels = ['nNNPDF30NLO', 'EPPS21nlo']
+theory_labels = ['nNNPDF3.0NLO', 'EPPS21NLO']
 num_err_members_in_sets = [200, 200, 106, 106]
+#num_err_members_in_sets = [10, 10, 10, 10]
 
 pdf_centrals = [[np.zeros((284, num_etac_bins)) for _ in range(len(PDF_sets))] for _ in range(4)]
 
@@ -162,8 +174,8 @@ def compute_general_2D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
                             pdf_errs_central[pTD_index, etaD_index] - \
                             pdf_err_member_minus[pTD_index, etaD_index], 0)**2
 
-            pdf_err_plus = np.sqrt(pdf_err_plus)
-            pdf_err_minus = np.sqrt(pdf_err_minus)
+            pdf_err_plus = np.sqrt(pdf_err_plus) / 1.645
+            pdf_err_minus = np.sqrt(pdf_err_minus) / 1.645
 
         if (PDF_set == 'NNPDF30_nlo_as_01180_Np' or PDF_set == 'NNPDF30_nlo_as_01180_NPb'):
             average = 0.
@@ -196,7 +208,7 @@ def compute_general_2D_vals_NLO(PDF_set, num_err_members_in_set, process, load_s
 
                 sum_val += (average - pdf_err_member)**2
 
-            pdf_err_plus = np.sqrt(1. / (num_err_members_in_set * 1. - 1.) * sum_val) * 1.645
+            pdf_err_plus = np.sqrt(1. / (num_err_members_in_set * 1. - 1.) * sum_val)
             pdf_err_minus = pdf_err_plus
         
 
@@ -226,7 +238,6 @@ def compute_normalized_2D_values_for_a_pdf_member(process, PDF_index, PDF_set, m
                             np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                             fragmentation_set + '/' + FF_scale_choice + '/scale_variation/' + PDF_set + '/central/' + \
                                             '0_m_charm_central_vals.txt', delimiter=',') / 2.
-    """
     pdf_central = np.zeros((284, num_etac_bins))
 
     if (PDF_set == 'EPPS21nlo_Ep' or PDF_set == 'EPPS21nlo_EPb'):
@@ -261,9 +272,9 @@ def compute_normalized_2D_values_for_a_pdf_member(process, PDF_index, PDF_set, m
                     np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                     fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
                                     str(member_index) + '_0_m_charm_central_vals.txt', delimiter=',') / 2.
-    """
-    #member_vals_normalized = member_vals - pdf_central + scale_var_central
-    member_vals_normalized = scale_var_central
+
+    member_vals_normalized = member_vals - pdf_central + scale_var_central
+    #member_vals_normalized = scale_var_central
     
     return member_vals_normalized
 
@@ -375,8 +386,6 @@ def pTD_plot(PDF_sets, plot_errors_flag, theory_labels):
             ratios = HISTO_central_sigma_vals
         else:
             ratios = ratios / HISTO_central_sigma_vals
-
-        print(HISTO_pdf_err_minus)
 
         ax1.plot(places_inside_bins[PDF_index, :], HISTO_central_sigma_vals, marker=markers[PDF_index],
                         color=marker_color, markersize=5, linestyle='none',
@@ -499,7 +508,9 @@ def pTD_plot(PDF_sets, plot_errors_flag, theory_labels):
     ax1.legend(loc='upper right', framealpha=1, fontsize=legend_fontsize)
     plt.tight_layout()
 
-    plt.savefig(plots_directory + process + '/' + fragmentation_set + "/" + process + '_pT.pdf')
+    filename = plots_directory + process + '/' + fragmentation_set + "/" + process + '_pT.pdf'
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    plt.savefig(filename)
 
     plt.show()
 
@@ -564,11 +575,11 @@ def etaD_plot(PDF_sets, plot_errors_flag, theory_labels):
             HISTO_pdf_err_plus[etaD_index] += sum(pdf_err_plus[:, etaD_index])
             HISTO_pdf_err_minus[etaD_index] += sum(pdf_err_minus[:, etaD_index])
 
-        #HISTO_ratio_up_pdf_err = (HISTO_central_sigma_vals + HISTO_pdf_err_plus) / HISTO_central_sigma_vals
-        #HISTO_ratio_down_pdf_err = (HISTO_central_sigma_vals - HISTO_pdf_err_minus) / HISTO_central_sigma_vals
+        HISTO_ratio_up_pdf_err = (HISTO_central_sigma_vals + HISTO_pdf_err_plus) / HISTO_central_sigma_vals
+        HISTO_ratio_down_pdf_err = (HISTO_central_sigma_vals - HISTO_pdf_err_minus) / HISTO_central_sigma_vals
 
-        #HISTO_ratio_up_scale_var = (HISTO_central_sigma_vals + HISTO_scales_dd_sigma_vals) / HISTO_central_sigma_vals
-        #HISTO_ratio_down_scale_var = (HISTO_central_sigma_vals + HISTO_scales_uu_sigma_vals) / HISTO_central_sigma_vals
+        HISTO_ratio_up_scale_var = (HISTO_central_sigma_vals + HISTO_scales_dd_sigma_vals) / HISTO_central_sigma_vals
+        HISTO_ratio_down_scale_var = (HISTO_central_sigma_vals + HISTO_scales_uu_sigma_vals) / HISTO_central_sigma_vals
 
         if (PDF_index == 0):
             HISTO_ratio = HISTO_central_sigma_vals
@@ -639,7 +650,9 @@ def etaD_plot(PDF_sets, plot_errors_flag, theory_labels):
     #legend2 = ax1.legend([pdf_err_bar_plot, scale_var_bar_plot], ["PDF uncertainty", "Scale variation"], loc='lower left', framealpha=1, fontsize=legend_fontsize)
     #ax1.add_artist(legend1)
 
-    plt.savefig(plots_directory + process + '/' + fragmentation_set + "/" + process + '_' + PDF_sets[1] + '_etaD.pdf')
+    filename = plots_directory + process + '/' + fragmentation_set + "/" + process + '_' + PDF_sets[1] + '_etaD.pdf'
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    plt.savefig(filename)
     plt.tight_layout()
     plt.show()
 
@@ -704,12 +717,12 @@ def Rcpm_LO(PDF_set, z_def, fragmentation_set):
 
 
 def total_cross_section(W_sign):
-    font_size = 16
-    axis_label_font_size = 17
-    axis_font_size = 13
-    legend_fontsize = 15
+    font_size = 19
+    axis_label_font_size = 22
+    axis_font_size = 17
+    legend_fontsize = 17
 
-    fig, ax = plt.subplots(figsize=(6, 6))
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [4, 7], 'hspace': 0}, figsize=(6, 6))
 
     y_vals = [2.8, 2.2, 1.3, 0.7]
 
@@ -718,7 +731,7 @@ def total_cross_section(W_sign):
     else:
         processes = ['W+D-', 'W+Dstar-']
 
-    for PDF_set_index in range(2, len(PDF_sets)):
+    for PDF_set_index in range(len(PDF_sets)):
         PDF_set = PDF_sets[PDF_set_index]
 
         vals = np.zeros(num_err_members_in_sets[PDF_set_index] + 1)
@@ -728,7 +741,7 @@ def total_cross_section(W_sign):
 
         sum_quantity = 0.
 
-        for member_index in range(1):
+        for member_index in range(num_err_members_in_sets[PDF_set_index] + 1):
             for process in processes:
                 process_index = -1
                 if (process == 'W-D+'):
@@ -739,51 +752,49 @@ def total_cross_section(W_sign):
                     process_index = 2
                 else:
                     process_index = 3
-                
+
                 num_err_members_in_set = num_err_members_in_sets[PDF_set_index]
-                
+
                 if (process_index == 0 or process_index == 2):
                     vals[member_index] += sum(sum(compute_normalized_2D_values_for_a_pdf_member(process, PDF_set_index, PDF_set, member_index, 'frag_main_scale'))) * 208.
                 else:
                     vals_star[member_index] += sum(sum(compute_normalized_2D_values_for_a_pdf_member(process, PDF_set_index, PDF_set, member_index, 'frag_main_scale'))) * 208.
         
         sum_quantity = vals[0] + vals_star[0]
-        """
-        if (PDF_set == 'EPPS21nlo_Ep' or PDF_set == 'EPPS21nlo_EPb'):
+        
+        if (PDF_set == 'EPPS21nlo_pp' or PDF_set == 'EPPS21nlo_pPb'):
             # This is not directly member_index.
             for member_index in range(1, int(num_err_members_in_sets[PDF_set_index] / 2) + 1):
                 plus_val = vals[2 * (member_index - 1) + 1] + vals_star[2 * (member_index - 1) + 1]
                 minus_val = vals[2 * member_index] + vals_star[2 * member_index]
-
                 err_plus += max(plus_val - vals[0] - vals_star[0], vals[0] + vals_star[0] - minus_val, 0)**2
                 err_minus += max(vals[0] + vals_star[0] - plus_val, minus_val - vals[0] - vals_star[0], 0)**2
-            
-            err_plus = np.sqrt(err_plus)
-            err_minus = np.sqrt(err_minus)
+
+                print(plus_val, member_index, PDF_set)
+            err_plus = np.sqrt(err_plus) / 1.645
+            err_minus = np.sqrt(err_minus) / 1.645
 
             sum_quantity = vals[0] + vals_star[0]
-        
+
         else:
             sum_quantity = sum(vals[1:] + vals_star[1:]) / (len(vals) * 1. - 1.)
 
             sum_in_error_formula = np.sum((vals[1:] + vals_star[1:] - sum_quantity)**2)
 
-            err_plus = np.sqrt(1. / (num_err_members_in_sets[PDF_set_index] * 1. - 1.) * sum_in_error_formula) * 1.645
+            err_plus = np.sqrt(1. / (num_err_members_in_sets[PDF_set_index] * 1. - 1.) * sum_in_error_formula)
             err_minus = err_plus
 
             vals[0] = sum(vals[1:]) / (num_err_members_in_sets[PDF_set_index] * 1.)
             vals_star[0] = sum(vals_star[1:]) / (num_err_members_in_sets[PDF_set_index] * 1.)
-        """
 
         vals[0] = vals[0] * 1e-3
         vals_star[0] = vals_star[0] * 1e-3
 
-        #print(PDF_set + ": " + str(sum_quantity) + r' $+$ ' + str(err_plus) + r' $-$ ' + str(err_minus))
-
-        print(sum_quantity / 208.)
         plt.plot([sum_quantity / 208., sum_quantity / 208.], [y_vals[PDF_set_index] - 0.25, y_vals[PDF_set_index] + 0.25], color='black', zorder=5, solid_capstyle='butt')
 
-        if (PDF_set == 'NNPDF30_nlo_as_01180_NPb' or PDF_set == 'EPPS21nlo_EPb'):
+        err_expected = 0.
+        
+        if (PDF_set == 'NNPDF30_nlo_as_01180_pPb' or PDF_set == 'EPPS21nlo_pPb'):
             if (W_sign == 'minus'):
                 efficiency_starless = efficiency[0]
                 efficiency_star = efficiency[2]
@@ -794,62 +805,80 @@ def total_cross_section(W_sign):
             N_expected = L_new_experiment * (efficiency_starless * vals[0] + efficiency_star * vals_star[0])
             err_expected = 1. / np.sqrt(N_expected * 1.) * sum_quantity
 
-            print(sum_quantity / 208.)
             expected_uncertainty = patches.Rectangle((sum_quantity / 208. - err_expected / 208., y_vals[PDF_set_index] - 0.25), 2. * err_expected / 208.,
                                                     0.25, facecolor='lightgray', zorder=3)
 
-            ax.add_patch(expected_uncertainty)
+            ax2.add_patch(expected_uncertainty)
+            
+            print(err_minus / 208.)
+            pdf_err = patches.Rectangle((sum_quantity / 208. - err_minus / 208., y_vals[PDF_set_index]), err_plus / 208. + err_minus / 208.,
+                                        0.25, facecolor=pdf_err_color, zorder=4)
 
-            #pdf_err = patches.Rectangle((sum_quantity / 208. - err_minus / 208., y_vals[PDF_set_index]), err_plus / 208. + err_minus / 208.,
-            #                            0.25, facecolor=pdf_err_color, zorder=4)
-
-        #else:
-            #pdf_err = patches.Rectangle((sum_quantity / 208. - err_minus / 208., y_vals[PDF_set_index] - 0.25), err_plus / 208. + err_minus / 208.,
-            #                            0.5, facecolor=pdf_err_color, zorder=4)
-
-        #ax.add_patch(pdf_err)
-
-        if (PDF_set == 'EPPS21nlo_Ep' or PDF_set == 'NNPDF30_nlo_as_01180_Np'):
-            ax.text(sum_quantity / 208. - err_minus / 208. - 3.5, y_vals[PDF_set_index] - 0.1, r'$pp$', fontsize=font_size)
-            if (PDF_set == 'NNPDF30_nlo_as_01180_Np'):
-                ax.text(37, y_vals[PDF_set_index] - 0.5, r'nNNPDF30$\_$nlo', fontsize=font_size)
-            else:
-                ax.text(37, y_vals[PDF_set_index] - 0.5, r'EPPS21nlo', fontsize=font_size)
         else:
-            ax.text(sum_quantity / 208. - err_minus / 208. - 4, y_vals[PDF_set_index] - 0.1, r'$pPb$', fontsize=font_size)
+            pdf_err = patches.Rectangle((sum_quantity / 208. - err_minus / 208., y_vals[PDF_set_index] - 0.25), err_plus / 208. + err_minus / 208.,
+                                        0.5, facecolor=pdf_err_color, zorder=4)
 
-    plt.plot([0., 100], [3.5, 3.5], color='black', zorder=7)
+        ax2.add_patch(pdf_err)
 
-    plt.xlim(35.5, 75)
-    plt.ylim(0, 5.9)
+        if (PDF_set == 'EPPS21nlo_pp' or PDF_set == 'NNPDF30_nlo_as_01180_pp'):
+            ax2.text(sum_quantity / 208. - err_minus / 208. - 3.5, y_vals[PDF_set_index] - 0.1, r'$pp$', fontsize=font_size)
+            if (PDF_set == 'NNPDF30_nlo_as_01180_pp'):
+                ax2.text(21, y_vals[PDF_set_index] - 0.5, r'nNNPDF3.0NLO', fontsize=font_size)
+            else:
+                ax2.text(21, y_vals[PDF_set_index] - 0.5, r'EPPS21NLO', fontsize=font_size)
+        else:
+            ax2.text(sum_quantity / 208. - err_expected / 208. - 4, y_vals[PDF_set_index] - 0.1, r'$p$Pb', fontsize=font_size)
 
-    ax.set_xlabel('Cross section per nucleon [pb]', fontsize=axis_label_font_size)
+    plt.xlim(19, 58)
+    ax2.set_ylim(0, 3.5)
+    ax1.set_ylim(0.2, 4)
 
-    info_xval_1 = 37
+    ax2.set_xlabel('Cross section per nucleon [pb]', fontsize=axis_label_font_size)
+
+    info_xval_1 = 21
     info_xval_2 = 1.
-    info_yval_1 = 5.3
-    info_yval_2 = 4.7
-    info_yval_3 = 4.1
+    info_yval_1 = 3
+    info_yval_2 = 2
+    info_yval_3 = 1
 
     if (W_sign == 'minus'):
         process_text = r'$W^-D^{(*)+}$'
     else:
         process_text = r'$W^+D^{(*)-}$'
 
-    ax.text(info_xval_1, info_yval_1, process_text + '  OS-SS', fontsize=font_size)
-    ax.text(info_xval_1, info_yval_2, r'$\sqrt{s} = 8.5$ TeV', fontsize=font_size)
-    ax.text(info_xval_1, info_yval_3, frag_set_text, fontsize=font_size)
+    ax1.text(info_xval_1, info_yval_1, process_text + r'\quad OS-SS', fontsize=font_size)
+    ax1.text(info_xval_1, info_yval_2, r'$\sqrt{s} = 8.5$ TeV', fontsize=font_size)
+    ax1.text(info_xval_1, info_yval_3, frag_set_text, fontsize=font_size)
 
-    #plt.legend([pdf_err, expected_uncertainty], ["PDF error (90% C.L.)", "Expected measurement\nerror"],
-    #                    bbox_to_anchor=(1., 0.72), framealpha=1, fontsize=legend_fontsize, loc='center right')
+    # For legends
+    expected_uncertainty = patches.Rectangle((0, 0), 0, 0, facecolor='lightgray', zorder=3)
+    ax1.add_patch(expected_uncertainty)
+    pdf_err = patches.Rectangle((0, 0), 0, 0, facecolor=pdf_err_color, zorder=4)
+    ax1.add_patch(pdf_err)
+    ax1.legend([pdf_err, expected_uncertainty], ["PDF error (68\% C.L.)", "Expected statistical\nmeasurement error\n(68\% C.L.)"],
+                framealpha=1, fontsize=legend_fontsize, loc='lower right')
 
-    ax.tick_params(axis='both', which='major', labelsize=axis_font_size)
-    ax.set_yticklabels([])
-    ax.set_xticks([40, 45, 50, 55, 60, 65, 70])
+    ax2.tick_params(axis='both', which='major', labelsize=axis_font_size)
+    ax1.set_yticklabels([])
+    ax2.set_yticklabels([])
 
-    ax.minorticks_on()
-    ax.tick_params(which='both', direction='in', top=True, right=True)
-    ax.tick_params(direction='in', top=True, right=True)
+    ax2.minorticks_on()
+    ax2.tick_params(
+        which='both',    # major and minor ticks
+        direction='in',
+        left=False,
+        right=False,
+        bottom=True,
+        top=True,
+        labelsize=axis_font_size
+    )
+    ax1.tick_params(top=False, bottom=False, right=False, left=False)
+
+    ax1.xaxis.set_zorder(100)
+    ax1.yaxis.set_zorder(100)
+
+    ax2.xaxis.set_zorder(100)
+    ax2.yaxis.set_zorder(100)
 
     plt.tight_layout()
 
@@ -860,8 +889,8 @@ def total_cross_section(W_sign):
 
 
 #pTD_plot(PDF_sets, True, ['pp', 'pPb'])
-etaD_plot(PDF_sets, False, ['pp', 'pPb'])
+#etaD_plot(PDF_sets, False, ['pp', 'pPb'])
 #Rcpm(PDF_sets)
-#total_cross_section('minus')
+total_cross_section('minus')
 
 #Rcpm_LO('EPPS16nlo_pPb', 'minus', 'opal')

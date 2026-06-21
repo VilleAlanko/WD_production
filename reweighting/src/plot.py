@@ -561,13 +561,13 @@ def absolute(tolerance, which_cross_sections_included, flavors, valences):
 
 def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, which_cross_sections_included, tolerance):
     font_size = 17
-    axis_label_font_size = 20
-    axis_font_size = 14
-    legend_fontsize = 13.5
+    axis_label_font_size = 21
+    axis_font_size = 17
+    legend_fontsize = 14
 
     markers = ['d', 'v', 'o']
     marker_color = 'black'
-    theory_labels = ['CT18ANLO', 'MSHT20NLO', 'NNPDF40NLO4.0 (pch)']
+    theory_labels = ['CT18ANLO', 'MSHT20NLO', 'NNPDF4.0NLO (pch)']
     PDF_sets = ['CT18ANLO', 'MSHT20nlo_as118', 'NNPDF40_nlo_pch_as_01180']
     old_color = 'cornflowerblue'
     new_color = 'salmon'
@@ -691,48 +691,72 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, which_cross_sections_included,
     #--------------------------------------------------------------------------------------------------------------------------------------#
 
     plt.xlim(bin_edges[0], bin_edges[-1])
-    ax1.set_ylim(0.755, 1.15)
+    ax1.set_ylim(0.755, 1.2)
     ax2.set_ylim(0.83, 1.14)
-    if (which_cross_sections_included == 'both'):
-        ax1.set_ylabel(r'$R_c^\pm(D^\pm, D^{*\pm})$', fontsize=axis_label_font_size)
-    elif (which_cross_sections_included == 'D'):
-        ax1.set_ylabel(r'$R_c^\pm$($D^\pm)$', fontsize=axis_label_font_size)
 
-    ax2.set_ylabel(r'$\frac{\text{Theory}}{\text{ATLAS}}$', fontsize=axis_label_font_size * 1.3)
-
-    ax2.set_yticks([0.85, 0.9, 0.95, 1., 1.05, 1.1])
-
+    # DECORATIONS
     for i in range(1, len(bin_edges) - 3):
-        ax1.axvline(bin_edges[i], color='gray', linewidth=0.5, ymax=0.75, zorder=0)
+        if (kinematic_quantity == 'pTD'):
+            ax1.axvline(bin_edges[i], color='gray', linewidth=0.5, ymax=0.63, zorder=0)
+        else:
+            ax1.axvline(bin_edges[i], color='gray', linewidth=0.5, ymax=0.67, zorder=0)
     for i in range(len(bin_edges) - 3, len(bin_edges) - 1):
-        ax1.axvline(bin_edges[i], color='gray', linewidth=0.5, ymax=0.62, zorder=0)
+        ax1.axvline(bin_edges[i], color='gray', linewidth=0.5, ymax=0.60, zorder=0)
     for i in range(1, len(bin_edges) - 1):
         ax2.axvline(bin_edges[i], color='gray', linewidth=0.5, zorder=0)
 
-    text_y1 = 1.11
-    text_y2 = 1.075
-    if (kinematic_quantity == 'pTD'):
-        text_x = 9
+    if (which_cross_sections_included == 'both'):
+        ax1.set_ylabel(r'$R_c^\pm(D^\pm, D^{*\pm})$', fontsize=axis_label_font_size)
+    elif (which_cross_sections_included == 'D'):
+        ax1.set_ylabel(r'$R_c^\pm(D^\pm)$', fontsize=axis_label_font_size)
     else:
+        ax1.set_ylabel(r'$R_c^\pm(D^{*\pm})$', fontsize=axis_label_font_size)
+    ax2.set_ylabel(r'$\frac{\text{Theory}}{\text{ATLAS}}$', fontsize=axis_label_font_size * 1.3)
+
+    ax1.set_yticks([0.8, 0.85, 0.9, 0.95, 1., 1.05, 1.1, 1.15, 1.2])
+    ax2.set_yticks([0.9, 1., 1.1])
+
+    text_y1 = 1.15
+    text_y2 = 1.11
+    text_y3 = 1.07
+
+    text_x = 0
+    if (kinematic_quantity == 'pTD'):
+        plt.xlabel(r'$p_T (D)$ [GeV]', fontsize=axis_label_font_size)
+        text_x = 9
+        plt.xticks(bin_edges, [f'{tick:.0f}' for tick in bin_edges])
+    else:
+        plt.xlabel(r'$|\eta_\text{lepton}|$', fontsize=axis_label_font_size)
         text_x = 0.1
+        plt.xticks(bin_edges, [f'{tick:.1f}' for tick in bin_edges])
 
     ax1.text(text_x, text_y1, r'$\sqrt{s} = 13$ TeV', fontsize=font_size)
     ax1.text(text_x, text_y2, 'KKKS08 OPAL', fontsize=font_size)
+
+    ax1.text(text_x, text_y3, 'OS-SS', fontsize=font_size)
 
     if (kinematic_quantity == 'eta_lept'):
         plt.xticks(bin_edges, [f'{tick:.1f}' for tick in bin_edges])
     elif (kinematic_quantity == 'pTD'):
         plt.xticks(bin_edges, [f'{tick:.0f}' for tick in bin_edges])
 
-    ax1.tick_params(axis='both', which='major', labelsize=axis_font_size)
-    ax2.tick_params(axis='both', which='major', labelsize=axis_font_size)
+    ax1.xaxis.set_zorder(100)
+    ax1.yaxis.set_zorder(100)
 
-    ax1.tick_params(direction='in', top=True, right=True)
-    ax1.minorticks_on()
-    ax1.tick_params(which='both', direction='in', top=True, right=True)
-    ax2.minorticks_on()
-    ax2.tick_params(which='both', direction='in', top=True, right=True)
-    ax2.tick_params(direction='in', top=True, right=True)
+    ax2.xaxis.set_zorder(100)
+    ax2.yaxis.set_zorder(100)
+
+    for ax in [ax1, ax2]:
+        ax.minorticks_on()
+        ax.tick_params(
+            which='both',    # major and minor ticks
+            direction='in',
+            left=True,
+            right=True,
+            bottom=False,
+            top=False,
+            labelsize=axis_font_size
+        )
 
     legend1 = ax1.legend(loc='upper right', fontsize=legend_fontsize, framealpha=1)
     ax1.legend([ATLAS_uncertainty, before_reweighting, after_reweighting],
@@ -1199,7 +1223,7 @@ def Rcpm_approximation_sp_sm(PDF_set, which_cross_sections_included, tolerances,
     font_size = 20
     axis_label_font_size = 22
     axis_font_size = 19
-    legend_fontsize = 20
+    legend_fontsize = 17
 
     fig, ax = plt.subplots(figsize=(6, 6))
     
@@ -1254,7 +1278,7 @@ def Rcpm_approximation_sp_sm(PDF_set, which_cross_sections_included, tolerances,
 
     plt.fill_between(x, 1. - 2. * (epsilon * dv_old + sm_old) / sp_old + error_plus,
                         1. - 2. * (epsilon * dv_old + sm_old) / sp_old - error_minus,
-                        color='lightgray', alpha=0.5, zorder=0)
+                        color='lightgray', alpha=0.5, zorder=0, label='Original PDF error (68\% C.L.)')
     
     ax.xaxis.set_major_locator(ticker.FixedLocator([1e-2, 1e-1]))
     ax.set_xticklabels([r'$10^{-2}$', r'$10^{-1}$'])
@@ -1369,9 +1393,9 @@ def Rcpm_approximation_v2(PDF_set, which_cross_sections_included, tolerances, co
     plt.savefig('plots/Rcpm_approximation/' + PDF_set + '_' + which_cross_sections_included + '.pdf')
     plt.show()
 
-PDF_set = 'MSHT20nlo_as118'
+#PDF_set = 'MSHT20nlo_as118'
 #PDF_set = 'NNPDF40_nlo_pch_as_01180'
-#PDF_set = 'CT18ANLO'
+PDF_set = 'CT18ANLO'
 which_cross_sections_included = 'both'
 
 #ratio_HESSIAN(PDF_set, which_cross_sections_included, [[1, 1], [3, 0], [21, 0], [1, 0]],
@@ -1394,22 +1418,22 @@ which_cross_sections_included = 'both'
 #ratio_MC('NNPDF40_nlo_pch_as_01180', which_cross_sections_included, [[1, 1], [3, 1], [3, 0], [21, 0], [-3, 0]], [r'$d_\text{valence}$', r'$s_\text{valence}$', r'$s$', r'$g$', r'$\bar{s}$'],
 #                   [0.4, -8, 0.6, 0.94, 0.9], [2, 7, 1.25, 1.03, 1.1])
 #absolute_and_ratio_MC('NNPDF40_nlo_pch_as_01180', which_cross_sections_included, [[1, 1], [3, 1], [3, 2], [21, 0]], [r'$d_-$', r'$s_-$', r'$s_+$', r'$g$'],
-#                   [-0.25, -3.5, 1e-5, 1e-5], [4, 12, 4.8, 5], [-0.3, -11, 0.955, 0.985], [2.3, 11, 1.045, 1.015], [1e-3 * 1.2, 1e-3 * 1.2, 1e-2 * 1.3, 1e-2 * 1.3],
-#                   [2.2, 6, 2.4, 2.4], 'NNPDF4.0NLO')
+#                   [-0.25, -3.5, 1e-5, 1e-5], [4, 12, 4.8, 5], [-0.3, -11, 0.955, 0.985], [2.3, 11, 1.045, 1.015], [1e-3 * 1.2, 1e-3 * 1.2, 1e-2 * 0.65, 1e-2 * 0.65],
+#                   [2.2, 6, 2.4, 2.4], 'NNPDF4.0NLO (pch)')
 #ratio_to_other_PDF('MSHT20nlo_as118', 'CT18ANLO', flavors, which_cross_sections_included)
 #ratio_of_ratio(1)
 #ratio_of_ratio(3)
 #absolute('3.16', 'both', [1, 1, 3, 3, 21], [1, 0, 1, 0, 0])
 #Rcpm_approximation(PDF_set, which_cross_sections_included, ['3.16', '1'], ['red', 'blue'],
 #                 [r'$t = \sqrt{10}$', r'$t = 1$'])
-#Rcpm_approximation_sp_sm(PDF_set, which_cross_sections_included, ['3.16', '1'], ['red', 'blue'],
-#                [r'$t = \sqrt{10}$', r'$t = 1$'], 'NNPDF4.0NLO')
+Rcpm_approximation_sp_sm(PDF_set, which_cross_sections_included, ['3.16', '1'], ['red', 'blue'],
+                [r'$t = \sqrt{10}$', r'$t = 1$'], 'NNPDF4.0NLO (pch)')
 #Rcpm_approximation_ratio(PDF_set, which_cross_sections_included, ['3.16', '1', '0.3', '0.01', '0.001'], ['red', 'green', 'blue', 'orange', 'purple', 'pink'],
 #                   [r'$t = \sqrt{10}$', r'$t = 1$', r'$t = 0.3$', r'$t = 0.01$', r'$t = 0.001$', r'$t = 0.0001$'])
 #Rcpm_approximation_v2(PDF_set, which_cross_sections_included, ['3.16', '1', '0.3'], ['red', 'green', 'blue', 'orange', 'purple', 'pink'],
 #                   [r'$t = \sqrt{10}$', r'$t = 1$', r'$t = 0.3$', r'$t = 0.01$', r'$t = 0.001$', r'$t = 0.0001$'])
-Rcpm_OLD_and_NEW_and_DATA('eta_lept', which_cross_sections_included, '1')
-Rcpm_OLD_and_NEW_and_DATA('pTD', which_cross_sections_included, '1')
+#Rcpm_OLD_and_NEW_and_DATA('eta_lept', which_cross_sections_included, '1')
+#Rcpm_OLD_and_NEW_and_DATA('pTD', which_cross_sections_included, '1')
 #strangeness_asymmetry(PDF_set, which_cross_sections_included, True, '3.16')
 #weights(PDF_set, which_cross_sections_included, '3.16')
 
