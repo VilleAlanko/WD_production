@@ -35,7 +35,7 @@ PDF_sets = ['NNPDF30_nlo_as_01180_pp', 'NNPDF30_nlo_as_01180_pPb', 'EPPS21nlo_pp
 #PDF_sets = ['EPPS21nlo_pp', 'EPPS21nlo_pPb']
 #theory_labels = ['pp', 'pPb']
 theory_labels = ['nNNPDF3.0NLO', 'EPPS21NLO']
-num_err_members_in_sets = [200, 200, 106, 106]
+num_err_members_in_sets = [80, 80, 80, 80]
 #num_err_members_in_sets = [10, 10, 10, 10]
 
 pdf_centrals = [[np.zeros((284, num_etac_bins)) for _ in range(len(PDF_sets))] for _ in range(4)]
@@ -793,7 +793,7 @@ def total_cross_section(W_sign):
         plt.plot([sum_quantity / 208., sum_quantity / 208.], [y_vals[PDF_set_index] - 0.25, y_vals[PDF_set_index] + 0.25], color='black', zorder=5, solid_capstyle='butt')
 
         err_expected = 0.
-        
+
         if (PDF_set == 'NNPDF30_nlo_as_01180_pPb' or PDF_set == 'EPPS21nlo_pPb'):
             if (W_sign == 'minus'):
                 efficiency_starless = efficiency[0]
@@ -891,6 +891,6 @@ def total_cross_section(W_sign):
 #pTD_plot(PDF_sets, True, ['pp', 'pPb'])
 #etaD_plot(PDF_sets, False, ['pp', 'pPb'])
 #Rcpm(PDF_sets)
-total_cross_section('minus')
+total_cross_section('plus')
 
 #Rcpm_LO('EPPS16nlo_pPb', 'minus', 'opal')

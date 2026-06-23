@@ -1,21 +1,32 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import matplotlib as mpl
+
+mpl.rcParams.update({
+    "text.usetex": True,
+    "font.family": "serif",
+    "font.weight": "bold"
+})
+mpl.rcParams['text.latex.preamble'] = r'''
+\usepackage{amsmath}
+\usepackage{xcolor}
+'''
 
 main_vals_directory = '/home/alankovh/Documents/WD_production/output/'
 plots_directory = '/home/alankovh/Documents/WD_production/plots/8,5 TeV/'
 
 PDF_sets_raw = ['NNPDF30_nlo_as_01180', 'EPPS21nlo']
 #PDF_sets_raw = ['EPPS21nlo']
-num_err_members_in_sets = [200, 106]
+num_err_members_in_sets = [200, 10]
 
 num_etac_bins = 22
 pdf_centrals = [[np.zeros((284, num_etac_bins)) for _ in range(len(PDF_sets_raw))] for _ in range(4)]
 
 z_def = 'minus'
-fragmentation_set = 'opal'
+fragmentation_set = 'KKKS08_opal'
 
-if (fragmentation_set == 'opal'):
+if (fragmentation_set == 'KKKS08_opal'):
     frag_set_text = 'KKKS08 OPAL'
 else:
     frag_set_text = ' KKKS08 GLOBAL'
@@ -58,20 +69,20 @@ def compute_normalized_2D_values_for_a_pdf_member(process, PDF_index, PDF_set, m
 
     scale_var_central = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                             fragmentation_set + '/frag_main_scale/scale_variation/' + PDF_set + '/central/' + \
-                                            '0_vals.txt', delimiter=',') / 2. - \
+                                            '0_m_charm_central_vals.txt', delimiter=',') / 2. - \
                             np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
-                                            fragmentation_set + '/scale_variation/' + PDF_set + '/central/' + \
-                                            '0_vals.txt', delimiter=',') / 2.
+                                            fragmentation_set + '/frag_main_scale/scale_variation/' + PDF_set + '/central/' + \
+                                            '0_m_charm_central_vals.txt', delimiter=',') / 2.
 
     pdf_central = np.zeros((284, num_etac_bins))
 
     if (PDF_set == 'EPPS21nlo_Ep' or PDF_set == 'EPPS21nlo_EPb'):
         pdf_central = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                            str(0) + '_0_vals.txt', delimiter=',') / 2. - \
+                                            str(0) + '_0_m_charm_central_vals.txt', delimiter=',') / 2. - \
                             np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                             fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                            str(0) + '_0_vals.txt', delimiter=',') / 2.
+                                            str(0) + '_0_m_charm_central_vals.txt', delimiter=',') / 2.
     else:
         if (member_index < 2):
             member_sum = np.zeros((284, num_etac_bins))
@@ -79,10 +90,10 @@ def compute_normalized_2D_values_for_a_pdf_member(process, PDF_index, PDF_set, m
             for member_index_here in range(1, num_err_members + 1):
                 member_sum += np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                                 fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                str(member_index_here) + '_0_vals.txt', delimiter=',') / 2. - \
+                                                str(member_index_here) + '_0_m_charm_central_vals.txt', delimiter=',') / 2. - \
                                 np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                                 fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                                str(member_index_here) + '_0_vals.txt', delimiter=',') / 2.
+                                                str(member_index_here) + '_0_m_charm_central_vals.txt', delimiter=',') / 2.
 
             pdf_central = member_sum / num_err_members
 
@@ -92,10 +103,10 @@ def compute_normalized_2D_values_for_a_pdf_member(process, PDF_index, PDF_set, m
 
     member_vals = np.loadtxt(main_vals_directory + process + '/NLO/' + z_def + '/' + \
                                     fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                    str(member_index) + '_0_vals.txt', delimiter=',') / 2. - \
+                                    str(member_index) + '_0_m_charm_central_vals.txt', delimiter=',') / 2. - \
                     np.loadtxt(main_vals_directory + process + '/subtraction/' + z_def + '/' + \
                                     fragmentation_set + '/pdf_errs/' + PDF_set + '/' + \
-                                    str(member_index) + '_0_vals.txt', delimiter=',') / 2.
+                                    str(member_index) + '_0_m_charm_central_vals.txt', delimiter=',') / 2.
 
     member_vals_normalized = member_vals - pdf_central + scale_var_central
 
@@ -193,22 +204,22 @@ def compute_Rcpm_pdf_err_HESSIAN(PDF_index, PDF_set, Rcpm_central, which_cross_s
 
 
 def Rcpm(which_cross_sections_included, PDF_sets_raw, PDF_prefix):
-    font_size = 16
-    axis_label_font_size = 17
-    axis_font_size = 13
-    legend_fontsize = 14
+    font_size = 19
+    axis_label_font_size = 22
+    axis_font_size = 17
+    legend_fontsize = 17
 
-    fig, ax = plt.subplots(figsize=(6, 6))
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [4, 7], 'hspace': 0}, figsize=(6, 6))
 
     y_vals = [2, 1]
 
     p_Pb_shift = [0.2, -0.2]
-    proton_or_lead_array = ['p', 'Pb']
+    proton_or_lead_array = ['pp', 'pPb']
 
-    for PDF_index in range(len(PDF_sets_raw)):
+    for PDF_index in range(1, len(PDF_sets_raw)):
         for proton_or_lead_index in range(2):
             proton_or_lead = proton_or_lead_array[proton_or_lead_index]
-            PDF_set = PDF_sets_raw[PDF_index] + '_' + PDF_prefix[PDF_index] + proton_or_lead
+            PDF_set = PDF_sets_raw[PDF_index] + '_' + proton_or_lead
             num_err_members_in_set = num_err_members_in_sets[PDF_index]
 
             if (PDF_sets_raw[PDF_index] == 'EPPS21nlo'):
@@ -259,10 +270,8 @@ def Rcpm(which_cross_sections_included, PDF_sets_raw, PDF_prefix):
                                     (Wp_cross_section + Wp_star_cross_section)**2 / (Wm_cross_section + Wm_star_cross_section)**4 * Wm_err_expected**2)
                 
                 print('err expected', Rcpm_err_expected, PDF_set)
-                # NOTICE THE SCALING
-                Rcpm_err_expected = Rcpm_err_expected / 5.
 
-            PDF_set = PDF_sets_raw[PDF_index] + '_' + PDF_prefix[PDF_index] + proton_or_lead_array[proton_or_lead_index]
+            PDF_set = PDF_sets_raw[PDF_index] + '_' + proton_or_lead_array[proton_or_lead_index]
 
             if (which_cross_sections_included == 'both'):
                 Rcpm = (Wp_cross_section + Wp_star_cross_section) / (Wm_cross_section + Wm_star_cross_section)
@@ -293,28 +302,27 @@ def Rcpm(which_cross_sections_included, PDF_sets_raw, PDF_prefix):
             #print('Rcpm (' + which_cross_sections_included + ') with ' + PDF_set + ': ' + str(round(Rcpm, 5)) + \
             #        '(+' + str(round(Rcpm_pdf_err_up, 5)) + '-' + str(round(Rcpm_pdf_err_down, 5)) + ').')
 
-            ax.plot([Rcpm, Rcpm],
+            ax2.plot([Rcpm, Rcpm],
                     [y_vals[PDF_index] + p_Pb_shift[proton_or_lead_index] - 0.2, y_vals[PDF_index] + p_Pb_shift[proton_or_lead_index] + 0.2],
                     color='black', zorder=6, solid_capstyle='butt')
 
             pdf_err = patches.Rectangle((Rcpm - Rcpm_pdf_err_down, 2 - PDF_index - 0.2 + p_Pb_shift[proton_or_lead_index]),
                         Rcpm_pdf_err_down + Rcpm_pdf_err_up, 0.4, facecolor=pdf_err_color, zorder=5)
-            ax.add_patch(pdf_err)
+            ax2.add_patch(pdf_err)
 
             if (proton_or_lead_index == 1):
                 expected_err = patches.Rectangle((Rcpm - Rcpm_err_expected, 2 - PDF_index - 0.2 + p_Pb_shift[proton_or_lead_index]),
                                     2 * Rcpm_err_expected, 0.4, facecolor='lightgray', zorder=3)
-                ax.add_patch(expected_err)
+                ax2.add_patch(expected_err)
 
-                ax.text(Rcpm - Rcpm_err_expected - 0.013, y_vals[PDF_index] -0.2, r'$pPb$', fontsize=font_size)
+                ax2.text(Rcpm - Rcpm_err_expected - 0.07, y_vals[PDF_index] - 0.28, r'$p$Pb', fontsize=font_size)
             else:
-                ax.text(Rcpm - Rcpm_pdf_err_down - 0.010, y_vals[PDF_index] + 0.2, r'$pp$', fontsize=font_size)
-            
-            
-            if (PDF_set == 'NNPDF30_nlo_as_01180_Np'):
-                ax.text(0.855, y_vals[0], r'nNNPDF30$\_$nlo', fontsize=font_size)
-            elif (PDF_set == 'EPPS21nlo_Ep'):
-                ax.text(0.855, y_vals[1], r'EPPS21nlo', fontsize=font_size)
+                ax2.text(Rcpm - Rcpm_pdf_err_down - 0.05, y_vals[PDF_index] + 0.16, r'$pp$', fontsize=font_size)
+
+            if (PDF_set == 'NNPDF30_nlo_as_01180_pp'):
+                ax2.text(0.5, y_vals[0], r'nNNPDF3.0NLO', fontsize=font_size)
+            elif (PDF_set == 'EPPS21nlo_pp'):
+                ax2.text(0.5, y_vals[1], r'EPPS21NLO', fontsize=font_size)
 
     atlas_val = 0.971
 
@@ -324,14 +332,37 @@ def Rcpm(which_cross_sections_included, PDF_sets_raw, PDF_prefix):
     atlas_stat_up = 0.006
     atlas_stat_down = 0.006
 
-    plt.xlim(0.85, 0.975)
-    plt.ylim(0.5, 3.5)
+    plt.xlim(0.47, 1.12)
+    ax2.set_ylim(0, 3.5)
+    ax1.set_ylim(0.2, 4)
 
-    ax.set_xlabel(r'$R_c^\pm (D^\pm, D^{*\pm})$', fontsize=axis_label_font_size)
+    ax1.set_yticklabels([])
+    ax2.set_yticklabels([])
 
-    info_xval_1 = 0.855
-    info_yval_1 = 3.16666
-    info_yval_2 = 2.83333
+    ax2.minorticks_on()
+    ax2.tick_params(
+        which='both',    # major and minor ticks
+        direction='in',
+        left=False,
+        right=False,
+        bottom=True,
+        top=True,
+        labelsize=axis_font_size
+    )
+    ax1.tick_params(top=False, bottom=False, right=False, left=False)
+
+    ax1.xaxis.set_zorder(100)
+    ax1.yaxis.set_zorder(100)
+
+    ax2.xaxis.set_zorder(100)
+    ax2.yaxis.set_zorder(100)
+
+    ax2.set_xlabel(r'$R_c^\pm (D^\pm, D^{*\pm})$', fontsize=axis_label_font_size)
+
+    info_xval_1 = 0.5
+    info_yval_1 = 3
+    info_yval_2 = 2
+    info_yval_3 = 1
 
     """
     if (which_cross_sections_included == 'both'):
@@ -342,20 +373,17 @@ def Rcpm(which_cross_sections_included, PDF_sets_raw, PDF_prefix):
         ax.text(info_xval_1, info_yval_1, r'$D^*$', fontsize=font_size)
     """
 
-    plt.plot([0, 2], [2.5, 2.5], color='black')
+    ax1.text(info_xval_1, info_yval_1, r'$\sqrt{s} = 8.5$ TeV', fontsize=font_size)
+    ax1.text(info_xval_1, info_yval_2, frag_set_text, fontsize=font_size)
+    ax1.text(info_xval_1, info_yval_3, 'OS-SS', fontsize=font_size)
 
-    plt.tick_params(direction='in', top=True, right=True)
-    plt.minorticks_on()
-    plt.tick_params(which='both', direction='in', top=True, right=True)
+    pdf_err = patches.Rectangle((0, 0), 0, 0, facecolor=pdf_err_color, zorder=5)
+    expected_err = patches.Rectangle((0, 0), 0, 0, facecolor='lightgray', zorder=3)
+    ax1.add_patch(pdf_err)
+    ax1.add_patch(expected_err)
 
-    ax.text(info_xval_1, info_yval_1, r'$\sqrt{s} = 8.5$ TeV', fontsize=font_size)
-    ax.text(info_xval_1, info_yval_2, frag_set_text, fontsize=font_size)
-
-    plt.legend([pdf_err, expected_err], ["PDF error (90% C.L.)", "Expected measurement\nerror / 5"], loc='center right',
-                        bbox_to_anchor=(1, 0.78), framealpha=1, fontsize=legend_fontsize)
-
-    ax.tick_params(axis='both', which='major', labelsize=axis_font_size)
-    ax.set_yticklabels([])
+    ax1.legend([pdf_err, expected_err], [r"PDF error (68\% C.L.)", "Expected measurement\nerror"], loc='upper right',
+                framealpha=1, fontsize=legend_fontsize)
 
     plt.tight_layout()
 
