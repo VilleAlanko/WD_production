@@ -35,7 +35,7 @@ PDF_sets = ['NNPDF30_nlo_as_01180_pp', 'NNPDF30_nlo_as_01180_pPb', 'EPPS21nlo_pp
 #PDF_sets = ['EPPS21nlo_pp', 'EPPS21nlo_pPb']
 #theory_labels = ['pp', 'pPb']
 theory_labels = ['nNNPDF3.0NLO', 'EPPS21NLO']
-num_err_members_in_sets = [80, 80, 80, 80]
+num_err_members_in_sets = [200, 200, 106, 106]
 #num_err_members_in_sets = [10, 10, 10, 10]
 
 pdf_centrals = [[np.zeros((284, num_etac_bins)) for _ in range(len(PDF_sets))] for _ in range(4)]
@@ -731,7 +731,7 @@ def total_cross_section(W_sign):
     else:
         processes = ['W+D-', 'W+Dstar-']
 
-    for PDF_set_index in range(len(PDF_sets)):
+    for PDF_set_index in range(2, len(PDF_sets)):
         PDF_set = PDF_sets[PDF_set_index]
 
         vals = np.zeros(num_err_members_in_sets[PDF_set_index] + 1)

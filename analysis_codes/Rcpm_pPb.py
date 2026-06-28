@@ -18,7 +18,7 @@ plots_directory = '/home/alankovh/Documents/WD_production/plots/8,5 TeV/'
 
 PDF_sets_raw = ['NNPDF30_nlo_as_01180', 'EPPS21nlo']
 #PDF_sets_raw = ['EPPS21nlo']
-num_err_members_in_sets = [200, 10]
+num_err_members_in_sets = [200, 106]
 
 num_etac_bins = 22
 pdf_centrals = [[np.zeros((284, num_etac_bins)) for _ in range(len(PDF_sets_raw))] for _ in range(4)]
@@ -382,7 +382,7 @@ def Rcpm(which_cross_sections_included, PDF_sets_raw, PDF_prefix):
     ax1.add_patch(pdf_err)
     ax1.add_patch(expected_err)
 
-    ax1.legend([pdf_err, expected_err], [r"PDF error (68\% C.L.)", "Expected measurement\nerror"], loc='upper right',
+    ax1.legend([pdf_err, expected_err], [r"PDF error (68\% C.L.)", "Expected stat.\nmeasurement error\n(68\% C.L.)"], loc='upper right',
                 framealpha=1, fontsize=legend_fontsize)
 
     plt.tight_layout()
