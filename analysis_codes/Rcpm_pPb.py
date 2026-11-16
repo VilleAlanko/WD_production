@@ -50,6 +50,8 @@ L_new_experiment = 1.2
 for i in range(4):
     efficiency[i] = atlas_vals[i] / (atlas_stat_errs[i]**2 * L_atlas)
 
+    print(efficiency[i])
+
 
 def compute_normalized_2D_values_for_a_pdf_member(process, PDF_index, PDF_set, member_index):
     process_index = -1
@@ -216,7 +218,7 @@ def Rcpm(which_cross_sections_included, PDF_sets_raw, PDF_prefix):
     p_Pb_shift = [0.2, -0.2]
     proton_or_lead_array = ['pp', 'pPb']
 
-    for PDF_index in range(1, len(PDF_sets_raw)):
+    for PDF_index in range(len(PDF_sets_raw)):
         for proton_or_lead_index in range(2):
             proton_or_lead = proton_or_lead_array[proton_or_lead_index]
             PDF_set = PDF_sets_raw[PDF_index] + '_' + proton_or_lead
@@ -320,9 +322,9 @@ def Rcpm(which_cross_sections_included, PDF_sets_raw, PDF_prefix):
                 ax2.text(Rcpm - Rcpm_pdf_err_down - 0.05, y_vals[PDF_index] + 0.16, r'$pp$', fontsize=font_size)
 
             if (PDF_set == 'NNPDF30_nlo_as_01180_pp'):
-                ax2.text(0.5, y_vals[0], r'nNNPDF3.0NLO', fontsize=font_size)
+                ax2.text(0.45, y_vals[0], r'nNNPDF3.0NLO', fontsize=font_size)
             elif (PDF_set == 'EPPS21nlo_pp'):
-                ax2.text(0.5, y_vals[1], r'EPPS21NLO', fontsize=font_size)
+                ax2.text(0.45, y_vals[1], r'EPPS21NLO', fontsize=font_size)
 
     atlas_val = 0.971
 
@@ -332,8 +334,8 @@ def Rcpm(which_cross_sections_included, PDF_sets_raw, PDF_prefix):
     atlas_stat_up = 0.006
     atlas_stat_down = 0.006
 
-    plt.xlim(0.47, 1.12)
-    ax2.set_ylim(0, 3.5)
+    plt.xlim(0.42, 1.12)
+    ax2.set_ylim(0, 3)
     ax1.set_ylim(0.2, 4)
 
     ax1.set_yticklabels([])
@@ -359,7 +361,7 @@ def Rcpm(which_cross_sections_included, PDF_sets_raw, PDF_prefix):
 
     ax2.set_xlabel(r'$R_c^\pm (D^\pm, D^{*\pm})$', fontsize=axis_label_font_size)
 
-    info_xval_1 = 0.5
+    info_xval_1 = 0.45
     info_yval_1 = 3
     info_yval_2 = 2
     info_yval_3 = 1

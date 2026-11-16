@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.linalg import inv
 
-PDF_set = 'CT18ANLO'
+PDF_set = 'MSHT20nlo_as118'
 which_cross_sections_included = 'D'
 
 y_plus_eta_lept = np.loadtxt('input/theory_values/HESSIAN/variation/eta_lept_' + which_cross_sections_included + '_' + PDF_set + '_plus.txt', delimiter=',')

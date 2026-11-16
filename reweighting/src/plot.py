@@ -159,8 +159,10 @@ def absolute_and_ratio_HESSIAN(PDF_set, which_cross_sections_included, flavor_an
             ax1.plot(x, NEW_PDF, zorder=tolerance_index + 3, color=colors[tolerance_index], label=labels[tolerance_index])
             ax2.plot(x, NEW_PDF / OLD_PDF, zorder=5, color=colors[tolerance_index])
 
-        ax1.fill_between(x, OLD_PDF - OLD_ERR_MINUS, OLD_PDF + OLD_ERR_PLUS, zorder=1, color='lightgray', alpha=0.5, label=r'Original PDF error (68\% C.L.)')
-        ax2.fill_between(x, (OLD_PDF + OLD_ERR_PLUS) / OLD_PDF, (OLD_PDF - OLD_ERR_MINUS) / OLD_PDF, zorder=1, color='lightgray', alpha=0.5)
+        ax1.fill_between(x, OLD_PDF - OLD_ERR_MINUS, OLD_PDF + OLD_ERR_PLUS, zorder=1, color='lightgray',
+                         alpha=0.5, label=r'Original PDF error (68\% C.L.)', rasterized=True)
+        ax2.fill_between(x, (OLD_PDF + OLD_ERR_PLUS) / OLD_PDF, (OLD_PDF - OLD_ERR_MINUS) / OLD_PDF, zorder=1,
+                         color='lightgray', alpha=0.5, rasterized=True)
 
         ax2.plot([0, 2], [1, 1], color='black', zorder=1)
 
@@ -370,8 +372,10 @@ def absolute_and_ratio_MC(PDF_set, which_cross_sections_included, flavor_and_val
 
         ax2.plot(x, NEW_PDF / OLD_PDF, zorder=2, color='red')
 
-        ax1.fill_between(x, OLD_PDF - OLD_ERR_MINUS, OLD_PDF + OLD_ERR_PLUS, zorder=0, color='lightgray', alpha=0.5, label=r'Original PDF error (68\% C.L.)')
-        ax2.fill_between(x, (OLD_PDF + OLD_ERR_PLUS) / OLD_PDF, (OLD_PDF - OLD_ERR_MINUS) / OLD_PDF, zorder=1, color='lightgray', alpha=0.5)
+        ax1.fill_between(x, OLD_PDF - OLD_ERR_MINUS, OLD_PDF + OLD_ERR_PLUS, zorder=0, color='lightgray',
+                         alpha=0.5, label=r'Original PDF error (68\% C.L.)', rasterized=True)
+        ax2.fill_between(x, (OLD_PDF + OLD_ERR_PLUS) / OLD_PDF, (OLD_PDF - OLD_ERR_MINUS) / OLD_PDF, zorder=1,
+                         color='lightgray', alpha=0.5, rasterized=True)
 
         ax2.plot([0, 2], [1, 1], color='black', zorder=1)
 
@@ -612,7 +616,7 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, which_cross_sections_included,
         if (kinematic_quantity == 'eta_lept'):
             bin_edges = np.array([0., 0.5, 1., 1.5, 2., 2.5])
             bar_width = 0.11
-            plt.xlabel(r'$|\eta_\text{lepton}|$', fontsize=axis_label_font_size)
+            plt.xlabel(r'$|\eta_l|$', fontsize=axis_label_font_size)
             xmin = bin_edges[0:-1]
             xmax = bin_edges[1:]
             bin_midpoints = (xmin + xmax) / 2
@@ -620,7 +624,7 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, which_cross_sections_included,
 
         elif (kinematic_quantity == 'pTD'):
             bin_edges = np.array([8., 12., 20., 40., 80., 150.])
-            plt.xlabel(r'$p_T (D)$ [GeV]', fontsize=axis_label_font_size)
+            plt.xlabel(r'$p_{T, D}$ [GeV]', fontsize=axis_label_font_size)
 
             plt.xscale('log', base=10)
 
@@ -722,11 +726,11 @@ def Rcpm_OLD_and_NEW_and_DATA(kinematic_quantity, which_cross_sections_included,
 
     text_x = 0
     if (kinematic_quantity == 'pTD'):
-        plt.xlabel(r'$p_T (D)$ [GeV]', fontsize=axis_label_font_size)
+        plt.xlabel(r'$p_{T, D}$ [GeV]', fontsize=axis_label_font_size)
         text_x = 9
         plt.xticks(bin_edges, [f'{tick:.0f}' for tick in bin_edges])
     else:
-        plt.xlabel(r'$|\eta_\text{lepton}|$', fontsize=axis_label_font_size)
+        plt.xlabel(r'$|\eta_l|$', fontsize=axis_label_font_size)
         text_x = 0.1
         plt.xticks(bin_edges, [f'{tick:.1f}' for tick in bin_edges])
 
@@ -1278,7 +1282,8 @@ def Rcpm_approximation_sp_sm(PDF_set, which_cross_sections_included, tolerances,
 
     plt.fill_between(x, 1. - 2. * (epsilon * dv_old + sm_old) / sp_old + error_plus,
                         1. - 2. * (epsilon * dv_old + sm_old) / sp_old - error_minus,
-                        color='lightgray', alpha=0.5, zorder=0, label='Original PDF error (68\% C.L.)')
+                        color='lightgray', alpha=0.5, zorder=0, label='Original PDF error (68\% C.L.)',
+                        rasterized=True)
     
     ax.xaxis.set_major_locator(ticker.FixedLocator([1e-2, 1e-1]))
     ax.set_xticklabels([r'$10^{-2}$', r'$10^{-1}$'])
@@ -1412,7 +1417,7 @@ which_cross_sections_included = 'both'
 #              [1e-5, -0.5, 1e-5, 1e-5], [4, 2.4, 5, 4.8], [0.84, -3, 0.985, 0.92], [1.15, 4, 1.015, 1.08],
 #              [1e-3 * 1.2, 1e-3 * 1.2, 1e-2 * 1.7, 1e-2 * 1.7], [2, 0.9, 2, 2], 'MSHT20NLO')
 #absolute_and_ratio_HESSIAN('CT18ANLO', which_cross_sections_included, [[1, 1], [21, 0], [3, 2]],
-#              [r'$d_-$', r'$g$', r'$s$'], ['3.16', '1'],
+#              [r'$d_-$', r'$g$', r'$s_+$'], ['3.16', '1'],
 #              [r'Reweighted ($t = \sqrt{10}$)', r'Reweighted ($t = 1$)'], ['red', 'blue'],
 #              [1e-5, 1e-5, 1e-5], [4, 5, 4.8], [0.84, 0.977, 0.85], [1.15, 1.023, 1.15], [1e-3 * 1.2, 1e-2 * 1.9, 1e-2 * 1.9], [2, 2.4, 2.4], 'CT18ANLO')
 #ratio_MC('NNPDF40_nlo_pch_as_01180', which_cross_sections_included, [[1, 1], [3, 1], [3, 0], [21, 0], [-3, 0]], [r'$d_\text{valence}$', r'$s_\text{valence}$', r'$s$', r'$g$', r'$\bar{s}$'],
@@ -1427,7 +1432,7 @@ which_cross_sections_included = 'both'
 #Rcpm_approximation(PDF_set, which_cross_sections_included, ['3.16', '1'], ['red', 'blue'],
 #                 [r'$t = \sqrt{10}$', r'$t = 1$'])
 Rcpm_approximation_sp_sm(PDF_set, which_cross_sections_included, ['3.16', '1'], ['red', 'blue'],
-                [r'$t = \sqrt{10}$', r'$t = 1$'], 'NNPDF4.0NLO (pch)')
+                [r'$t = \sqrt{10}$', r'$t = 1$'], 'CT18ANLO')
 #Rcpm_approximation_ratio(PDF_set, which_cross_sections_included, ['3.16', '1', '0.3', '0.01', '0.001'], ['red', 'green', 'blue', 'orange', 'purple', 'pink'],
 #                   [r'$t = \sqrt{10}$', r'$t = 1$', r'$t = 0.3$', r'$t = 0.01$', r'$t = 0.001$', r'$t = 0.0001$'])
 #Rcpm_approximation_v2(PDF_set, which_cross_sections_included, ['3.16', '1', '0.3'], ['red', 'green', 'blue', 'orange', 'purple', 'pink'],

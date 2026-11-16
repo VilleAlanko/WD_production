@@ -731,7 +731,7 @@ def total_cross_section(W_sign):
     else:
         processes = ['W+D-', 'W+Dstar-']
 
-    for PDF_set_index in range(2, len(PDF_sets)):
+    for PDF_set_index in range(len(PDF_sets)):
         PDF_set = PDF_sets[PDF_set_index]
 
         vals = np.zeros(num_err_members_in_sets[PDF_set_index] + 1)
@@ -821,11 +821,11 @@ def total_cross_section(W_sign):
         ax2.add_patch(pdf_err)
 
         if (PDF_set == 'EPPS21nlo_pp' or PDF_set == 'NNPDF30_nlo_as_01180_pp'):
-            ax2.text(sum_quantity / 208. - err_minus / 208. - 3.5, y_vals[PDF_set_index] - 0.1, r'$pp$', fontsize=font_size)
+            ax2.text(sum_quantity / 208. - err_minus / 208. - 3.5, y_vals[PDF_set_index] - 0.05, r'$pp$', fontsize=font_size)
             if (PDF_set == 'NNPDF30_nlo_as_01180_pp'):
-                ax2.text(21, y_vals[PDF_set_index] - 0.5, r'nNNPDF3.0NLO', fontsize=font_size)
+                ax2.text(20.5, y_vals[PDF_set_index] - 0.35, r'nNNPDF3.0NLO', fontsize=font_size)
             else:
-                ax2.text(21, y_vals[PDF_set_index] - 0.5, r'EPPS21NLO', fontsize=font_size)
+                ax2.text(20.5, y_vals[PDF_set_index] - 0.35, r'EPPS21NLO', fontsize=font_size)
         else:
             ax2.text(sum_quantity / 208. - err_expected / 208. - 4, y_vals[PDF_set_index] - 0.1, r'$p$Pb', fontsize=font_size)
 
@@ -835,7 +835,7 @@ def total_cross_section(W_sign):
 
     ax2.set_xlabel('Cross section per nucleon [pb]', fontsize=axis_label_font_size)
 
-    info_xval_1 = 21
+    info_xval_1 = 20.5
     info_xval_2 = 1.
     info_yval_1 = 3
     info_yval_2 = 2
@@ -856,7 +856,7 @@ def total_cross_section(W_sign):
     pdf_err = patches.Rectangle((0, 0), 0, 0, facecolor=pdf_err_color, zorder=4)
     ax1.add_patch(pdf_err)
     ax1.legend([pdf_err, expected_uncertainty], ["PDF error (68\% C.L.)", "Expected statistical\nmeasurement error\n(68\% C.L.)"],
-                framealpha=1, fontsize=legend_fontsize, loc='lower right')
+                framealpha=1, fontsize=legend_fontsize, loc='upper right')
 
     ax2.tick_params(axis='both', which='major', labelsize=axis_font_size)
     ax1.set_yticklabels([])
@@ -891,6 +891,6 @@ def total_cross_section(W_sign):
 #pTD_plot(PDF_sets, True, ['pp', 'pPb'])
 #etaD_plot(PDF_sets, False, ['pp', 'pPb'])
 #Rcpm(PDF_sets)
-total_cross_section('plus')
+total_cross_section('minus')
 
 #Rcpm_LO('EPPS16nlo_pPb', 'minus', 'opal')
